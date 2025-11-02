@@ -73,6 +73,8 @@
         }
 
         .ton-balance {
+            display: none !important;
+            visibility: hidden !important;
             font-size: 24px;
             font-weight: 700;
             margin: 10px 20px;
@@ -80,7 +82,8 @@
         }
 
         .demo-badge {
-            display: inline-block;
+            display: none !important;
+            visibility: hidden !important;
             background: #667eea;
             padding: 4px 12px;
             border-radius: 8px;
@@ -993,6 +996,17 @@
         // ==========================================
 
         document.getElementById('balance').textContent = balance.toFixed(2);
+
+        // Скрываем надпись "5 TON Demo"
+        const tonBalance = document.querySelector('.ton-balance');
+        if (tonBalance) {
+            tonBalance.style.display = 'none';
+            tonBalance.style.visibility = 'hidden';
+            tonBalance.style.opacity = '0';
+            tonBalance.style.height = '0';
+            tonBalance.style.margin = '0';
+            tonBalance.style.padding = '0';
+        }
 
         const user = tg?.initDataUnsafe?.user;
         if (user) {
