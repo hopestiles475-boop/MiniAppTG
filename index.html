@@ -3189,13 +3189,7 @@
             let remaining = seconds;
             
             const countdown = setInterval(() => {
-                if (multiplierElement) {
-                    multiplierElement.textContent = `Ставки через ${remaining}...`;
-                    multiplierElement.style.color = '#ffaa00';
-                    multiplierElement.style.borderColor = '#ffaa00';
-                }
-                
-                // Обновляем canvas с текстом кулдауна
+                // Показываем кулдаун только на canvas
                 if (ctx && canvas) {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     ctx.fillStyle = '#ffaa00';
@@ -3204,6 +3198,13 @@
                     ctx.textBaseline = 'middle';
                     ctx.fillText(`Ставки принимаются`, canvas.width / 2, canvas.height / 2 - 20);
                     ctx.fillText(`${remaining}...`, canvas.width / 2, canvas.height / 2 + 20);
+                }
+                
+                // В элементе множителя показываем просто кулдаун без текста
+                if (multiplierElement) {
+                    multiplierElement.textContent = `${remaining}`;
+                    multiplierElement.style.color = '#ffaa00';
+                    multiplierElement.style.borderColor = '#ffaa00';
                 }
                 
                 // Обновляем текст кнопки для активных ставок
