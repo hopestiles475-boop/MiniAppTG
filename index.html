@@ -466,6 +466,15 @@
             opacity: 1 !important;
         }
 
+        /* Скрываем кнопку "Открыть" когда модальное окно активно */
+        .modal.active ~ .open-btn,
+        .modal.active + * + .open-btn,
+        body:has(.modal.active) .open-btn {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+
         #caseDetailPage.active ~ #openBtn,
         #caseDetailPage.active + #openBtn {
             display: flex !important;
@@ -533,6 +542,14 @@
 
         .modal.active {
             display: flex !important;
+        }
+
+        /* Скрываем кнопку "Открыть" со страницы деталей когда модальное окно активно */
+        .modal.active ~ #openBtn {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
 
         .modal-content {
@@ -1161,11 +1178,15 @@
             document.getElementById('modalPrizeValue').textContent = `💎 ${prize.value.toFixed(2)}`;
             document.getElementById('prizeModal').classList.add('active');
             
-            // Скрываем кнопку "Открыть" со страницы деталей когда показывается модальное окно
+            // Полностью скрываем кнопку "Открыть" со страницы деталей когда показывается модальное окно
             const openBtn = document.getElementById('openBtn');
             if (openBtn) {
                 openBtn.classList.remove('show');
-                openBtn.style.cssText = 'display: none !important;';
+                openBtn.style.display = 'none';
+                openBtn.style.visibility = 'hidden';
+                openBtn.style.opacity = '0';
+                openBtn.style.pointerEvents = 'none';
+                openBtn.style.cssText += 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important;';
             }
         }
 
@@ -1202,10 +1223,10 @@
 
         document.querySelector('.subscribe-btn').addEventListener('click', () => {
             if (tg) {
-                tg.openTelegramLink('https://t.me/your_channel');
+                tg.openTelegramLink('https://t.me/alushtahot');
                 tg.HapticFeedback.impactOccurred('medium');
             } else {
-                window.open('https://t.me/your_channel', '_blank');
+                window.open('https://t.me/alushtahot', '_blank');
             }
         });
 
