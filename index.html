@@ -64,7 +64,26 @@
         }
 
         .diamond-icon {
-            font-size: 18px;
+            width: 18px;
+            height: 18px;
+            display: inline-block;
+            background-image: url('ton_symbol.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            vertical-align: middle;
+        }
+        
+        .currency-icon {
+            width: 16px;
+            height: 16px;
+            display: inline-block;
+            background-image: url('ton_symbol.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            vertical-align: middle;
+            margin-right: 2px;
         }
 
         .balance-text {
@@ -280,6 +299,14 @@
             font-size: 14px;
             font-weight: 600;
             color: #00d4ff;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .case-price-badge .currency-icon {
+            width: 14px;
+            height: 14px;
         }
 
         .case-info {
@@ -494,6 +521,15 @@
             font-weight: 700;
             color: #667eea;
             margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            justify-content: center;
+        }
+        
+        .case-detail-price .currency-icon {
+            width: 24px;
+            height: 24px;
         }
 
         .whats-inside-title {
@@ -551,6 +587,15 @@
             font-size: 16px;
             font-weight: 600;
             color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            justify-content: center;
+        }
+        
+        .prize-value .currency-icon {
+            width: 16px;
+            height: 16px;
         }
 
         .open-btn {
@@ -747,6 +792,15 @@
             color: #667eea;
             font-weight: 700;
             margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            justify-content: center;
+        }
+        
+        .modal-prize-value .currency-icon {
+            width: 20px;
+            height: 20px;
         }
 
         .modal-open-btn {
@@ -845,7 +899,7 @@
             <div class="username" id="username">User</div>
         </div>
         <div class="balance-section">
-            <span class="diamond-icon">💎</span>
+            <span class="diamond-icon"></span>
             <span class="balance-text" id="balance">0.00</span>
             <button style="background: transparent; border: none; color: #ffffff; font-size: 18px; cursor: pointer; padding: 0 5px;">+</button>
         </div>
@@ -873,7 +927,7 @@
 
         <div class="cases-carousel" id="casesCarousel">
             <div class="case-card" data-case="1" data-price="0.1">
-                <div class="case-price-badge">💎 0.1</div>
+                <div class="case-price-badge"><span class="currency-icon"></span> 0.1</div>
                 <div class="case-icon"><img src="IconCase/2c0JGQXrElCDlaNGbYHwgipHo2-yq00qIxcU39IganVzrqDys2-no-bg-preview%20%28carve.photos%29.png" alt="Case 1" onerror="console.error('Failed to load image:', this.src)"></div>
                 <div class="case-info">
                     <div class="case-name">Кейс #1</div>
@@ -890,7 +944,7 @@
         <button class="back-btn" onclick="window.goBack()">← Назад</button>
         <div class="case-detail-header">
             <div class="case-detail-icon" id="detailIcon"></div>
-            <div class="case-detail-price" id="detailPrice">💎 2.25</div>
+            <div class="case-detail-price" id="detailPrice"><span class="currency-icon"></span> 2.25</div>
             
             <div class="roulette-container" id="rouletteContainer">
                 <div class="roulette-wrapper">
@@ -915,7 +969,7 @@
         <div class="modal-content">
             <div class="modal-prize-icon" id="modalPrizeIcon">🏆</div>
             <div class="modal-prize-name" id="modalPrizeName">Оскар</div>
-            <div class="modal-prize-value" id="modalPrizeValue">💎 82.17</div>
+            <div class="modal-prize-value" id="modalPrizeValue"><span class="currency-icon"></span> 82.17</div>
             <button class="modal-close" onclick="closePrizeModal()">Закрыть</button>
         </div>
     </div>
@@ -958,6 +1012,11 @@
         
         // Глобальный список выигрышей всех пользователей
         let globalPrizes = [];
+        
+        // Функция для форматирования цены с иконкой валюты
+        function formatPrice(value) {
+            return `<span class="currency-icon"></span>${value.toFixed(2)}`;
+        }
         
         // Функция отправки выигрыша на сервер
         async function sendPrizeToServer(prize) {
@@ -1610,7 +1669,7 @@
                 detailIcon.textContent = currentCase.icon || '🔐';
             }
             detailIcon.style.display = 'flex';
-            document.getElementById('detailPrice').textContent = `💎 ${currentCase.price.toFixed(2)}`;
+            document.getElementById('detailPrice').innerHTML = formatPrice(currentCase.price);
             
             const rouletteContainer = document.getElementById('rouletteContainer');
             rouletteContainer.classList.remove('active');
@@ -1684,7 +1743,7 @@
                 
                 const valueDiv = document.createElement('div');
                 valueDiv.className = 'prize-value';
-                valueDiv.textContent = `💎 ${prize.value.toFixed(2)}`;
+                valueDiv.innerHTML = formatPrice(prize.value);
                 prizeItem.appendChild(valueDiv);
                 
                 prizeItem.dataset.icon = prize.icon;
@@ -1829,7 +1888,7 @@
             }
             
             document.getElementById('modalPrizeName').textContent = prize.name;
-            document.getElementById('modalPrizeValue').textContent = `💎 ${prize.value.toFixed(2)}`;
+            document.getElementById('modalPrizeValue').innerHTML = formatPrice(prize.value);
             document.getElementById('prizeModal').classList.add('active');
             
             // Полностью скрываем кнопку "Открыть" со страницы деталей когда показывается модальное окно
