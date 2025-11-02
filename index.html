@@ -379,45 +379,9 @@
         <div class="whats-inside-title">Что внутри?</div>
         
         <div class="prizes-grid" id="prizesGrid">
-            <div class="prize-item" data-value="82.17">
-                <div class="prize-icon">🏆</div>
-                <div class="prize-value">💎 82.17</div>
-            </div>
-            <div class="prize-item" data-value="75.66">
-                <div class="prize-icon">✨</div>
-                <div class="prize-value">💎 75.66</div>
-            </div>
-            <div class="prize-item" data-value="69.30">
-                <div class="prize-icon">💀</div>
-                <div class="prize-value">💎 69.30</div>
-            </div>
-            <div class="prize-item" data-value="25.27">
-                <div class="prize-icon">🐱</div>
-                <div class="prize-value">💎 25.27</div>
-            </div>
-            <div class="prize-item" data-value="23.50">
-                <div class="prize-icon">🚬</div>
-                <div class="prize-value">💎 23.50</div>
-            </div>
-            <div class="prize-item" data-value="17.00">
-                <div class="prize-icon">💍</div>
-                <div class="prize-value">💎 17.00</div>
-            </div>
-            <div class="prize-item" data-value="11.40">
-                <div class="prize-icon">🦋</div>
-                <div class="prize-value">💎 11.40</div>
-            </div>
-            <div class="prize-item" data-value="8.64">
-                <div class="prize-icon">🧪</div>
-                <div class="prize-value">💎 8.64</div>
-            </div>
-            <div class="prize-item" data-value="7.90">
-                <div class="prize-icon">🌺</div>
-                <div class="prize-value">💎 7.90</div>
-            </div>
         </div>
 
-        <button class="open-btn" id="openBtn" onclick="openCase()">
+        <button class="open-btn" id="openBtn" onclick="window.openCase()">
             Открыть <span>🚀</span>
         </button>
     </div>
@@ -479,24 +443,110 @@
         document.getElementById('balance').textContent = balance.toFixed(2);
 
         document.querySelectorAll('.case-card').forEach(card => {
-            card.addEventListener('click', () => {
+            card.addEventListener('click', (e) => {
+                e.stopPropagation();
                 const caseNum = parseInt(card.dataset.case);
+                console.log('Clicked case:', caseNum);
                 showCaseDetail(caseNum);
             });
         });
 
+        window.openCase = function() {
+            console.log('openCase called, currentCase:', currentCase, 'isOpening:', isOpening);
+            if (currentCase && !isOpening) {
+                const openCaseFunc = function() {
+                    if (isOpening) return;
+                    
+                    const price = currentCase.price;
+                    if (balance < price) {
+                        if (tg) {
+                            tg.showAlert('Недостаточно баланса!');
+                            tg.HapticFeedback.notificationOccurred('error');
+                        } else {
+                            alert('Недостаточно баланса!');
+                        }
+                        return;
+                    }
+
+                    isOpening = true;
+                    balance -= price;
+                    document.getElementById('balance').textContent = balance.toFixed(2);
+                    
+                    const openBtn = document.getElementById('openBtn');
+                    openBtn.disabled = true;
+                    openBtn.innerHTML = 'Крутится... <span class="spinning">🎰</span>';
+
+                    if (tg) {
+                        tg.HapticFeedback.impactOccurred('heavy');
+                    }
+
+                    const prizeItems = document.querySelectorAll('.prize-item');
+                    let spinCount = 0;
+                    const spinDuration = 2000;
+                    const spinInterval = 50;
+                    const totalSpins = spinDuration / spinInterval;
+
+                    prizeItems.forEach(item => {
+                        item.classList.add('spinning-prizes');
+                    });
+
+                    const randomPrize = currentPrizes[Math.floor(Math.random() * currentPrizes.length)];
+                    
+                    let currentIndex = 0;
+                    const shuffleInterval = setInterval(() => {
+                        prizeItems.forEach(item => item.classList.remove('win'));
+                        const randomItem = prizeItems[Math.floor(Math.random() * prizeItems.length)];
+                        randomItem.classList.add('win');
+                        
+                        currentIndex++;
+                        if (currentIndex >= totalSpins) {
+                            clearInterval(shuffleInterval);
+                            prizeItems.forEach(item => item.classList.remove('spinning-prizes'));
+                            
+                            setTimeout(() => {
+                                prizeItems.forEach(item => {
+                                    if (item.dataset.icon === randomPrize.icon) {
+                                        item.classList.add('win');
+                                    } else {
+                                        item.classList.remove('win');
+                                    }
+                                });
+                                
+                                showPrizeModal(randomPrize);
+                                isOpening = false;
+                                openBtn.disabled = false;
+                                openBtn.innerHTML = 'Открыть <span>🚀</span>';
+                                
+                                if (tg) {
+                                    tg.HapticFeedback.notificationOccurred('success');
+                                }
+                            }, 500);
+                        }
+                    }, spinInterval);
+                };
+                openCaseFunc();
+            }
+        };
+
         function showCaseDetail(caseNum) {
+            console.log('showCaseDetail called with:', caseNum);
             currentCase = cases[caseNum];
-            if (!currentCase) return;
+            if (!currentCase) {
+                console.log('No case found');
+                return;
+            }
 
             isOpening = false;
             
             const mainPage = document.getElementById('mainPage');
             const detailPage = document.getElementById('caseDetailPage');
+            const modal = document.getElementById('prizeModal');
             
             mainPage.style.display = 'none';
             detailPage.style.display = 'block';
             detailPage.classList.add('active');
+            modal.style.display = 'none';
+            modal.classList.remove('active');
             
             document.getElementById('detailIcon').textContent = currentCase.icon;
             document.getElementById('detailPrice').textContent = `💎 ${currentCase.price.toFixed(2)}`;
@@ -515,6 +565,7 @@
                 prizeItem.dataset.icon = prize.icon;
                 prizeItem.dataset.name = prize.name;
                 prizeItem.dataset.value = prize.value;
+                prizeItem.classList.remove('win');
                 prizesGrid.appendChild(prizeItem);
             });
 
@@ -522,8 +573,9 @@
             openBtn.disabled = false;
             openBtn.innerHTML = 'Открыть <span>🚀</span>';
 
-            const modal = document.getElementById('prizeModal');
-            modal.classList.remove('active');
+            document.querySelectorAll('.prize-item').forEach(item => {
+                item.classList.remove('win', 'spinning-prizes');
+            });
 
             if (tg) {
                 tg.HapticFeedback.impactOccurred('medium');
@@ -551,76 +603,6 @@
             }
         }
 
-        function openCase() {
-            if (isOpening) return;
-            
-            const price = currentCase.price;
-            if (balance < price) {
-                if (tg) {
-                    tg.showAlert('Недостаточно баланса!');
-                    tg.HapticFeedback.notificationOccurred('error');
-                } else {
-                    alert('Недостаточно баланса!');
-                }
-                return;
-            }
-
-            isOpening = true;
-            balance -= price;
-            document.getElementById('balance').textContent = balance.toFixed(2);
-            
-            const openBtn = document.getElementById('openBtn');
-            openBtn.disabled = true;
-            openBtn.innerHTML = 'Крутится... <span class="spinning">🎰</span>';
-
-            if (tg) {
-                tg.HapticFeedback.impactOccurred('heavy');
-            }
-
-            const prizeItems = document.querySelectorAll('.prize-item');
-            let spinCount = 0;
-            const spinDuration = 2000;
-            const spinInterval = 50;
-            const totalSpins = spinDuration / spinInterval;
-
-            prizeItems.forEach(item => {
-                item.classList.add('spinning-prizes');
-            });
-
-            const randomPrize = currentPrizes[Math.floor(Math.random() * currentPrizes.length)];
-            
-            let currentIndex = 0;
-            const shuffleInterval = setInterval(() => {
-                prizeItems.forEach(item => item.classList.remove('win'));
-                const randomItem = prizeItems[Math.floor(Math.random() * prizeItems.length)];
-                randomItem.classList.add('win');
-                
-                currentIndex++;
-                if (currentIndex >= totalSpins) {
-                    clearInterval(shuffleInterval);
-                    prizeItems.forEach(item => item.classList.remove('spinning-prizes'));
-                    
-                    setTimeout(() => {
-                        prizeItems.forEach(item => {
-                            if (item.dataset.icon === randomPrize.icon) {
-                                item.classList.add('win');
-                            } else {
-                                item.classList.remove('win');
-                            }
-                        });
-                        
-                        showPrizeModal(randomPrize);
-                        isOpening = false;
-                        openBtn.disabled = false;
-                        openBtn.innerHTML = 'Открыть <span>🚀</span>';
-                        
-                        if (tg) {
-                            tg.HapticFeedback.notificationOccurred('success');
-                        }
-                    }, 500);
-                }
-            }, spinInterval);
-        }
 
         function showPrizeModal(prize) {
             document.getElementById('modalPrizeIcon').textContent = prize.icon;
