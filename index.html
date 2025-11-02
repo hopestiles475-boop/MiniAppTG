@@ -1066,6 +1066,7 @@
                     
                     // Даем время на отрисовку элементов перед анимацией
                     setTimeout(() => {
+                        // Сначала выбираем случайный приз из доступных
                         const randomPrize = currentPrizes[Math.floor(Math.random() * currentPrizes.length)];
                         const rouletteTrack = document.getElementById('rouletteTrack');
                         const giftItems = rouletteTrack.querySelectorAll('.gift-item');
@@ -1080,15 +1081,16 @@
                         const itemWidth = 150 + 20; // 150px ширина + 20px gap
                         const containerWidth = rouletteContainer.offsetWidth;
                         
-                        // Находим все подарки с нужным иконом
+                        // Находим все подарки с нужным иконом (иконка выбранного приза)
                         const matchingIndices = [];
                         for (let i = 0; i < giftItems.length; i++) {
-                            if (giftItems[i].dataset.icon === randomPrize.icon) {
+                            if (giftItems[i].dataset.icon === randomPrize.icon && 
+                                giftItems[i].dataset.name === randomPrize.name) {
                                 matchingIndices.push(i);
                             }
                         }
                         
-                        // Выбираем случайный индекс из середины массива
+                        // Выбираем случайный индекс из середины массива для плавной остановки
                         let targetIndex;
                         if (matchingIndices.length > 0) {
                             const midPoint = Math.floor(giftItems.length / 2);
@@ -1100,6 +1102,7 @@
                                 ? candidates[Math.floor(Math.random() * candidates.length)]
                                 : matchingIndices[Math.floor(matchingIndices.length / 2)];
                         } else {
+                            // Если не нашли точное совпадение, выбираем из середины
                             targetIndex = Math.floor(giftItems.length / 2);
                         }
                         
@@ -1209,40 +1212,63 @@
                             if (progress < 1) {
                                 requestAnimationFrame(animateRoulette);
                             } else {
+                                // Находим элемент, который действительно находится в центре
+                                let actualCenterIndex = targetIndex;
+                                let minDistance = Infinity;
+                                
+                                giftItems.forEach((item, index) => {
+                                    const itemOffset = index * itemWidth + itemWidth / 2;
+                                    const totalTrackWidth = giftItems.length * itemWidth;
+                                    const itemCenter = itemOffset - totalTrackWidth / 2 + finalPosition;
+                                    const distance = Math.abs(itemCenter);
+                                    
+                                    if (distance < minDistance) {
+                                        minDistance = distance;
+                                        actualCenterIndex = index;
+                                    }
+                                });
+                                
                                 setTimeout(() => {
                                     giftItems.forEach(item => item.classList.remove('selected'));
-                                    if (giftItems[targetIndex]) {
-                                        giftItems[targetIndex].classList.add('selected');
+                                    if (giftItems[actualCenterIndex]) {
+                                        giftItems[actualCenterIndex].classList.add('selected');
+                                        
+                                        // Получаем данные приза из элемента, на котором остановилась рулетка
+                                        const actualPrize = {
+                                            icon: giftItems[actualCenterIndex].dataset.icon,
+                                            name: giftItems[actualCenterIndex].dataset.name,
+                                            value: parseFloat(giftItems[actualCenterIndex].dataset.value)
+                                        };
+                                        
+                                        setTimeout(() => {
+                                            showPrizeModal(actualPrize);
+                                            
+                                            // Восстанавливаем иконку кейса
+                                            if (currentCase && (currentCase.icon.includes('.png') || currentCase.icon.includes('.jpg') || currentCase.icon.includes('.jpeg'))) {
+                                                const img = document.createElement('img');
+                                                img.src = currentCase.icon;
+                                                img.alt = 'Case';
+                                                img.style.width = '100%';
+                                                img.style.maxWidth = '300px';
+                                                img.style.height = 'auto';
+                                                img.style.objectFit = 'contain';
+                                                img.style.display = 'block';
+                                                img.onerror = function() {
+                                                    detailIcon.textContent = '🔐';
+                                                };
+                                                detailIcon.innerHTML = '';
+                                                detailIcon.appendChild(img);
+                                            }
+                                            detailIcon.style.display = 'flex';
+                                            
+                                            rouletteContainer.classList.remove('active');
+                                            isOpening = false;
+                                            
+                                            if (tg) {
+                                                tg.HapticFeedback.notificationOccurred('success');
+                                            }
+                                        }, 500);
                                     }
-                                    
-                                    setTimeout(() => {
-                                        showPrizeModal(randomPrize);
-                                        
-                                        // Восстанавливаем иконку кейса
-                                        if (currentCase && (currentCase.icon.includes('.png') || currentCase.icon.includes('.jpg') || currentCase.icon.includes('.jpeg'))) {
-                                            const img = document.createElement('img');
-                                            img.src = currentCase.icon;
-                                            img.alt = 'Case';
-                                            img.style.width = '100%';
-                                            img.style.maxWidth = '300px';
-                                            img.style.height = 'auto';
-                                            img.style.objectFit = 'contain';
-                                            img.style.display = 'block';
-                                            img.onerror = function() {
-                                                detailIcon.textContent = '🔐';
-                                            };
-                                            detailIcon.innerHTML = '';
-                                            detailIcon.appendChild(img);
-                                        }
-                                        detailIcon.style.display = 'flex';
-                                        
-                                        rouletteContainer.classList.remove('active');
-                                        isOpening = false;
-                                        
-                                        if (tg) {
-                                            tg.HapticFeedback.notificationOccurred('success');
-                                        }
-                                    }, 500);
                                 }, 300);
                             }
                         };
