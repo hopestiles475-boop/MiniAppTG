@@ -275,6 +275,7 @@
             display: block !important;
         }
 
+
         .case-detail-header {
             text-align: center;
             margin-bottom: 30px;
@@ -418,12 +419,18 @@
             font-size: 18px;
             font-weight: 700;
             cursor: pointer;
-            display: flex !important;
+            display: none;
             align-items: center;
             justify-content: center;
             gap: 10px;
             z-index: 150;
             box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .open-btn.show {
+            display: flex !important;
         }
 
         .open-btn:disabled {
@@ -660,10 +667,11 @@
         <div class="prizes-grid" id="prizesGrid">
         </div>
 
-        <button class="open-btn" id="openBtn" type="button">
-            Открыть <span>🚀</span>
-        </button>
     </div>
+
+    <button class="open-btn" id="openBtn" type="button" style="display: none;">
+        Открыть <span>🚀</span>
+    </button>
 
     <div class="modal" id="prizeModal">
         <div class="modal-content">
@@ -970,7 +978,7 @@
 
             const openBtn = document.getElementById('openBtn');
             openBtn.disabled = false;
-            openBtn.style.display = 'flex';
+            openBtn.classList.add('show');
             openBtn.innerHTML = 'Открыть <span>🚀</span>';
             
             openBtn.onclick = function(e) {
@@ -995,9 +1003,12 @@
             const mainPage = document.getElementById('mainPage');
             const detailPage = document.getElementById('caseDetailPage');
             const modal = document.getElementById('prizeModal');
+            const openBtn = document.getElementById('openBtn');
             
             detailPage.style.display = 'none';
             detailPage.classList.remove('active');
+            
+            openBtn.classList.remove('show');
             
             mainPage.style.display = 'block';
             mainPage.classList.remove('hidden');
