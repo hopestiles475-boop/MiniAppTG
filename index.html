@@ -1189,9 +1189,36 @@
             
             const detailIcon = document.getElementById('detailIcon');
             if (currentCase.icon.includes('.jpg') || currentCase.icon.includes('.png') || currentCase.icon.includes('.jpeg')) {
-                // Используем путь напрямую, так как он уже правильно закодирован
-                const imgPath = currentCase.icon;
-                detailIcon.innerHTML = `<img src="${imgPath}" alt="Case ${caseNum}" onerror="this.style.display='none'; console.error('Failed to load detail image:', this.src);">`;
+                // Декодируем путь для правильной загрузки
+                let imgPath = currentCase.icon;
+                // Если путь уже содержит кодированные символы, используем его напрямую
+                detailIcon.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = imgPath;
+                img.alt = `Case ${caseNum}`;
+                img.style.width = '100%';
+                img.style.maxWidth = '300px';
+                img.style.height = 'auto';
+                img.style.objectFit = 'contain';
+                img.style.display = 'block';
+                img.onload = function() {
+                    console.log('Image loaded successfully:', this.src);
+                };
+                img.onerror = function() {
+                    console.error('Failed to load detail image:', this.src);
+                    // Попробуем декодировать путь
+                    try {
+                        const decodedPath = decodeURIComponent(imgPath);
+                        if (decodedPath !== imgPath) {
+                            this.src = decodedPath;
+                        } else {
+                            detailIcon.textContent = '🔐';
+                        }
+                    } catch(e) {
+                        detailIcon.textContent = '🔐';
+                    }
+                };
+                detailIcon.appendChild(img);
             } else {
                 detailIcon.textContent = currentCase.icon || '🔐';
             }
@@ -1325,7 +1352,33 @@
             if (detailIcon && currentCase) {
                 if (currentCase.icon.includes('.jpg') || currentCase.icon.includes('.png') || currentCase.icon.includes('.jpeg')) {
                     const imgPath = currentCase.icon;
-                    detailIcon.innerHTML = `<img src="${imgPath}" alt="Case" onerror="this.style.display='none'; console.error('Failed to load detail image:', this.src);">`;
+                    detailIcon.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = imgPath;
+                    img.alt = 'Case';
+                    img.style.width = '100%';
+                    img.style.maxWidth = '300px';
+                    img.style.height = 'auto';
+                    img.style.objectFit = 'contain';
+                    img.style.display = 'block';
+                    img.onload = function() {
+                        console.log('Image loaded successfully:', this.src);
+                    };
+                    img.onerror = function() {
+                        console.error('Failed to load detail image:', this.src);
+                        // Попробуем декодировать путь
+                        try {
+                            const decodedPath = decodeURIComponent(imgPath);
+                            if (decodedPath !== imgPath) {
+                                this.src = decodedPath;
+                            } else {
+                                detailIcon.textContent = '🔐';
+                            }
+                        } catch(e) {
+                            detailIcon.textContent = '🔐';
+                        }
+                    };
+                    detailIcon.appendChild(img);
                 } else {
                     detailIcon.textContent = currentCase.icon || '🔐';
                 }
