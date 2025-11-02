@@ -385,6 +385,8 @@
             height: 100%;
             position: relative;
             overflow: visible;
+            margin: 0;
+            padding: 0;
         }
 
         .roulette-container.active {
@@ -409,7 +411,7 @@
             height: 150px;
             background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
             border-radius: 16px;
-            display: flex;
+            display: flex !important;
             flex-direction: column;
             align-items: center;
             justify-content: center;
@@ -417,8 +419,9 @@
             font-size: 80px;
             position: relative;
             flex-shrink: 0;
-            visibility: visible;
-            opacity: 1;
+            visibility: visible !important;
+            opacity: 1 !important;
+            z-index: 1;
         }
 
         .gift-item.selected {
@@ -1112,6 +1115,11 @@
                                 const itemPos = newX + index * itemWidth - trackCenter + (itemWidth / 2);
                                 const distance = Math.abs(itemPos);
                                 
+                                // Убедимся, что все элементы видимы
+                                item.style.visibility = 'visible';
+                                item.style.opacity = '1';
+                                item.style.display = 'flex';
+                                
                                 if (distance < itemWidth / 2) {
                                     item.classList.add('selected');
                                 } else {
@@ -1176,6 +1184,8 @@
                 giftItem.style.flexShrink = '0';
                 giftItem.style.visibility = 'visible';
                 giftItem.style.opacity = '1';
+                giftItem.style.display = 'flex';
+                giftItem.style.pointerEvents = 'auto';
                 rouletteTrack.appendChild(giftItem);
             });
         }
