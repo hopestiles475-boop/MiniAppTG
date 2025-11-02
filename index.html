@@ -474,8 +474,18 @@
         }
 
         .open-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
+            opacity: 0.5 !important;
+            cursor: not-allowed !important;
+            pointer-events: none !important;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.5) 0%, rgba(118, 75, 162, 0.5) 100%) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3) !important;
+            transform: none !important;
+        }
+        
+        .open-btn:disabled:hover {
+            transform: none !important;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3) !important;
         }
 
         .spinning {
@@ -928,10 +938,15 @@
                     const rouletteContainer = document.getElementById('rouletteContainer');
                     const openBtn = document.getElementById('openBtn');
                     
+                    // Отключаем кнопку сразу же в начале
+                    openBtn.disabled = true;
+                    openBtn.style.pointerEvents = 'none';
+                    openBtn.style.opacity = '0.5';
+                    openBtn.style.cursor = 'not-allowed';
+                    openBtn.innerHTML = 'Крутится... <span class="spinning">🎰</span>';
+                    
                     detailIcon.style.display = 'none';
                     rouletteContainer.classList.add('active');
-                    openBtn.disabled = true;
-                    openBtn.innerHTML = 'Крутится... <span class="spinning">🎰</span>';
 
                     if (tg) {
                         tg.HapticFeedback.impactOccurred('heavy');
@@ -1007,6 +1022,9 @@
                                         
                                         isOpening = false;
                                         openBtn.disabled = false;
+                                        openBtn.style.pointerEvents = 'auto';
+                                        openBtn.style.opacity = '1';
+                                        openBtn.style.cursor = 'pointer';
                                         openBtn.innerHTML = 'Открыть <span>🚀</span>';
                                         
                                         if (tg) {
@@ -1132,6 +1150,11 @@
             if (openBtn) {
                 openBtn.classList.remove('show');
                 openBtn.style.cssText = 'display: none !important;';
+                openBtn.disabled = false;
+                openBtn.style.pointerEvents = 'auto';
+                openBtn.style.opacity = '1';
+                openBtn.style.cursor = 'pointer';
+                openBtn.innerHTML = 'Открыть <span>🚀</span>';
             }
             
             mainPage.style.display = 'block';
