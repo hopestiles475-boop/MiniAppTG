@@ -389,6 +389,9 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .roulette-container.active {
@@ -405,7 +408,7 @@
             will-change: transform;
             white-space: nowrap;
             width: auto;
-            height: 100%;
+            height: 150px;
             align-items: center;
             margin: 0;
             padding: 0;
@@ -432,6 +435,9 @@
             z-index: 2;
             transition: none !important;
             pointer-events: auto !important;
+            margin: 0;
+            padding: 0;
+            vertical-align: top;
         }
 
         .gift-item img {
@@ -1125,6 +1131,9 @@
                         rouletteTrack.style.display = 'flex';
                         rouletteTrack.style.visibility = 'visible';
                         rouletteTrack.style.opacity = '1';
+                        rouletteTrack.style.position = 'absolute';
+                        rouletteTrack.style.marginTop = '0';
+                        rouletteTrack.style.marginBottom = '0';
                         
                         let startTime = Date.now();
                         const animateRoulette = () => {
@@ -1135,8 +1144,11 @@
                             const ease = 1 - Math.pow(1 - progress, 3);
                             const currentOffset = startPosition + (finalPosition - startPosition) * ease;
                             
-                            // Применяем трансформацию - трек центрирован, смещаем по X
+                            // Применяем трансформацию - трек центрирован, смещаем только по X, Y всегда -50%
                             rouletteTrack.style.transform = `translate(calc(-50% + ${currentOffset}px), -50%)`;
+                            rouletteTrack.style.top = '50%';
+                            rouletteTrack.style.marginTop = '0';
+                            rouletteTrack.style.marginBottom = '0';
                             
                             // Обновляем выбранный элемент и ВСЕГДА делаем все видимыми
                             giftItems.forEach((item, index) => {
@@ -1151,6 +1163,11 @@
                                     min-width: 150px !important;
                                     max-width: 150px !important;
                                     height: 150px !important;
+                                    position: relative !important;
+                                    top: 0 !important;
+                                    margin: 0 !important;
+                                    padding: 0 !important;
+                                    vertical-align: top !important;
                                 `;
                                 
                                 // Убеждаемся, что изображения внутри тоже видимы
