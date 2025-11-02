@@ -3153,9 +3153,15 @@
             canvas.width = canvas.offsetWidth;
             canvas.height = canvas.offsetHeight;
             
+            // НЕ очищаем список игроков при инициализации, чтобы ставки сохранялись
+            // crashPlayers = []; // Убрано - сохраняем ставки между раундами
+            
             startNewCrashRound(ctx, canvas);
             updateCrashBetsList();
             updateBetItemSelect();
+            
+            // Загружаем ставки других игроков с сервера
+            loadCrashBetsFromServer();
             
             // Обновляем список ставок каждую секунду
             if (window.crashBetsInterval) {
@@ -3163,9 +3169,11 @@
             }
             window.crashBetsInterval = setInterval(() => {
                 if (document.getElementById('crashPage')?.style.display === 'block') {
+                    // Загружаем актуальные ставки с сервера
+                    loadCrashBetsFromServer();
                     updateCrashBetsList();
                 }
-            }, 500);
+            }, 1000);
         }
 
         // Начало нового раунда краша (с кулдауном для ставок)
@@ -3185,6 +3193,8 @@
             
             // Очищаем график и показываем кулдаун
             crashGraphPoints = [];
+            
+            // НЕ очищаем список игроков - сохраняем все ставки для отображения
             
             let remaining = seconds;
             
@@ -3398,11 +3408,8 @@
             
             updateCrashBetsList();
             
-            // Очищаем список игроков для нового раунда через несколько секунд
-            setTimeout(() => {
-                crashPlayers = [];
-                updateCrashBetsList();
-            }, 5000);
+            // НЕ очищаем список игроков - ставки остаются в списке для отображения истории
+            // Игроки могут видеть завершенные ставки до начала следующего раунда
         }
 
         // Проверка выигрышей игроков
@@ -3418,6 +3425,57 @@
             }
         }
 
+        // Сохранение ставки на сервер
+        async function saveCrashBetToServer(bet) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/crash/bets`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ...bet,
+                        timestamp: Date.now()
+                    })
+                });
+                
+                if (!response.ok) {
+                    console.log('Не удалось сохранить ставку на сервер, работаем локально');
+                }
+            } catch (error) {
+                console.log('Ошибка при сохранении ставки:', error);
+                // Работаем локально, если сервер недоступен
+            }
+        }
+        
+        // Загрузка ставок других игроков с сервера
+        async function loadCrashBetsFromServer() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/crash/bets`);
+                if (response.ok) {
+                    const serverBets = await response.json();
+                    
+                    // Объединяем ставки с сервера с локальными
+                    const localUserIds = crashPlayers.map(p => p.id);
+                    serverBets.forEach(serverBet => {
+                        // Добавляем ставку, если её нет в локальном списке
+                        if (!localUserIds.includes(serverBet.id)) {
+                            crashPlayers.push(serverBet);
+                        } else {
+                            // Обновляем существующую ставку
+                            const index = crashPlayers.findIndex(p => p.id === serverBet.id);
+                            if (index !== -1) {
+                                crashPlayers[index] = { ...crashPlayers[index], ...serverBet };
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.log('Ошибка при загрузке ставок:', error);
+                // Работаем локально, если сервер недоступен
+            }
+        }
+        
         // Вывод ставки
         function cashOutPlayer(playerId) {
             const player = crashPlayers.find(p => p.id === playerId);
@@ -3428,6 +3486,9 @@
             player.cashedOut = true;
             player.winnings = winnings;
             player.cashOutMultiplier = crashMultiplier;
+            
+            // Обновляем информацию на сервере
+            saveCrashBetToServer(player);
             
             // Если это ставка текущего пользователя, добавляем выигрыш к балансу
             if (playerId === userBet?.id) {
@@ -3662,6 +3723,10 @@
                 
                 userBet = newBet;
                 crashPlayers.push(newBet);
+                
+                // Отправляем ставку на сервер для синхронизации с другими игроками
+                saveCrashBetToServer(newBet);
+                
                 updateCrashBetsList();
                 
                 // Меняем текст кнопки только если раунд активен
