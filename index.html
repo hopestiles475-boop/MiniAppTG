@@ -295,6 +295,8 @@
             border-radius: 16px;
             background: rgba(255, 255, 255, 0.05);
             display: none;
+            padding: 0 75px;
+            box-sizing: border-box;
         }
 
         .roulette-container.active {
@@ -308,7 +310,8 @@
             left: 0;
             top: 50%;
             transform: translateY(-50%);
-            transition: transform 0.1s linear;
+            transition: transform 0.05s linear;
+            will-change: transform;
         }
 
         .gift-item {
@@ -431,6 +434,8 @@
 
         .open-btn.show {
             display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
 
         .open-btn:disabled {
@@ -848,8 +853,9 @@
                     }
                     
                     const startX = 0;
-                    const centerX = rouletteContainer.offsetWidth / 2;
-                    const targetItemCenter = targetIndex * itemWidth;
+                    const containerWidth = rouletteContainer.offsetWidth;
+                    const centerX = containerWidth / 2;
+                    const targetItemCenter = targetIndex * itemWidth + (itemWidth / 2);
                     const targetX = centerX - targetItemCenter;
                     const extraSpins = 5;
                     const finalX = targetX - (extraSpins * currentPrizes.length * itemWidth);
@@ -914,7 +920,7 @@
             const rouletteTrack = document.getElementById('rouletteTrack');
             rouletteTrack.innerHTML = '';
             
-            const extendedPrizes = [...currentPrizes, ...currentPrizes, ...currentPrizes, ...currentPrizes, ...currentPrizes];
+            const extendedPrizes = [...currentPrizes, ...currentPrizes, ...currentPrizes, ...currentPrizes, ...currentPrizes, ...currentPrizes];
             
             extendedPrizes.forEach((prize, index) => {
                 const giftItem = document.createElement('div');
@@ -926,6 +932,9 @@
                 giftItem.dataset.icon = prize.icon;
                 giftItem.dataset.name = prize.name;
                 giftItem.dataset.value = prize.value;
+                giftItem.style.flexShrink = '0';
+                giftItem.style.visibility = 'visible';
+                giftItem.style.opacity = '1';
                 rouletteTrack.appendChild(giftItem);
             });
         }
@@ -977,18 +986,22 @@
             });
 
             const openBtn = document.getElementById('openBtn');
-            openBtn.disabled = false;
-            openBtn.classList.add('show');
-            openBtn.innerHTML = 'Открыть <span>🚀</span>';
-            
-            openBtn.onclick = function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Open button clicked');
-                if (currentCase && !isOpening) {
-                    window.openCase();
-                }
-            };
+            if (openBtn) {
+                openBtn.disabled = false;
+                openBtn.classList.add('show');
+                openBtn.style.display = 'flex';
+                openBtn.style.visibility = 'visible';
+                openBtn.innerHTML = 'Открыть <span>🚀</span>';
+                
+                openBtn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Open button clicked');
+                    if (currentCase && !isOpening) {
+                        window.openCase();
+                    }
+                };
+            }
 
             document.querySelectorAll('.prize-item').forEach(item => {
                 item.classList.remove('win', 'spinning-prizes');
