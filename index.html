@@ -220,6 +220,13 @@
             margin: 15px 0;
         }
 
+        .case-icon img {
+            width: 100%;
+            max-width: 120px;
+            height: auto;
+            object-fit: contain;
+        }
+
         .case-price-badge {
             position: absolute;
             top: 10px;
@@ -289,6 +296,13 @@
         .case-detail-icon {
             font-size: 120px;
             margin: 20px 0;
+        }
+
+        .case-detail-icon img {
+            width: 100%;
+            max-width: 200px;
+            height: auto;
+            object-fit: contain;
         }
 
         .roulette-container {
@@ -739,27 +753,27 @@
         <div class="cases-carousel" id="casesCarousel">
             <div class="case-card" data-case="1" data-price="0.1">
                 <div class="case-price-badge">💎 0.1</div>
-                <div class="case-icon">🐸</div>
+                <div class="case-icon"><img src="IconCase/2c0JGQXrElCDlaNGbYHwgipHo2-yq00qIxcU39IganVzrqDys2ZlzCtVVhLp_fLYwDM72kas1MZuPvLJy4dF4Sui.jpg" alt="Case 1"></div>
             </div>
             <div class="case-card" data-case="2" data-price="0.5">
                 <div class="case-price-badge">💎 0.5</div>
-                <div class="case-icon">💀</div>
+                <div class="case-icon"><img src="IconCase/9aVA4BPQdJkDmeyatmkd6NJ_9J2m4FdaFV_ug-glYkQynUls9fwM1Wggpp1YXqGUg5DEoXhJAlqOO8m_1Ti6L5av.jpg" alt="Case 2"></div>
             </div>
             <div class="case-card" data-case="3" data-price="1">
                 <div class="case-price-badge">💎 1</div>
-                <div class="case-icon">🧸</div>
+                <div class="case-icon"><img src="IconCase/9b9VAwbActN_OS8u0KzdDrk5B3IWp4jVymIWNKj5sJJgtuSCa7Ikr33iG2q25YaMBhCK0eomyYFxOQk8kwuxYkRS.jpg" alt="Case 3"></div>
             </div>
             <div class="case-card" data-case="4" data-price="1">
                 <div class="case-price-badge">💎 1</div>
-                <div class="case-icon">💰</div>
+                <div class="case-icon"><img src="IconCase/aAsoXWgFH3cEc0D0oLbcdJ7kbpDtyk9SKUaL06o_JAlgbnS-aJpCSyg61uddzaui5ZWcgd7RScYwLSbdruvgC65p.jpg" alt="Case 4"></div>
             </div>
             <div class="case-card" data-case="5" data-price="1.5">
                 <div class="case-price-badge">💎 1.5</div>
-                <div class="case-icon">💎</div>
+                <div class="case-icon"><img src="IconCase/goywMgHtLcJIDbu4rcpamr77BtAz9mFVgIUxw7W5ZqJdtmto6p0Jb5sSXLuruFBhtTGmnBH-NWh-AR6q6Dmm93j5.jpg" alt="Case 5"></div>
             </div>
             <div class="case-card" data-case="6" data-price="2">
                 <div class="case-price-badge">💎 2</div>
-                <div class="case-icon">🏆</div>
+                <div class="case-icon"><img src="IconCase/n-qxKQFxqb-ncpLgDbrfbfCXPwWkBlk-BXBVoN5J9cIpd3FJ0CO-j8y7XkxMBqS3csRh9qmyLK636jQ_kltqR9d9.jpg" alt="Case 6"></div>
             </div>
         </div>
 
@@ -773,7 +787,7 @@
     <div class="case-detail-page" id="caseDetailPage" style="display: none;">
         <button class="back-btn" onclick="window.goBack()">← Назад</button>
         <div class="case-detail-header">
-            <div class="case-detail-icon" id="detailIcon">🔐</div>
+            <div class="case-detail-icon" id="detailIcon"></div>
             <div class="case-detail-price" id="detailPrice">💎 2.25</div>
             
             <div class="roulette-container" id="rouletteContainer">
@@ -848,7 +862,7 @@
         });
 
         const cases = {
-            1: { icon: '🐸', price: 0.1, prizes: [
+            1: { icon: 'IconCase/2c0JGQXrElCDlaNGbYHwgipHo2-yq00qIxcU39IganVzrqDys2ZlzCtVVhLp_fLYwDM72kas1MZuPvLJy4dF4Sui.jpg', price: 0.1, prizes: [
                 { icon: '🏆', name: 'Оскар', value: 82.17 },
                 { icon: '✨', name: 'Парфюм', value: 75.66 },
                 { icon: '💀', name: 'Зелье', value: 69.30 },
@@ -859,30 +873,30 @@
                 { icon: '🧪', name: 'Зелье', value: 8.64 },
                 { icon: '🌺', name: 'Цветок', value: 7.90 }
             ]},
-            2: { icon: '💀', price: 0.5, prizes: [
+            2: { icon: 'IconCase/9aVA4BPQdJkDmeyatmkd6NJ_9J2m4FdaFV_ug-glYkQynUls9fwM1Wggpp1YXqGUg5DEoXhJAlqOO8m_1Ti6L5av.jpg', price: 0.5, prizes: [
                 { icon: '💀', name: 'Череп', value: 45.00 },
                 { icon: '🎱', name: '8-ball', value: 35.00 },
                 { icon: '💍', name: 'Кольцо', value: 25.00 },
                 { icon: '👑', name: 'Корона', value: 20.00 },
                 { icon: '💎', name: 'Кристалл', value: 15.00 }
             ]},
-            3: { icon: '🧸', price: 1, prizes: [
+            3: { icon: 'IconCase/9b9VAwbActN_OS8u0KzdDrk5B3IWp4jVymIWNKj5sJJgtuSCa7Ikr33iG2q25YaMBhCK0eomyYFxOQk8kwuxYkRS.jpg', price: 1, prizes: [
                 { icon: '🧸', name: 'Мишка', value: 30.00 },
                 { icon: '🍼', name: 'Бутылочка', value: 25.00 },
                 { icon: '🎩', name: 'Цилиндр', value: 20.00 },
                 { icon: '🎁', name: 'Подарок', value: 15.00 }
             ]},
-            4: { icon: '💰', price: 1, prizes: [
+            4: { icon: 'IconCase/aAsoXWgFH3cEc0D0oLbcdJ7kbpDtyk9SKUaL06o_JAlgbnS-aJpCSyg61uddzaui5ZWcgd7RScYwLSbdruvgC65p.jpg', price: 1, prizes: [
                 { icon: '💰', name: '200 TON', value: 200.00 },
                 { icon: '💵', name: '100 TON', value: 100.00 },
                 { icon: '💴', name: '50 TON', value: 50.00 }
             ]},
-            5: { icon: '💎', price: 1.5, prizes: [
+            5: { icon: 'IconCase/goywMgHtLcJIDbu4rcpamr77BtAz9mFVgIUxw7W5ZqJdtmto6p0Jb5sSXLuruFBhtTGmnBH-NWh-AR6q6Dmm93j5.jpg', price: 1.5, prizes: [
                 { icon: '💎', name: 'Кристалл', value: 40.00 },
                 { icon: '🪙', name: 'Монета', value: 30.00 },
                 { icon: '⌚', name: 'Часы', value: 25.00 }
             ]},
-            6: { icon: '🏆', price: 2, prizes: [
+            6: { icon: 'IconCase/n-qxKQFxqb-ncpLgDbrfbfCXPwWkBlk-BXBVoN5J9cIpd3FJ0CO-j8y7XkxMBqS3csRh9qmyLK636jQ_kltqR9d9.jpg', price: 2, prizes: [
                 { icon: '🏆', name: 'Трофей', value: 50.00 },
                 { icon: '💠', name: 'Кристалл', value: 35.00 },
                 { icon: '🧪', name: 'Зелье', value: 20.00 },
@@ -1081,8 +1095,13 @@
             modal.style.display = 'none';
             modal.classList.remove('active');
             
-            document.getElementById('detailIcon').textContent = '🔐';
-            document.getElementById('detailIcon').style.display = 'block';
+            const detailIcon = document.getElementById('detailIcon');
+            if (currentCase.icon.includes('.jpg') || currentCase.icon.includes('.png') || currentCase.icon.includes('.jpeg')) {
+                detailIcon.innerHTML = `<img src="${currentCase.icon}" alt="Case ${caseNum}">`;
+            } else {
+                detailIcon.textContent = currentCase.icon || '🔐';
+            }
+            detailIcon.style.display = 'block';
             document.getElementById('detailPrice').textContent = `💎 ${currentCase.price.toFixed(2)}`;
             
             const rouletteContainer = document.getElementById('rouletteContainer');
