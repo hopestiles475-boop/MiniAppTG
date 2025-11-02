@@ -3245,8 +3245,8 @@
                             crashDirection = -1;
                             crashMultiplier = 0.01;
                             
+                            // Вибрация при краше
                             if (tg) {
-                                tg.showAlert('КРАШ! Все не забранные ставки потеряны!');
                                 tg.HapticFeedback.notificationOccurred('error');
                             }
                             
@@ -3254,10 +3254,10 @@
                             crashRoundActive = false;
                             processCrashRound();
                             
-                            // Сразу начинаем новый кулдаун для следующего раунда (чтобы люди успели поставить)
+                            // Начинаем кулдаун 10 секунд
                             setTimeout(() => {
                                 showCrashCooldown(10, ctx, canvas);
-                            }, 1000);
+                            }, 500);
                         }
                     }, timeToCrash);
                     
@@ -3276,7 +3276,7 @@
             let speed = 0.008 + Math.random() * 0.015;
             
             const animate = () => {
-                // Не обновляем график если раунд не активен (кулдаун)
+                // Не обновляем график если раунд не активен (кулдаун или краш завершен)
                 if (!crashRoundActive) {
                     return;
                 }
@@ -3291,7 +3291,7 @@
                         crashDirection = -1; // Достигли цели, начинаем краш
                     }
                 } else if (crashDirection === -1) {
-                    // Резкое падение - сразу до нуля
+                    // Резкое падение - сразу до нуля (обработка уже произошла в setTimeout)
                     crashMultiplier = 0.01;
                 }
                 
@@ -3321,10 +3321,10 @@
                 }
                 ctx.stroke();
                 
-                // Рисуем вертикальную линию при краше (резкое падение)
+                // При резком падении рисуем вертикальную красную линию
                 if (crashDirection === -1 && crashMultiplier <= 0.01) {
                     ctx.strokeStyle = '#ff0000';
-                    ctx.lineWidth = 2;
+                    ctx.lineWidth = 3;
                     ctx.beginPath();
                     const lastPoint = crashGraphPoints[crashGraphPoints.length - 2];
                     if (lastPoint) {
