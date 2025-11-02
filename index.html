@@ -189,6 +189,15 @@
             align-items: center;
             justify-content: center;
             font-size: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .live-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 8px;
         }
 
         .live-item.active {
@@ -858,12 +867,7 @@
 
         <div class="live-section">
             <div class="live-badge">LIVE</div>
-            <div class="live-carousel">
-                <div class="live-item active">🌙</div>
-                <div class="live-item">❄️</div>
-                <div class="live-item">💝</div>
-                <div class="live-item">🍭</div>
-                <div class="live-item">🕷️</div>
+            <div class="live-carousel" id="liveCarousel">
             </div>
         </div>
 
@@ -948,6 +952,7 @@
         let currentPrizes = [];
         let isOpening = false;
         let currentTab = 'cases';
+        let recentPrizes = [];
 
         document.addEventListener('DOMContentLoaded', function() {
             const mainPage = document.getElementById('mainPage');
@@ -957,6 +962,9 @@
             mainPage.classList.remove('hidden');
             detailPage.style.display = 'none';
             detailPage.classList.remove('active');
+            
+            // Инициализируем LIVE секцию
+            updateLiveCarousel();
         });
 
 
@@ -1628,7 +1636,58 @@
         
         window.goBack = goBack;
 
+        function updateLiveCarousel() {
+            const liveCarousel = document.getElementById('liveCarousel');
+            liveCarousel.innerHTML = '';
+            
+            // Показываем последние 5 подарков
+            const displayPrizes = recentPrizes.slice(-5).reverse();
+            
+            if (displayPrizes.length === 0) {
+                // Если нет подарков, показываем пустую секцию
+                return;
+            }
+            
+            displayPrizes.forEach((prize, index) => {
+                const liveItem = document.createElement('div');
+                liveItem.className = 'live-item';
+                if (index === 0) {
+                    liveItem.classList.add('active');
+                }
+                
+                const iconStr = String(prize.icon || '');
+                if (iconStr.toLowerCase().includes('.png') || iconStr.toLowerCase().includes('.jpg') || iconStr.toLowerCase().includes('.jpeg')) {
+                    const img = document.createElement('img');
+                    img.src = prize.icon;
+                    img.alt = prize.name;
+                    img.onerror = function() {
+                        liveItem.textContent = '?';
+                    };
+                    liveItem.appendChild(img);
+                } else {
+                    liveItem.textContent = prize.icon || '?';
+                }
+                
+                liveCarousel.appendChild(liveItem);
+            });
+        }
+
         function showPrizeModal(prize) {
+            // Добавляем подарок в список последних выигрышей
+            recentPrizes.push({
+                icon: prize.icon,
+                name: prize.name,
+                value: prize.value
+            });
+            
+            // Ограничиваем до последних 20 подарков
+            if (recentPrizes.length > 20) {
+                recentPrizes.shift();
+            }
+            
+            // Обновляем LIVE секцию
+            updateLiveCarousel();
+            
             const modalPrizeIcon = document.getElementById('modalPrizeIcon');
             
             // Проверяем, является ли иконка изображением
