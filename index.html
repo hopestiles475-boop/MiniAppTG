@@ -3194,7 +3194,17 @@
             // Очищаем график и показываем кулдаун
             crashGraphPoints = [];
             
-            // НЕ очищаем список игроков - сохраняем все ставки для отображения
+            // Удаляем только завершенные ставки прошлого раунда (старше 30 секунд)
+            const now = Date.now();
+            crashPlayers = crashPlayers.filter(player => {
+                // Оставляем активные ставки (не завершенные)
+                if (!player.cashedOut) {
+                    return true;
+                }
+                // Оставляем завершенные ставки, которые недавно завершились (меньше 30 секунд назад)
+                const timeSinceCashout = now - (player.cashOutTime || player.timestamp || 0);
+                return timeSinceCashout < 30000; // Показываем завершенные ставки 30 секунд
+            });
             
             let remaining = seconds;
             
@@ -3388,6 +3398,7 @@
                     player.cashedOut = true;
                     player.winnings = 0;
                     player.cashOutMultiplier = 0;
+                    player.cashOutTime = Date.now(); // Запоминаем время краша
                     lostCount++;
                     
                     // Если это ставка текущего пользователя, сбрасываем состояние
@@ -3486,6 +3497,7 @@
             player.cashedOut = true;
             player.winnings = winnings;
             player.cashOutMultiplier = crashMultiplier;
+            player.cashOutTime = Date.now(); // Запоминаем время вывода
             
             // Обновляем информацию на сервере
             saveCrashBetToServer(player);
