@@ -3350,6 +3350,13 @@
                     multiplierElement.style.color = crashDirection === 1 ? '#00ff00' : '#ff0000';
                 }
                 
+                // Обновляем кнопку "Забрать" если есть активная ставка
+                const makeBetBtn = document.getElementById('makeBetBtn');
+                if (makeBetBtn && userBet && crashRoundActive && crashDirection === 1 && !userBet.cashedOut) {
+                    makeBetBtn.textContent = 'Забрать';
+                    makeBetBtn.disabled = false;
+                }
+                
                 // Проверяем выигрыши только если раунд активен
                 if (crashRoundActive) {
                     checkCrashWins();
@@ -3577,8 +3584,8 @@
         const makeBetBtn = document.getElementById('makeBetBtn');
         if (makeBetBtn) {
             makeBetBtn.addEventListener('click', () => {
-                // Если есть активная ставка и раунд идет, можно забрать
-                if (userBet && crashRoundActive && !userBet.cashedOut) {
+                // Если есть активная ставка и раунд идет (график растет), можно забрать
+                if (userBet && crashRoundActive && crashDirection === 1 && !userBet.cashedOut) {
                     cashOutPlayer(userBet.id);
                     return;
                 }
