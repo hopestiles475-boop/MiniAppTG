@@ -950,11 +950,7 @@
             detailPage.classList.remove('active');
         });
 
-        // ==========================================
-        // КОНФИГУРАЦИЯ КЕЙСОВ
-        // Здесь вы можете легко добавлять и редактировать кейсы и предметы
-        // ==========================================
-        
+
         // КОНФИГУРАЦИЯ КЕЙСА #1
         const case1Config = {
             // Иконка кейса (путь к изображению)
@@ -1128,10 +1124,31 @@
                             // Обновляем выбранный элемент и ВСЕГДА делаем все видимыми
                             giftItems.forEach((item, index) => {
                                 // ВАЖНО: Принудительно делаем все элементы видимыми на каждом кадре
-                                item.style.opacity = '1';
-                                item.style.visibility = 'visible';
-                                item.style.display = 'flex';
-                                item.style.transition = 'none';
+                                item.style.cssText += `
+                                    opacity: 1 !important;
+                                    visibility: visible !important;
+                                    display: flex !important;
+                                    transition: none !important;
+                                `;
+                                
+                                // Убеждаемся, что изображения внутри тоже видимы
+                                const images = item.querySelectorAll('img');
+                                images.forEach(img => {
+                                    img.style.cssText += `
+                                        opacity: 1 !important;
+                                        visibility: visible !important;
+                                        display: block !important;
+                                    `;
+                                });
+                                
+                                // Убеждаемся, что текст тоже видим
+                                const textElements = item.querySelectorAll('.gift-name');
+                                textElements.forEach(text => {
+                                    text.style.cssText += `
+                                        opacity: 1 !important;
+                                        visibility: visible !important;
+                                    `;
+                                });
                                 
                                 const itemCenter = index * itemWidth + itemWidth / 2;
                                 const itemPos = itemCenter + currentPosition;
@@ -1214,9 +1231,27 @@
                     const img = document.createElement('img');
                     img.src = prize.icon;
                     img.alt = prize.name;
-                    img.style.width = '80px';
-                    img.style.height = '80px';
-                    img.style.objectFit = 'contain';
+                    
+                    // Жестко устанавливаем стили для изображения - всегда видимое
+                    img.style.cssText = `
+                        width: 80px !important;
+                        height: 80px !important;
+                        object-fit: contain !important;
+                        display: block !important;
+                        visibility: visible !important;
+                        opacity: 1 !important;
+                        pointer-events: auto !important;
+                        transition: none !important;
+                        position: relative !important;
+                    `;
+                    
+                    img.onload = function() {
+                        this.style.opacity = '1';
+                        this.style.visibility = 'visible';
+                        this.style.display = 'block';
+                        console.log('Gift image loaded:', this.src);
+                    };
+                    
                     img.onerror = function() {
                         console.error('Failed to load gift image:', this.src);
                         this.style.display = 'none';
@@ -1225,6 +1260,10 @@
                     const nameDiv = document.createElement('div');
                     nameDiv.className = 'gift-name';
                     nameDiv.textContent = prize.name;
+                    nameDiv.style.cssText = `
+                        opacity: 1 !important;
+                        visibility: visible !important;
+                    `;
                     
                     giftItem.appendChild(img);
                     giftItem.appendChild(nameDiv);
@@ -1249,6 +1288,10 @@
                     transition: none !important;
                     position: relative !important;
                     z-index: 2 !important;
+                    width: 150px !important;
+                    min-width: 150px !important;
+                    max-width: 150px !important;
+                    height: 150px !important;
                 `;
                 
                 rouletteTrack.appendChild(giftItem);
@@ -1333,36 +1376,69 @@
                 prizeItem.className = 'prize-item';
                 
                 // Проверяем, является ли иконка изображением
-                let iconHtml = '';
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'prize-icon';
+                
                 const iconStr = String(prize.icon || '');
                 if (iconStr.toLowerCase().includes('.png') || iconStr.toLowerCase().includes('.jpg') || iconStr.toLowerCase().includes('.jpeg')) {
                     const img = document.createElement('img');
-                    img.src = prize.icon;
-                    img.alt = prize.name;
-                    img.style.width = '60px';
-                    img.style.height = '60px';
-                    img.style.objectFit = 'contain';
-                    img.onerror = function() {
-                        console.error('Failed to load prize image:', this.src);
-                        this.style.display = 'none';
-                        const parent = this.parentElement;
-                        if (parent) {
-                            parent.textContent = prize.name || '?';
-                        }
+                    
+                    // Пробуем разные варианты пути
+                    const tryLoadImage = (src) => {
+                        img.src = src;
+                        img.alt = prize.name || 'Prize';
+                        img.style.width = '60px';
+                        img.style.height = '60px';
+                        img.style.objectFit = 'contain';
+                        img.style.display = 'block';
+                        
+                        img.onload = function() {
+                            console.log('Prize image loaded:', this.src);
+                        };
+                        
+                        img.onerror = function() {
+                            console.error('Failed to load prize image:', this.src);
+                            // Пробуем декодировать путь
+                            try {
+                                const decodedPath = decodeURIComponent(src);
+                                if (decodedPath !== src) {
+                                    this.src = decodedPath;
+                                    return;
+                                }
+                            } catch(e) {}
+                            
+                            // Пробуем закодировать путь
+                            try {
+                                const encodedPath = encodeURI(src);
+                                if (encodedPath !== src) {
+                                    this.src = encodedPath;
+                                    return;
+                                }
+                            } catch(e) {}
+                            
+                            // Если ничего не помогло, показываем название
+                            this.style.display = 'none';
+                            const textNode = document.createTextNode(prize.name || '?');
+                            if (this.parentElement) {
+                                this.parentElement.appendChild(textNode);
+                            }
+                        };
+                        
+                        iconDiv.appendChild(img);
                     };
                     
-                    const iconDiv = document.createElement('div');
-                    iconDiv.className = 'prize-icon';
-                    iconDiv.appendChild(img);
-                    iconHtml = iconDiv.outerHTML;
+                    tryLoadImage(prize.icon);
                 } else {
-                    iconHtml = `<div class="prize-icon">${prize.icon || '?'}</div>`;
+                    iconDiv.textContent = prize.icon || '?';
                 }
                 
-                prizeItem.innerHTML = `
-                    ${iconHtml}
-                    <div class="prize-value">💎 ${prize.value.toFixed(2)}</div>
-                `;
+                prizeItem.appendChild(iconDiv);
+                
+                const valueDiv = document.createElement('div');
+                valueDiv.className = 'prize-value';
+                valueDiv.textContent = `💎 ${prize.value.toFixed(2)}`;
+                prizeItem.appendChild(valueDiv);
+                
                 prizeItem.dataset.icon = prize.icon;
                 prizeItem.dataset.name = prize.name;
                 prizeItem.dataset.value = prize.value;
