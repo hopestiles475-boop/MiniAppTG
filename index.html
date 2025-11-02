@@ -751,6 +751,135 @@
             width: auto !important;
         }
 
+        .inventory-modal-content {
+            max-width: 400px;
+            width: 90%;
+            padding: 30px;
+            position: relative;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .modal-close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+        }
+
+        .modal-close-btn:active {
+            transform: scale(0.9);
+        }
+
+        .inventory-modal-icon {
+            width: 150px;
+            height: 150px;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 20px;
+            background: rgba(102, 126, 234, 0.1);
+            padding: 20px;
+        }
+
+        .inventory-modal-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .inventory-modal-name {
+            font-size: 28px;
+            font-weight: 700;
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .inventory-modal-price {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 30px;
+        }
+
+        .price-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+        }
+
+        .price-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .price-value .currency-icon {
+            width: 28px;
+            height: 28px;
+        }
+
+        .inventory-modal-buttons {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .inventory-modal-btn {
+            flex: 1;
+            padding: 16px 24px;
+            border-radius: 16px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .inventory-modal-btn.sell-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .inventory-modal-btn.sell-btn:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .inventory-modal-btn.close-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .inventory-modal-btn.close-btn:active {
+            transform: scale(0.98);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
         @keyframes scaleIn {
             from { transform: scale(0.8); opacity: 0; }
             to { transform: scale(1); opacity: 1; }
@@ -932,6 +1061,7 @@
             display: flex;
             gap: 15px;
             margin-bottom: 30px;
+            justify-content: center;
         }
 
         .top-up-btn {
@@ -1151,6 +1281,22 @@
         </div>
     </div>
 
+    <div class="modal" id="inventoryItemModal">
+        <div class="modal-content inventory-modal-content">
+            <button class="modal-close-btn" onclick="closeInventoryModal()">✕</button>
+            <div class="inventory-modal-icon" id="inventoryModalIcon"></div>
+            <div class="inventory-modal-name" id="inventoryModalName">Предмет</div>
+            <div class="inventory-modal-price">
+                <span class="price-label">Цена:</span>
+                <span class="price-value" id="inventoryModalPrice"><span class="currency-icon"></span> 0.00</span>
+            </div>
+            <div class="inventory-modal-buttons">
+                <button class="inventory-modal-btn sell-btn" id="sellItemBtn">Продать</button>
+                <button class="inventory-modal-btn close-btn" onclick="closeInventoryModal()">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
     <div class="profile-page" id="profilePage" style="display: none;">
         <div class="profile-header">
             <div class="profile-avatar" id="profileAvatar">
@@ -1161,10 +1307,6 @@
 
         <div class="top-up-buttons">
             <button class="top-up-btn primary">
-                <span class="btn-icon">🎁</span>
-                <span>Пополнить</span>
-            </button>
-            <button class="top-up-btn secondary">
                 <span class="btn-icon"><span class="currency-icon" style="width: 18px; height: 18px; display: inline-block;"></span></span>
                 <span>Пополнить</span>
             </button>
@@ -2308,12 +2450,7 @@
                 slot.appendChild(valueBadge);
                 
                 slot.addEventListener('click', () => {
-                    if (tg) {
-                        tg.showAlert(`${item.name}\nЦена: ${formatPrice(item.value)}`);
-                        tg.HapticFeedback.impactOccurred('light');
-                    } else {
-                        alert(`${item.name}\nЦена: ${item.value.toFixed(2)}`);
-                    }
+                    showInventoryItemModal(item);
                 });
                 
                 inventoryGrid.appendChild(slot);
@@ -2435,6 +2572,104 @@
         const sellAllBtn = document.getElementById('sellAllBtn');
         if (sellAllBtn) {
             sellAllBtn.addEventListener('click', sellAllItems);
+        }
+        
+        // Текущий выбранный предмет из инвентаря
+        let selectedInventoryItem = null;
+        
+        // Показ модального окна предмета из инвентаря
+        function showInventoryItemModal(item) {
+            selectedInventoryItem = item;
+            const modal = document.getElementById('inventoryItemModal');
+            const modalIcon = document.getElementById('inventoryModalIcon');
+            const modalName = document.getElementById('inventoryModalName');
+            const modalPrice = document.getElementById('inventoryModalPrice');
+            
+            if (!modal || !modalIcon || !modalName || !modalPrice) return;
+            
+            // Устанавливаем название
+            modalName.textContent = item.name;
+            
+            // Устанавливаем цену
+            modalPrice.innerHTML = formatPrice(item.value);
+            
+            // Устанавливаем иконку
+            modalIcon.innerHTML = '';
+            const iconStr = String(item.icon || '');
+            if (iconStr.toLowerCase().includes('.png') || iconStr.toLowerCase().includes('.jpg') || iconStr.toLowerCase().includes('.jpeg')) {
+                const img = document.createElement('img');
+                img.src = item.icon;
+                img.alt = item.name;
+                img.onerror = function() {
+                    modalIcon.innerHTML = '<span style="font-size: 80px;">🎁</span>';
+                };
+                modalIcon.appendChild(img);
+            } else {
+                modalIcon.innerHTML = `<span style="font-size: 80px;">${item.icon || '🎁'}</span>`;
+            }
+            
+            // Показываем модальное окно
+            modal.classList.add('active');
+            
+            if (tg) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
+        }
+        
+        // Закрытие модального окна предмета из инвентаря
+        function closeInventoryModal() {
+            const modal = document.getElementById('inventoryItemModal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+            selectedInventoryItem = null;
+            
+            if (tg) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
+        }
+        
+        window.closeInventoryModal = closeInventoryModal;
+        
+        // Продажа выбранного предмета
+        function sellSelectedItem() {
+            if (!selectedInventoryItem) return;
+            
+            const item = selectedInventoryItem;
+            
+            if (tg) {
+                tg.showConfirm(`Продать "${item.name}" за 💎 ${item.value.toFixed(2)}?`, (confirmed) => {
+                    if (confirmed) {
+                        balance += item.value;
+                        document.getElementById('balance').textContent = balance.toFixed(2);
+                        
+                        // Удаляем предмет из инвентаря
+                        userInventory = userInventory.filter(invItem => invItem.id !== item.id);
+                        saveInventory();
+                        updateInventory();
+                        closeInventoryModal();
+                        
+                        tg.HapticFeedback.notificationOccurred('success');
+                    }
+                });
+            } else {
+                if (confirm(`Продать "${item.name}" за ${item.value.toFixed(2)}?`)) {
+                    balance += item.value;
+                    document.getElementById('balance').textContent = balance.toFixed(2);
+                    
+                    // Удаляем предмет из инвентаря
+                    userInventory = userInventory.filter(invItem => invItem.id !== item.id);
+                    saveInventory();
+                    updateInventory();
+                    closeInventoryModal();
+                }
+            }
+        }
+        
+        // Обработчик кнопки "Продать" в модальном окне
+        const sellItemBtn = document.getElementById('sellItemBtn');
+        if (sellItemBtn) {
+            sellItemBtn.addEventListener('click', sellSelectedItem);
         }
     </script>
 </body>
