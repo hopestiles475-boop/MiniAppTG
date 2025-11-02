@@ -890,6 +890,183 @@
             font-size: 12px;
             font-weight: 500;
         }
+
+        .profile-page {
+            padding: 20px;
+            padding-bottom: 120px;
+            min-height: 100vh;
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 30px;
+            margin-top: 20px;
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-username {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .top-up-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .top-up-btn {
+            flex: 1;
+            padding: 16px 20px;
+            border-radius: 16px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .top-up-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .top-up-btn.secondary {
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .top-up-btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-icon {
+            font-size: 20px;
+        }
+
+        .inventory-section {
+            margin-top: 30px;
+        }
+
+        .inventory-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .inventory-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .sell-all-btn {
+            background: rgba(102, 126, 234, 0.3);
+            border: 1px solid rgba(102, 126, 234, 0.5);
+            color: #667eea;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .sell-all-btn:active {
+            transform: scale(0.98);
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .inventory-slot {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .inventory-slot:active {
+            transform: scale(0.95);
+        }
+
+        .inventory-slot.has-item {
+            border-color: rgba(102, 126, 234, 0.5);
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .inventory-slot img {
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+        }
+
+        .inventory-slot .empty-icon {
+            font-size: 40px;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .inventory-slot .next-icon {
+            font-size: 30px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .inventory-slot .item-value {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            right: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 4px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 600;
+            color: #00d4ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        .inventory-slot .item-value .currency-icon {
+            width: 10px;
+            height: 10px;
+        }
     </style>
 </head>
 <body>
@@ -974,6 +1151,35 @@
         </div>
     </div>
 
+    <div class="profile-page" id="profilePage" style="display: none;">
+        <div class="profile-header">
+            <div class="profile-avatar" id="profileAvatar">
+                <img id="profileAvatarImg" src="" alt="Avatar" onerror="this.style.display='none'; this.parentElement.innerHTML='👤';">
+            </div>
+            <div class="profile-username" id="profileUsername">User</div>
+        </div>
+
+        <div class="top-up-buttons">
+            <button class="top-up-btn primary">
+                <span class="btn-icon">🎁</span>
+                <span>Пополнить</span>
+            </button>
+            <button class="top-up-btn secondary">
+                <span class="btn-icon"><span class="currency-icon" style="width: 18px; height: 18px; display: inline-block;"></span></span>
+                <span>Пополнить</span>
+            </button>
+        </div>
+
+        <div class="inventory-section">
+            <div class="inventory-header">
+                <span class="inventory-title">Инвентарь (<span id="inventoryCount">0</span>)</span>
+                <button class="sell-all-btn" id="sellAllBtn">Продать все</button>
+            </div>
+            <div class="inventory-grid" id="inventoryGrid">
+            </div>
+        </div>
+    </div>
+
     <div class="bottom-nav">
         <div class="nav-item active" data-page="cases">
             <div class="nav-icon">🎁</div>
@@ -1012,6 +1218,47 @@
         
         // Глобальный список выигрышей всех пользователей
         let globalPrizes = [];
+        
+        // Инвентарь пользователя (выигранные подарки)
+        let userInventory = [];
+        
+        // Загрузка инвентаря из localStorage
+        function loadInventory() {
+            try {
+                const stored = localStorage.getItem('userInventory');
+                if (stored) {
+                    userInventory = JSON.parse(stored);
+                } else {
+                    userInventory = [];
+                }
+                updateInventory();
+            } catch (e) {
+                console.error('Failed to load inventory:', e);
+                userInventory = [];
+            }
+        }
+        
+        // Сохранение инвентаря в localStorage
+        function saveInventory() {
+            try {
+                localStorage.setItem('userInventory', JSON.stringify(userInventory));
+            } catch (e) {
+                console.error('Failed to save inventory:', e);
+            }
+        }
+        
+        // Добавление подарка в инвентарь
+        function addToInventory(prize) {
+            userInventory.push({
+                icon: prize.icon,
+                name: prize.name,
+                value: prize.value,
+                timestamp: Date.now(),
+                id: Date.now() + Math.random()
+            });
+            saveInventory();
+            updateInventory();
+        }
         
         // Функция для форматирования цены с иконкой валюты
         function formatPrice(value) {
@@ -1137,6 +1384,12 @@
             // Загружаем подарки с сервера или из localStorage
             fetchGlobalPrizes();
             
+            // Загружаем инвентарь пользователя
+            loadInventory();
+            
+            // Обновляем информацию профиля
+            updateProfileInfo();
+            
             // Обновляем список подарков каждые 3 секунды
             setInterval(() => {
                 fetchGlobalPrizes();
@@ -1146,6 +1399,9 @@
             window.addEventListener('storage', (e) => {
                 if (e.key === 'globalPrizes') {
                     loadPrizesFromLocalStorage();
+                }
+                if (e.key === 'userInventory') {
+                    loadInventory();
                 }
             });
         });
@@ -1856,6 +2112,9 @@
         }
 
         async function showPrizeModal(prize) {
+            // Добавляем подарок в инвентарь пользователя
+            addToInventory(prize);
+            
             // Отправляем выигрыш на сервер (или добавляем локально при ошибке)
             const sent = await sendPrizeToServer(prize);
             
@@ -1990,19 +2249,182 @@
             }
         });
 
+        // Обновление информации профиля
+        function updateProfileInfo() {
+            const user = tg?.initDataUnsafe?.user;
+            const profileUsername = document.getElementById('profileUsername');
+            const profileAvatar = document.getElementById('profileAvatarImg');
+            
+            if (user) {
+                if (profileUsername) {
+                    profileUsername.textContent = user.first_name || user.username || 'User';
+                }
+                if (profileAvatar && user.photo_url) {
+                    profileAvatar.src = user.photo_url;
+                }
+            }
+        }
+        
+        // Обновление отображения инвентаря
+        function updateInventory() {
+            const inventoryGrid = document.getElementById('inventoryGrid');
+            const inventoryCount = document.getElementById('inventoryCount');
+            
+            if (!inventoryGrid) return;
+            
+            inventoryGrid.innerHTML = '';
+            
+            if (inventoryCount) {
+                inventoryCount.textContent = userInventory.length;
+            }
+            
+            // Показываем максимум 9 предметов (3x3), + слот для перелистывания
+            const itemsToShow = userInventory.slice(0, 8);
+            
+            itemsToShow.forEach(item => {
+                const slot = document.createElement('div');
+                slot.className = 'inventory-slot has-item';
+                
+                const iconStr = String(item.icon || '');
+                if (iconStr.toLowerCase().includes('.png') || iconStr.toLowerCase().includes('.jpg') || iconStr.toLowerCase().includes('.jpeg')) {
+                    const img = document.createElement('img');
+                    img.src = item.icon;
+                    img.alt = item.name;
+                    img.onerror = function() {
+                        slot.innerHTML = '<span class="empty-icon">🎁</span>';
+                    };
+                    slot.appendChild(img);
+                } else {
+                    slot.innerHTML = `<span class="empty-icon">${item.icon || '🎁'}</span>`;
+                }
+                
+                const valueBadge = document.createElement('div');
+                valueBadge.className = 'item-value';
+                valueBadge.innerHTML = formatPrice(item.value);
+                slot.appendChild(valueBadge);
+                
+                slot.addEventListener('click', () => {
+                    if (tg) {
+                        tg.showAlert(`${item.name}\nЦена: ${formatPrice(item.value)}`);
+                        tg.HapticFeedback.impactOccurred('light');
+                    } else {
+                        alert(`${item.name}\nЦена: ${item.value.toFixed(2)}`);
+                    }
+                });
+                
+                inventoryGrid.appendChild(slot);
+            });
+            
+            // Добавляем пустые слоты или слот для следующей страницы
+            const remaining = userInventory.length - itemsToShow.length;
+            const slotsNeeded = 9 - itemsToShow.length;
+            
+            for (let i = 0; i < slotsNeeded; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'inventory-slot';
+                
+                if (i === slotsNeeded - 1 && remaining > 0) {
+                    slot.innerHTML = '<span class="next-icon">→</span>';
+                    slot.addEventListener('click', () => {
+                        if (tg) {
+                            tg.showAlert('Следующая страница в разработке');
+                        }
+                    });
+                } else {
+                    slot.innerHTML = '<span class="empty-icon">🎁</span>';
+                }
+                
+                inventoryGrid.appendChild(slot);
+            }
+        }
+        
+        // Продажа всех предметов
+        function sellAllItems() {
+            if (userInventory.length === 0) {
+                if (tg) {
+                    tg.showAlert('Инвентарь пуст');
+                } else {
+                    alert('Инвентарь пуст');
+                }
+                return;
+            }
+            
+            const totalValue = userInventory.reduce((sum, item) => sum + item.value, 0);
+            
+            if (tg) {
+                tg.showConfirm(`Продать все предметы за ${formatPrice(totalValue)}?`, (confirmed) => {
+                    if (confirmed) {
+                        balance += totalValue;
+                        document.getElementById('balance').textContent = balance.toFixed(2);
+                        userInventory = [];
+                        saveInventory();
+                        updateInventory();
+                        tg.HapticFeedback.notificationOccurred('success');
+                    }
+                });
+            } else {
+                if (confirm(`Продать все предметы за ${totalValue.toFixed(2)}?`)) {
+                    balance += totalValue;
+                    document.getElementById('balance').textContent = balance.toFixed(2);
+                    userInventory = [];
+                    saveInventory();
+                    updateInventory();
+                }
+            }
+        }
+
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', () => {
                 const page = item.dataset.page;
                 document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
                 
-                if (page === 'crash' || page === 'profile') {
+                const mainPage = document.getElementById('mainPage');
+                const caseDetailPage = document.getElementById('caseDetailPage');
+                const profilePage = document.getElementById('profilePage');
+                
+                if (page === 'cases') {
+                    mainPage.style.display = 'block';
+                    mainPage.classList.remove('hidden');
+                    caseDetailPage.style.display = 'none';
+                    caseDetailPage.classList.remove('active');
+                    profilePage.style.display = 'none';
+                } else if (page === 'profile') {
+                    mainPage.style.display = 'none';
+                    mainPage.classList.add('hidden');
+                    caseDetailPage.style.display = 'none';
+                    caseDetailPage.classList.remove('active');
+                    profilePage.style.display = 'block';
+                    updateInventory();
+                    updateProfileInfo();
                     if (tg) {
-                        tg.showAlert(`Страница ${page === 'crash' ? 'Краш' : 'Профиль'} в разработке`);
+                        tg.HapticFeedback.impactOccurred('light');
+                    }
+                } else if (page === 'crash') {
+                    if (tg) {
+                        tg.showAlert('Страница Краш в разработке');
                     }
                 }
             });
         });
+        
+        // Обработчики кнопок пополнения
+        document.querySelectorAll('.top-up-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (tg) {
+                    tg.showAlert('Пополнение баланса');
+                    tg.HapticFeedback.impactOccurred('medium');
+                } else {
+                    alert('Пополнение баланса');
+                }
+            });
+        });
+        
+        // Обработчик кнопки "Продать все"
+        const sellAllBtn = document.getElementById('sellAllBtn');
+        if (sellAllBtn) {
+            sellAllBtn.addEventListener('click', sellAllItems);
+        }
     </script>
 </body>
 </html>
