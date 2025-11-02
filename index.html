@@ -430,6 +430,13 @@
             pointer-events: auto !important;
         }
 
+        .gift-item img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            display: block;
+        }
+
         .gift-item.selected {
             border-color: #00ff00;
             background: rgba(0, 255, 0, 0.2);
@@ -504,8 +511,18 @@
         }
 
         .prize-icon {
-            font-size: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
             margin-bottom: 10px;
+        }
+
+        .prize-icon img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            display: block;
         }
 
         .prize-value {
@@ -673,6 +690,19 @@
         }
 
         .modal-prize-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-prize-icon img {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .modal-prize-icon-old {
             font-size: 100px;
             margin: 20px 0;
             animation: bounce 0.6s;
@@ -922,15 +952,15 @@
 
         const cases = {
             1: { icon: 'IconCase/2c0JGQXrElCDlaNGbYHwgipHo2-yq00qIxcU39IganVzrqDys2-no-bg-preview%20%28carve.photos%29.png', price: 0.1, prizes: [
-                { icon: '🏆', name: 'Оскар', value: 82.17 },
-                { icon: '✨', name: 'Парфюм', value: 75.66 },
-                { icon: '💀', name: 'Зелье', value: 69.30 },
-                { icon: '🐱', name: 'Шлем', value: 25.27 },
-                { icon: '🚬', name: 'Сигара', value: 23.50 },
-                { icon: '💍', name: 'Кольцо', value: 17.00 },
-                { icon: '🦋', name: 'Бабочка', value: 11.40 },
-                { icon: '🧪', name: 'Зелье', value: 8.64 },
-                { icon: '🌺', name: 'Цветок', value: 7.90 }
+                { icon: 'ItemCase1/_Jne2Jf3nM6erEUU5TEnvU7PWFOiElGs2WJc0zQ250JHxRd6md_v1huDDCpZRSesDCZP53pWDPEnqfojbzsYqjbD.png', name: 'Оскар', value: 82.17 },
+                { icon: 'ItemCase1/4dOUEOHs9WSNk5pRBkEnCptGIs16lB5xe4E7mh3sWF6XAkHcwQvINscw7cXwhK5IUXv5eOdct9_vxDZtoaMTm8GJ.png', name: 'Парфюм', value: 75.66 },
+                { icon: 'ItemCase1/GsJZ-oPiqQHoyerbmc-z_L_NTi8cBWgKmS9ueEOwk5_PHeYbWeRwn6Jxic2d1Yhl8IZwt0rBUg5ZfvrkYkYp0UrO.png', name: 'Зелье', value: 69.30 },
+                { icon: 'ItemCase1/qlq8mJd7J1-60XWhd29rLbtjBfzeXSPLMVgzkcBDTNfHL50TBMHG2B0h2jB1bAd-rJWlHO1NtkI0zAsWF4BgcVHn.png', name: 'Шлем', value: 25.27 },
+                { icon: 'ItemCase1/QrKwYOzBzIX1ilzkfuCuiFdyCRU9jBm5pASbp_z2Sb6ATFNaaB1Zr1XfNGehXeHTYhldZNO8x4_l0ueW2t4MZ62W.png', name: 'Сигара', value: 23.50 },
+                { icon: 'ItemCase1/R1v8ymGGn2ZBo6cI96QvcWu5Yh2FsyiAmDW_WTGMfz7CMvELAOFCf7I7Ns2XGdKv1AxHTvrioJ6h-ALjrzjxb7Ra.png', name: 'Кольцо', value: 17.00 },
+                { icon: 'ItemCase1/XQTRb7Jx7OBjYfqnitHsZGV9pmln2Nhr9n5oYkJvZsF_dtkAYxPHS8Npi_qa6Pxcx0o368YwkcY9uRHmabTE5-LS.png', name: 'Бабочка', value: 11.40 },
+                { icon: 'ItemCase1/Y6HIRzDSCdUNCqWtHRsCpePjILr5QyrOnOD0T9PtrYjgu3Ff3XVbLGxLT1snsWyNNMzfDvTlhms0y1_Wwev6tz9-.png', name: 'Зелье', value: 8.64 },
+                { icon: 'ItemCase1/YLHOesDBQxjSVcanvj-iKz2mgFXRfweB38vb951G5LvwfJ8ytmlfe3PFUk3k_AgekpyW9A3uIpzEjM87k6_aUVS1.png', name: 'Цветок', value: 7.90 }
             ]}
         };
 
@@ -1100,7 +1130,25 @@
                                     
                                     setTimeout(() => {
                                         showPrizeModal(randomPrize);
-                                        detailIcon.style.display = 'block';
+                                        
+                                        // Восстанавливаем иконку кейса
+                                        if (currentCase && (currentCase.icon.includes('.png') || currentCase.icon.includes('.jpg') || currentCase.icon.includes('.jpeg'))) {
+                                            const img = document.createElement('img');
+                                            img.src = currentCase.icon;
+                                            img.alt = 'Case';
+                                            img.style.width = '100%';
+                                            img.style.maxWidth = '300px';
+                                            img.style.height = 'auto';
+                                            img.style.objectFit = 'contain';
+                                            img.style.display = 'block';
+                                            img.onerror = function() {
+                                                detailIcon.textContent = '🔐';
+                                            };
+                                            detailIcon.innerHTML = '';
+                                            detailIcon.appendChild(img);
+                                        }
+                                        detailIcon.style.display = 'flex';
+                                        
                                         rouletteContainer.classList.remove('active');
                                         isOpening = false;
                                         
@@ -1134,10 +1182,20 @@
             extendedPrizes.forEach((prize, index) => {
                 const giftItem = document.createElement('div');
                 giftItem.className = 'gift-item';
-                giftItem.innerHTML = `
-                    ${prize.icon}
-                    <div class="gift-name">${prize.name}</div>
-                `;
+                
+                // Проверяем, является ли иконка изображением
+                if (prize.icon.includes('.png') || prize.icon.includes('.jpg') || prize.icon.includes('.jpeg')) {
+                    giftItem.innerHTML = `
+                        <img src="${prize.icon}" alt="${prize.name}" style="width: 80px; height: 80px; object-fit: contain;">
+                        <div class="gift-name">${prize.name}</div>
+                    `;
+                } else {
+                    giftItem.innerHTML = `
+                        ${prize.icon}
+                        <div class="gift-name">${prize.name}</div>
+                    `;
+                }
+                
                 giftItem.dataset.icon = prize.icon;
                 giftItem.dataset.name = prize.name;
                 giftItem.dataset.value = prize.value;
@@ -1234,8 +1292,17 @@
             currentPrizes.forEach(prize => {
                 const prizeItem = document.createElement('div');
                 prizeItem.className = 'prize-item';
+                
+                // Проверяем, является ли иконка изображением
+                let iconHtml = '';
+                if (prize.icon.includes('.png') || prize.icon.includes('.jpg') || prize.icon.includes('.jpeg')) {
+                    iconHtml = `<div class="prize-icon"><img src="${prize.icon}" alt="${prize.name}" style="width: 60px; height: 60px; object-fit: contain;"></div>`;
+                } else {
+                    iconHtml = `<div class="prize-icon">${prize.icon}</div>`;
+                }
+                
                 prizeItem.innerHTML = `
-                    <div class="prize-icon">${prize.icon}</div>
+                    ${iconHtml}
                     <div class="prize-value">💎 ${prize.value.toFixed(2)}</div>
                 `;
                 prizeItem.dataset.icon = prize.icon;
@@ -1312,7 +1379,15 @@
         window.goBack = goBack;
 
         function showPrizeModal(prize) {
-            document.getElementById('modalPrizeIcon').textContent = prize.icon;
+            const modalPrizeIcon = document.getElementById('modalPrizeIcon');
+            
+            // Проверяем, является ли иконка изображением
+            if (prize.icon.includes('.png') || prize.icon.includes('.jpg') || prize.icon.includes('.jpeg')) {
+                modalPrizeIcon.innerHTML = `<img src="${prize.icon}" alt="${prize.name}" style="width: 120px; height: 120px; object-fit: contain;">`;
+            } else {
+                modalPrizeIcon.textContent = prize.icon;
+            }
+            
             document.getElementById('modalPrizeName').textContent = prize.name;
             document.getElementById('modalPrizeValue').textContent = `💎 ${prize.value.toFixed(2)}`;
             document.getElementById('prizeModal').classList.add('active');
