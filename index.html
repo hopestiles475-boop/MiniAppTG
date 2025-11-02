@@ -795,7 +795,7 @@
     <div id="mainPage">
         <button class="subscribe-btn">
             <div class="subscribe-inner">
-                <div class="subscribe-icon">🐸</div>
+                <div class="subscribe-icon"></div>
                 <span>Подпишись на нас</span>
             </div>
             <div class="subscribe-action">Подписаться</div>
@@ -1067,15 +1067,23 @@
                         const giftItems = rouletteTrack.querySelectorAll('.gift-item');
                         const itemWidth = 150 + 20;
                         
-                        let targetIndex = -1;
+                        // Находим все индексы с нужным подарком
+                        const matchingIndices = [];
                         for (let i = 0; i < giftItems.length; i++) {
                             if (giftItems[i].dataset.icon === randomPrize.icon) {
-                                targetIndex = i;
-                                break;
+                                matchingIndices.push(i);
                             }
                         }
                         
-                        if (targetIndex === -1) {
+                        // Выбираем подарок из середины массива для более плавной прокрутки
+                        let targetIndex = -1;
+                        if (matchingIndices.length > 0) {
+                            // Выбираем индекс ближе к середине массива
+                            const midPoint = Math.floor(giftItems.length / 2);
+                            targetIndex = matchingIndices.reduce((prev, curr) => {
+                                return Math.abs(curr - midPoint) < Math.abs(prev - midPoint) ? curr : prev;
+                            });
+                        } else {
                             targetIndex = Math.floor(giftItems.length / 2);
                         }
                         
@@ -1147,7 +1155,13 @@
             const rouletteTrack = document.getElementById('rouletteTrack');
             rouletteTrack.innerHTML = '';
             
-            const extendedPrizes = [...currentPrizes, ...currentPrizes, ...currentPrizes, ...currentPrizes, ...currentPrizes, ...currentPrizes];
+            // Создаем множество повторений для бесконечного эффекта прокрутки
+            // Повторяем подарки много раз в той же последовательности
+            const repeatCount = 30; // Увеличиваем количество повторений для плавной прокрутки
+            const extendedPrizes = [];
+            for (let i = 0; i < repeatCount; i++) {
+                extendedPrizes.push(...currentPrizes);
+            }
             
             extendedPrizes.forEach((prize, index) => {
                 const giftItem = document.createElement('div');
