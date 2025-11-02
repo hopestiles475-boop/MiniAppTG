@@ -424,6 +424,8 @@
             visibility: visible !important;
             opacity: 1 !important;
             z-index: 2;
+            transition: none !important;
+            pointer-events: auto !important;
         }
 
         .gift-item.selected {
@@ -1122,8 +1124,13 @@
                             
                             rouletteTrack.style.transform = `translateX(${currentPosition}px)`;
                             
-                            // Обновляем выбранный элемент
+                            // Обновляем выбранный элемент и ВСЕГДА делаем все видимыми
                             giftItems.forEach((item, index) => {
+                                // ВАЖНО: Принудительно делаем все элементы видимыми
+                                item.style.opacity = '1';
+                                item.style.visibility = 'visible';
+                                item.style.display = 'flex';
+                                
                                 const itemCenter = index * itemWidth + itemWidth / 2;
                                 const distance = Math.abs(itemCenter + currentPosition - centerX);
                                 
@@ -1190,21 +1197,28 @@
                 giftItem.dataset.icon = prize.icon;
                 giftItem.dataset.name = prize.name;
                 giftItem.dataset.value = prize.value;
-                giftItem.style.flexShrink = '0';
-                giftItem.style.visibility = 'visible';
-                giftItem.style.opacity = '1';
-                giftItem.style.display = 'flex';
-                giftItem.style.pointerEvents = 'auto';
-                giftItem.style.transition = 'none';
-                giftItem.style.position = 'relative';
-                giftItem.style.zIndex = '2';
+                
+                // Жестко устанавливаем стили для видимости
+                giftItem.style.cssText = `
+                    flex-shrink: 0 !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                    display: flex !important;
+                    pointer-events: auto !important;
+                    transition: none !important;
+                    position: relative !important;
+                    z-index: 2 !important;
+                `;
+                
                 rouletteTrack.appendChild(giftItem);
             });
             
             // Убеждаемся, что трек видим
-            rouletteTrack.style.display = 'flex';
-            rouletteTrack.style.visibility = 'visible';
-            rouletteTrack.style.opacity = '1';
+            rouletteTrack.style.cssText = `
+                display: flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            `;
         }
 
         function showCaseDetail(caseNum) {
