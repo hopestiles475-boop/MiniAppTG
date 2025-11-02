@@ -1100,7 +1100,8 @@
                         const targetItemCenter = targetIndex * itemWidth + (itemWidth / 2);
                         const targetX = centerX - targetItemCenter;
                         // Количество прокруток для эффекта бесконечной прокрутки
-                        const extraSpins = 15; // 15 полных циклов прокрутки
+                        // Используем меньше прокруток, но с большим количеством элементов
+                        const extraSpins = 10; // 10 полных циклов прокрутки
                         const spinDistance = extraSpins * currentPrizes.length * itemWidth;
                         const startX = 0;
                         const finalX = targetX - spinDistance;
@@ -1122,10 +1123,19 @@
                                 const itemPos = newX + index * itemWidth - trackCenter + (itemWidth / 2);
                                 const distance = Math.abs(itemPos);
                                 
-                                // Убедимся, что все элементы видимы
+                                // Убедимся, что все элементы всегда видимы и непрозрачны
                                 item.style.visibility = 'visible';
                                 item.style.opacity = '1';
                                 item.style.display = 'flex';
+                                item.style.pointerEvents = 'auto';
+                                item.style.transition = 'none';
+                                
+                                // Проверяем, находится ли элемент в видимой области
+                                const isVisible = Math.abs(itemPos) < containerWidth;
+                                if (isVisible) {
+                                    item.style.opacity = '1';
+                                    item.style.visibility = 'visible';
+                                }
                                 
                                 if (distance < itemWidth / 2) {
                                     item.classList.add('selected');
@@ -1171,8 +1181,8 @@
             rouletteTrack.innerHTML = '';
             
             // Создаем множество повторений для бесконечного эффекта прокрутки
-            // Повторяем подарки много раз в той же последовательности
-            const repeatCount = 30; // Увеличиваем количество повторений для плавной прокрутки
+            // Повторяем подарки очень много раз в той же последовательности
+            const repeatCount = 50; // Увеличиваем до 50 повторений
             const extendedPrizes = [];
             for (let i = 0; i < repeatCount; i++) {
                 extendedPrizes.push(...currentPrizes);
@@ -1193,6 +1203,7 @@
                 giftItem.style.opacity = '1';
                 giftItem.style.display = 'flex';
                 giftItem.style.pointerEvents = 'auto';
+                giftItem.style.transition = 'none'; // Убираем transition для мгновенного отображения
                 rouletteTrack.appendChild(giftItem);
             });
         }
