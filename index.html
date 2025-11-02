@@ -404,6 +404,8 @@
             will-change: transform;
             white-space: nowrap;
             width: auto;
+            height: 100%;
+            align-items: center;
         }
 
         .gift-item {
@@ -1078,6 +1080,14 @@
                         const randomPrize = currentPrizes[Math.floor(Math.random() * currentPrizes.length)];
                         const rouletteTrack = document.getElementById('rouletteTrack');
                         const giftItems = rouletteTrack.querySelectorAll('.gift-item');
+                        
+                        // Убеждаемся, что все элементы видны СРАЗУ
+                        giftItems.forEach(item => {
+                            item.style.opacity = '1';
+                            item.style.visibility = 'visible';
+                            item.style.display = 'flex';
+                        });
+                        
                         const itemWidth = 150 + 20;
                         
                         // Находим все подарки с нужным иконом
@@ -1107,11 +1117,19 @@
                         const centerX = containerWidth / 2;
                         
                         // Простая прокрутка: много раз крутим, потом останавливаемся на цели
-                        const spinDuration = 3000;
-                        const spins = 12; // 12 полных прокруток
+                        const spinDuration = 4000; // Увеличиваем до 4 секунд
+                        const spins = 15; // 15 полных прокруток
                         const totalDistance = spins * currentPrizes.length * itemWidth;
                         const targetPosition = targetIndex * itemWidth - centerX + itemWidth / 2;
                         const finalPosition = -totalDistance + targetPosition;
+                        
+                        // Устанавливаем начальную позицию так, чтобы первый подарок был виден в центре
+                        const startPosition = 0;
+                        rouletteTrack.style.transform = `translateX(${startPosition}px)`;
+                        rouletteTrack.style.transition = 'none';
+                        rouletteTrack.style.display = 'flex';
+                        rouletteTrack.style.visibility = 'visible';
+                        rouletteTrack.style.opacity = '1';
                         
                         let startTime = Date.now();
                         const animateRoulette = () => {
@@ -1120,19 +1138,21 @@
                             
                             // Простая функция замедления
                             const ease = 1 - Math.pow(1 - progress, 3);
-                            const currentPosition = finalPosition * ease;
+                            const currentPosition = startPosition + (finalPosition - startPosition) * ease;
                             
                             rouletteTrack.style.transform = `translateX(${currentPosition}px)`;
                             
                             // Обновляем выбранный элемент и ВСЕГДА делаем все видимыми
                             giftItems.forEach((item, index) => {
-                                // ВАЖНО: Принудительно делаем все элементы видимыми
+                                // ВАЖНО: Принудительно делаем все элементы видимыми на каждом кадре
                                 item.style.opacity = '1';
                                 item.style.visibility = 'visible';
                                 item.style.display = 'flex';
+                                item.style.transition = 'none';
                                 
                                 const itemCenter = index * itemWidth + itemWidth / 2;
-                                const distance = Math.abs(itemCenter + currentPosition - centerX);
+                                const itemPos = itemCenter + currentPosition;
+                                const distance = Math.abs(itemPos - centerX);
                                 
                                 if (distance < itemWidth / 2) {
                                     item.classList.add('selected');
@@ -1164,12 +1184,8 @@
                             }
                         };
                         
-                        // Устанавливаем начальную позицию
-                        rouletteTrack.style.transform = 'translateX(0px)';
-                        rouletteTrack.style.transition = 'none';
-                        
                         requestAnimationFrame(animateRoulette);
-                    }, 200);
+                    }, 300);
                 };
                 openCaseFunc();
             }
