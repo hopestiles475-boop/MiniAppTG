@@ -1,0 +1,60 @@
+{
+  "users": [
+    {
+      "userId": 123456789,
+      "username": "user1",
+      "balance": 150.50,
+      "inventory": [
+        {
+          "id": 1703123456789.123,
+          "icon": "ItemCase1/_Jne2Jf3nM6erEUU5TEnvU7PWFOiElGs2WJc0zQ250JHxRd6md_v1huDDCpZRSesDCZP53pWDPEnqfojbzsYqjbD.png",
+          "name": "Лоли поп",
+          "value": 82.17,
+          "timestamp": 1703123456789
+        },
+        {
+          "id": 1703123456790.456,
+          "icon": "ItemCase1/4dOUEOHs9WSNk5pRBkEnCptGIs16lB5xe4E7mh3sWF6XAkHcwQvINscw7cXwhK5IUXv5eOdct9_vxDZtoaMTm8GJ.png",
+          "name": "Бабочка",
+          "value": 75.66,
+          "timestamp": 1703123456790
+        }
+      ],
+      "updatedAt": 1703123456789
+    },
+    {
+      "userId": 987654321,
+      "username": "user2",
+      "balance": 200.00,
+      "inventory": [
+        {
+          "id": 1703123456800.789,
+          "icon": "ItemCase1/GsJZ-oPiqQHoyerbmc-z_L_NTi8cBWgKmS9ueEOwk5_PHeYbWeRwn6Jxic2d1Yhl8IZwt0rBUg5ZfvrkYkYp0UrO.png",
+          "name": "Зелье",
+          "value": 69.30,
+          "timestamp": 1703123456800
+        }
+      ],
+      "updatedAt": 1703123456800
+    }
+  ],
+  "globalPrizes": [
+    {
+      "userId": 123456789,
+      "username": "user1",
+      "icon": "ItemCase1/_Jne2Jf3nM6erEUU5TEnvU7PWFOiElGs2WJc0zQ250JHxRd6md_v1huDDCpZRSesDCZP53pWDPEnqfojbzsYqjbD.png",
+      "name": "Лоли поп",
+      "value": 82.17,
+      "timestamp": 1703123456789
+    },
+    {
+      "userId": 987654321,
+      "username": "user2",
+      "icon": "ItemCase1/4dOUEOHs9WSNk5pRBkEnCptGIs16lB5xe4E7mh3sWF6XAkHcwQvINscw7cXwhK5IUXv5eOdct9_vxDZtoaMTm8GJ.png",
+      "name": "Бабочка",
+      "value": 75.66,
+      "timestamp": 1703123456795
+    }
+  ]
+}
+
