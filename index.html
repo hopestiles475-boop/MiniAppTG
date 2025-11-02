@@ -1234,6 +1234,332 @@
             z-index: 1;
         }
 
+        .dice-page {
+            padding: 20px;
+            padding-bottom: 120px;
+            min-height: 100vh;
+            background: #0a0a0a;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .dice-header {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .dice-balance {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 16px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .dice-game-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .dice-controls {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .dice-bet-control {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .dice-bet-control label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .dice-input {
+            padding: 10px 15px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            width: 150px;
+            text-align: right;
+            box-sizing: border-box;
+        }
+
+        .dice-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .dice-threshold-container {
+            margin-bottom: 20px;
+        }
+
+        .dice-threshold-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .dice-threshold-label span:nth-child(2) {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ff00ff;
+        }
+
+        .dice-slider-wrapper {
+            position: relative;
+        }
+
+        .dice-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(to right, #00aaff 0%, #ff00ff 100%);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .dice-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #ff00ff;
+            border: 3px solid #ffffff;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(255, 0, 255, 0.5);
+        }
+
+        .dice-slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #ff00ff;
+            border: 3px solid #ffffff;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(255, 0, 255, 0.5);
+        }
+
+        .dice-slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+        }
+
+        .dice-roll-type {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .dice-roll-type-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .dice-roll-type-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+        }
+
+        .dice-roll-type-btn:active {
+            transform: scale(0.95);
+        }
+
+        .dice-auto-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .dice-auto-label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .dice-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .dice-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .dice-switch-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.2);
+            transition: 0.3s;
+            border-radius: 30px;
+        }
+
+        .dice-switch-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .dice-switch input:checked + .dice-switch-slider {
+            background-color: #00ff00;
+        }
+
+        .dice-switch input:checked + .dice-switch-slider:before {
+            transform: translateX(30px);
+        }
+
+        .dice-auto-status {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            font-weight: 600;
+            min-width: 40px;
+        }
+
+        .dice-start-btn {
+            width: 100%;
+            padding: 18px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, #00ff00 0%, #00cc00 100%);
+            color: #000;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(0, 255, 0, 0.4);
+            text-transform: uppercase;
+        }
+
+        .dice-start-btn:active {
+            transform: scale(0.98);
+        }
+
+        .dice-start-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .dice-result-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .dice-result-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .dice-result-value {
+            font-size: 72px;
+            font-weight: 700;
+            color: #ffffff;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dice-result-text {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 600;
+        }
+
+        .dice-result-value.win {
+            color: #00ff00;
+        }
+
+        .dice-result-value.lose {
+            color: #ff0000;
+        }
+
+        .dice-stats {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 15px;
+        }
+
+        .dice-stat-item {
+            text-align: center;
+        }
+
+        .dice-stat-label {
+            display: block;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .dice-stat-item span:last-child {
+            display: block;
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
         .mines-header {
             display: flex;
             justify-content: center;
@@ -1971,6 +2297,73 @@
         </div>
     </div>
 
+    <div id="dicePage" class="dice-page" style="display: none;">
+        <div class="dice-header">
+            <div class="dice-balance">
+                <span class="currency-icon"></span>
+                <span id="diceBalance">0.00</span>
+            </div>
+        </div>
+        
+        <div class="dice-game-container">
+            <div class="dice-controls">
+                <div class="dice-bet-control">
+                    <label>Ставка:</label>
+                    <input type="number" id="diceBetAmount" class="dice-input" value="0.1" min="0.01" step="0.01" placeholder="0.00">
+                </div>
+                
+                <div class="dice-threshold-container">
+                    <div class="dice-threshold-label">
+                        <span>Roll Under</span>
+                        <span id="diceThresholdValue">50</span>
+                        <span>Roll Over</span>
+                    </div>
+                    <div class="dice-slider-wrapper">
+                        <input type="range" id="diceThreshold" class="dice-slider" min="1" max="98" value="50">
+                        <div class="dice-slider-labels">
+                            <span>0</span>
+                            <span>99</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dice-roll-type">
+                    <button id="diceRollUnderBtn" class="dice-roll-type-btn active">Roll Under</button>
+                    <button id="diceRollOverBtn" class="dice-roll-type-btn">Roll Over</button>
+                </div>
+                
+                <div class="dice-auto-control">
+                    <span class="dice-auto-label">AUTO</span>
+                    <label class="dice-switch">
+                        <input type="checkbox" id="diceAutoToggle">
+                        <span class="dice-switch-slider"></span>
+                    </label>
+                    <span class="dice-auto-status" id="diceAutoStatus">OFF</span>
+                </div>
+                
+                <button id="diceStartBtn" class="dice-start-btn">START</button>
+            </div>
+            
+            <div class="dice-result-container">
+                <div class="dice-result-display" id="diceResultDisplay">
+                    <div class="dice-result-value" id="diceResultValue">?</div>
+                    <div class="dice-result-text" id="diceResultText">Нажмите START</div>
+                </div>
+            </div>
+            
+            <div class="dice-stats">
+                <div class="dice-stat-item">
+                    <span class="dice-stat-label">Выигрыш:</span>
+                    <span id="diceWinnings">0.00</span>
+                </div>
+                <div class="dice-stat-item">
+                    <span class="dice-stat-label">Множитель:</span>
+                    <span id="diceMultiplier">x2.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="bottom-nav">
         <div class="nav-item active" data-page="cases">
             <div class="nav-icon">🎁</div>
@@ -1983,6 +2376,10 @@
         <div class="nav-item" data-page="mines">
             <div class="nav-icon">💣</div>
             <div class="nav-label">Мины</div>
+        </div>
+        <div class="nav-item" data-page="dice">
+            <div class="nav-icon">🎲</div>
+            <div class="nav-label">Dice</div>
         </div>
         <div class="nav-item" data-page="profile">
             <div class="nav-icon">👤</div>
@@ -2009,7 +2406,7 @@
         let currentTab = 'cases';
         
         // API эндпоинт (замените на ваш реальный сервер)
-        const API_BASE_URL = 'https://your-api-server.com/api'; // ЗАМЕНИТЕ НА РЕАЛЬНЫЙ URL
+        const API_BASE_URL = 'http://localhost:3000/api'; // Локальный сервер
         
         // Глобальный список выигрышей всех пользователей
         let globalPrizes = [];
@@ -3291,6 +3688,11 @@
                         minesPage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; z-index: -1 !important;';
                     }
                     
+                    const dicePage = document.getElementById('dicePage');
+                    if (dicePage) {
+                        dicePage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; z-index: -1 !important;';
+                    }
+                    
                     // Показываем главную страницу и все её элементы
                     mainPage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; pointer-events: auto !important;';
                     mainPage.classList.remove('hidden');
@@ -3327,6 +3729,11 @@
                         minesPage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; z-index: -1 !important;';
                     }
                     
+                    const dicePage = document.getElementById('dicePage');
+                    if (dicePage) {
+                        dicePage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; z-index: -1 !important;';
+                    }
+                    
                     // Показываем профиль
                     profilePage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; pointer-events: auto !important; z-index: 1 !important;';
                     
@@ -3353,6 +3760,11 @@
                     const minesPage = document.getElementById('minesPage');
                     if (minesPage) {
                         minesPage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; z-index: -1 !important;';
+                    }
+                    
+                    const dicePage = document.getElementById('dicePage');
+                    if (dicePage) {
+                        dicePage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; z-index: -1 !important;';
                     }
                     
                     // Убеждаемся, что все элементы главной страницы скрыты
@@ -3422,6 +3834,47 @@
                         minesPage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 100% !important; z-index: 100 !important; pointer-events: auto !important;';
                         document.getElementById('minesBalance').textContent = balance.toFixed(2);
                         initMinesGame();
+                    }
+                    
+                    if (tg) {
+                        tg.HapticFeedback.impactOccurred('light');
+                    }
+                } else if (page === 'dice') {
+                    // Скрываем header при переходе на dice
+                    if (header) {
+                        header.style.display = 'none';
+                    }
+                    
+                    // Скрываем все остальные страницы и элементы
+                    mainPage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; position: absolute !important; pointer-events: none !important; z-index: -1 !important;';
+                    mainPage.classList.add('hidden');
+                    caseDetailPage.style.display = 'none';
+                    caseDetailPage.classList.remove('active');
+                    
+                    profilePage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; position: absolute !important; pointer-events: none !important; z-index: -1 !important;';
+                    
+                    const subscribeBtn = document.querySelector('.subscribe-btn');
+                    const tabs = document.querySelector('.tabs');
+                    const casesCarousel = document.querySelector('.cases-carousel');
+                    if (subscribeBtn) subscribeBtn.style.display = 'none';
+                    if (tabs) tabs.style.display = 'none';
+                    if (casesCarousel) casesCarousel.style.display = 'none';
+                    
+                    if (crashPage) {
+                        crashPage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; z-index: -1 !important;';
+                    }
+                    
+                    const minesPage = document.getElementById('minesPage');
+                    if (minesPage) {
+                        minesPage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; z-index: -1 !important;';
+                    }
+                    
+                    // Показываем страницу dice
+                    const dicePage = document.getElementById('dicePage');
+                    if (dicePage) {
+                        dicePage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 100% !important; z-index: 100 !important; pointer-events: auto !important;';
+                        document.getElementById('diceBalance').textContent = balance.toFixed(2);
+                        initDiceGame();
                     }
                     
                     if (tg) {
@@ -3816,6 +4269,242 @@
             });
         });
         
+        // ИГРА DICE
+        let diceGameState = {
+            betAmount: 0.1,
+            threshold: 50,
+            rollType: 'under', // 'under' или 'over'
+            autoPlay: false,
+            autoPlayInterval: null,
+            isRolling: false
+        };
+
+        function initDiceGame() {
+            const thresholdSlider = document.getElementById('diceThreshold');
+            const thresholdValue = document.getElementById('diceThresholdValue');
+            const rollUnderBtn = document.getElementById('diceRollUnderBtn');
+            const rollOverBtn = document.getElementById('diceRollOverBtn');
+            const autoToggle = document.getElementById('diceAutoToggle');
+            const autoStatus = document.getElementById('diceAutoStatus');
+            const startBtn = document.getElementById('diceStartBtn');
+            
+            // Обновление значения слайдера
+            if (thresholdSlider && thresholdValue) {
+                thresholdValue.textContent = diceGameState.threshold;
+                thresholdSlider.value = diceGameState.threshold;
+                
+                thresholdSlider.addEventListener('input', (e) => {
+                    diceGameState.threshold = parseInt(e.target.value);
+                    thresholdValue.textContent = diceGameState.threshold;
+                    updateDiceMultiplier();
+                });
+            }
+            
+            // Переключение типа ставки
+            if (rollUnderBtn) {
+                rollUnderBtn.addEventListener('click', () => {
+                    diceGameState.rollType = 'under';
+                    rollUnderBtn.classList.add('active');
+                    rollOverBtn.classList.remove('active');
+                    updateDiceMultiplier();
+                });
+            }
+            
+            if (rollOverBtn) {
+                rollOverBtn.addEventListener('click', () => {
+                    diceGameState.rollType = 'over';
+                    rollOverBtn.classList.add('active');
+                    rollUnderBtn.classList.remove('active');
+                    updateDiceMultiplier();
+                });
+            }
+            
+            // Переключатель авто-игры
+            if (autoToggle) {
+                autoToggle.addEventListener('change', (e) => {
+                    diceGameState.autoPlay = e.target.checked;
+                    autoStatus.textContent = diceGameState.autoPlay ? 'ON' : 'OFF';
+                    
+                    if (diceGameState.autoPlay && !diceGameState.isRolling) {
+                        startDiceGame();
+                    } else if (!diceGameState.autoPlay) {
+                        stopAutoPlay();
+                    }
+                });
+            }
+            
+            // Кнопка START
+            if (startBtn) {
+                startBtn.addEventListener('click', () => {
+                    if (!diceGameState.isRolling) {
+                        startDiceGame();
+                    }
+                });
+            }
+            
+            updateDiceMultiplier();
+        }
+
+        function updateDiceMultiplier() {
+            // Множитель зависит от вероятности выигрыша
+            // Для Roll Under: множитель = 99 / threshold
+            // Для Roll Over: множитель = 99 / (99 - threshold)
+            let multiplier;
+            if (diceGameState.rollType === 'under') {
+                multiplier = 99 / diceGameState.threshold;
+            } else {
+                multiplier = 99 / (99 - diceGameState.threshold);
+            }
+            
+            const multiplierEl = document.getElementById('diceMultiplier');
+            if (multiplierEl) {
+                multiplierEl.textContent = `x${multiplier.toFixed(2)}`;
+            }
+            
+            const winningsEl = document.getElementById('diceWinnings');
+            if (winningsEl) {
+                const winnings = diceGameState.betAmount * multiplier;
+                winningsEl.textContent = winnings.toFixed(2);
+            }
+        }
+
+        function startDiceGame() {
+            if (diceGameState.isRolling) return;
+            
+            diceGameState.betAmount = parseFloat(document.getElementById('diceBetAmount').value) || 0.1;
+            
+            if (balance < diceGameState.betAmount) {
+                if (tg) {
+                    tg.showAlert('Недостаточно средств!');
+                } else {
+                    alert('Недостаточно средств!');
+                }
+                if (diceGameState.autoPlay) {
+                    document.getElementById('diceAutoToggle').checked = false;
+                    diceGameState.autoPlay = false;
+                    document.getElementById('diceAutoStatus').textContent = 'OFF';
+                }
+                return;
+            }
+            
+            balance -= diceGameState.betAmount;
+            document.getElementById('balance').textContent = balance.toFixed(2);
+            document.getElementById('diceBalance').textContent = balance.toFixed(2);
+            saveInventory();
+            
+            diceGameState.isRolling = true;
+            const startBtn = document.getElementById('diceStartBtn');
+            if (startBtn) {
+                startBtn.disabled = true;
+                startBtn.textContent = 'ROLLING...';
+            }
+            
+            // Анимация броска
+            const resultValue = document.getElementById('diceResultValue');
+            const resultText = document.getElementById('diceResultText');
+            let rollCount = 0;
+            const rollInterval = setInterval(() => {
+                rollCount++;
+                const randomValue = Math.floor(Math.random() * 100);
+                if (resultValue) {
+                    resultValue.textContent = randomValue;
+                    resultValue.classList.remove('win', 'lose');
+                }
+                
+                if (rollCount > 10) {
+                    clearInterval(rollInterval);
+                    
+                    // Финальный результат
+                    const finalRoll = Math.floor(Math.random() * 100);
+                    
+                    let won = false;
+                    if (diceGameState.rollType === 'under') {
+                        won = finalRoll < diceGameState.threshold;
+                    } else {
+                        won = finalRoll > diceGameState.threshold;
+                    }
+                    
+                    if (resultValue) {
+                        resultValue.textContent = finalRoll;
+                        resultValue.classList.add(won ? 'win' : 'lose');
+                    }
+                    
+                    if (resultText) {
+                        resultText.textContent = won ? 'ВЫИГРЫШ!' : 'ПРОИГРЫШ';
+                        resultText.style.color = won ? '#00ff00' : '#ff0000';
+                    }
+                    
+                    if (won) {
+                        const multiplier = diceGameState.rollType === 'under' 
+                            ? 99 / diceGameState.threshold 
+                            : 99 / (99 - diceGameState.threshold);
+                        const winnings = diceGameState.betAmount * multiplier;
+                        balance += winnings;
+                        
+                        document.getElementById('balance').textContent = balance.toFixed(2);
+                        document.getElementById('diceBalance').textContent = balance.toFixed(2);
+                        saveInventory();
+                        
+                        if (tg) {
+                            tg.showAlert(`Выигрыш ${winnings.toFixed(2)}!`);
+                            tg.HapticFeedback.notificationOccurred('success');
+                        }
+                    } else {
+                        if (tg) {
+                            tg.showAlert('Проигрыш!');
+                            tg.HapticFeedback.notificationOccurred('error');
+                        }
+                    }
+                    
+                    diceGameState.isRolling = false;
+                    if (startBtn) {
+                        startBtn.disabled = false;
+                        startBtn.textContent = 'START';
+                    }
+                    
+                    // Продолжаем авто-игру если включена
+                    if (diceGameState.autoPlay) {
+                        setTimeout(() => {
+                            startDiceGame();
+                        }, 1500);
+                    } else {
+                        // Сбрасываем результат через 3 секунды
+                        setTimeout(() => {
+                            if (resultValue) {
+                                resultValue.textContent = '?';
+                                resultValue.classList.remove('win', 'lose');
+                            }
+                            if (resultText) {
+                                resultText.textContent = 'Нажмите START';
+                                resultText.style.color = 'rgba(255, 255, 255, 0.8)';
+                            }
+                        }, 3000);
+                    }
+                }
+            }, 50);
+        }
+
+        function stopAutoPlay() {
+            diceGameState.autoPlay = false;
+            diceGameState.isRolling = false;
+            const startBtn = document.getElementById('diceStartBtn');
+            if (startBtn) {
+                startBtn.disabled = false;
+                startBtn.textContent = 'START';
+            }
+        }
+
+        // Обновление множителя при изменении ставки
+        document.addEventListener('DOMContentLoaded', () => {
+            const diceBetAmount = document.getElementById('diceBetAmount');
+            if (diceBetAmount) {
+                diceBetAmount.addEventListener('input', () => {
+                    diceGameState.betAmount = parseFloat(diceBetAmount.value) || 0.1;
+                    updateDiceMultiplier();
+                });
+            }
+        });
+
         // Продажа выбранного предмета
         function sellSelectedItem() {
             if (!selectedInventoryItem) return;
