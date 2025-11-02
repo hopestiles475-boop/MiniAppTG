@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>NFT Cases</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--tg-theme-bg-color, #0a0a0a);
+            color: var(--tg-theme-text-color, #ffffff);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: var(--tg-theme-bg-color, #0a0a0a);
+        }
+
+        .balance-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+        }
+
+        .diamond-icon {
+            font-size: 18px;
+        }
+
+        .balance-text {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .ton-balance {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 10px 20px;
+        }
+
+        .demo-badge {
+            display: inline-block;
+            background: #667eea;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .cases-carousel {
+            display: flex;
+            gap: 15px;
+            padding: 20px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .cases-carousel::-webkit-scrollbar {
+            display: none;
+        }
+
+        .case-card {
+            min-width: 280px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+            border-radius: 20px;
+            padding: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .case-card:active {
+            transform: scale(0.98);
+        }
+
+        .case-icon {
+            font-size: 80px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .case-price {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+            margin-top: 10px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px;
+        }
+
+        .page-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .page-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .case-detail-page {
+            display: none !important;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        .case-detail-page.active {
+            display: block !important;
+        }
+
+        #mainPage.hidden {
+            display: none !important;
+        }
+
+        .case-detail-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .case-detail-icon {
+            font-size: 120px;
+            margin: 20px 0;
+        }
+
+        .case-detail-price {
+            font-size: 28px;
+            font-weight: 700;
+            color: #667eea;
+            margin: 15px 0;
+        }
+
+        .whats-inside-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 30px 0 20px 0;
+            padding: 0 10px;
+        }
+
+        .prizes-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            padding: 0 10px;
+            margin-bottom: 30px;
+        }
+
+        .prize-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+
+        .prize-item.win {
+            border-color: #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+            animation: winPulse 1s;
+        }
+
+        @keyframes winPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .prize-icon {
+            font-size: 50px;
+            margin-bottom: 10px;
+        }
+
+        .prize-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .open-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .open-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .spinning {
+            animation: spin 0.1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .spinning-prizes {
+            animation: shuffle 0.05s linear infinite;
+        }
+
+        @keyframes shuffle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            max-width: 90%;
+            animation: scaleIn 0.3s;
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-prize-icon {
+            font-size: 100px;
+            margin: 20px 0;
+            animation: bounce 0.6s;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-30px); }
+        }
+
+        .modal-prize-name {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 20px 0;
+        }
+
+        .modal-prize-value {
+            font-size: 24px;
+            color: #667eea;
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+
+        .modal-close {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="balance-section">
+            <span class="diamond-icon">💎</span>
+            <span class="balance-text" id="balance">0.00</span>
+            <button style="background: transparent; border: none; color: white; font-size: 18px; cursor: pointer; padding: 0 5px;">+</button>
+        </div>
+    </div>
+
+    <div class="ton-balance">
+        5 TON<span class="demo-badge">demo</span>
+    </div>
+
+    <div id="mainPage">
+        <div class="cases-carousel" id="casesCarousel">
+            <div class="case-card" data-case="1" data-price="69.30">
+                <div class="case-icon">🔐</div>
+                <div class="case-price">💎 69.30</div>
+            </div>
+            <div class="case-card" data-case="2" data-price="2.25">
+                <div class="case-icon">🌙</div>
+                <div class="case-price">💎 2.25</div>
+            </div>
+            <div class="case-card" data-case="3" data-price="75.66">
+                <div class="case-icon">✨</div>
+                <div class="case-price">💎 75.66</div>
+            </div>
+        </div>
+
+        <div class="pagination">
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+        </div>
+    </div>
+
+    <div class="case-detail-page" id="caseDetailPage">
+        <button class="back-btn" onclick="goBack()">← Назад</button>
+        <div class="case-detail-header">
+            <div class="case-detail-icon" id="detailIcon">🔐</div>
+            <div class="case-detail-price" id="detailPrice">💎 69.30</div>
+        </div>
+
+        <div class="whats-inside-title">Что внутри?</div>
+        
+        <div class="prizes-grid" id="prizesGrid">
+            <div class="prize-item" data-value="82.17">
+                <div class="prize-icon">🏆</div>
+                <div class="prize-value">💎 82.17</div>
+            </div>
+            <div class="prize-item" data-value="75.66">
+                <div class="prize-icon">✨</div>
+                <div class="prize-value">💎 75.66</div>
+            </div>
+            <div class="prize-item" data-value="69.30">
+                <div class="prize-icon">💀</div>
+                <div class="prize-value">💎 69.30</div>
+            </div>
+            <div class="prize-item" data-value="25.27">
+                <div class="prize-icon">🐱</div>
+                <div class="prize-value">💎 25.27</div>
+            </div>
+            <div class="prize-item" data-value="23.50">
+                <div class="prize-icon">🚬</div>
+                <div class="prize-value">💎 23.50</div>
+            </div>
+            <div class="prize-item" data-value="17.00">
+                <div class="prize-icon">💍</div>
+                <div class="prize-value">💎 17.00</div>
+            </div>
+            <div class="prize-item" data-value="11.40">
+                <div class="prize-icon">🦋</div>
+                <div class="prize-value">💎 11.40</div>
+            </div>
+            <div class="prize-item" data-value="8.64">
+                <div class="prize-icon">🧪</div>
+                <div class="prize-value">💎 8.64</div>
+            </div>
+            <div class="prize-item" data-value="7.90">
+                <div class="prize-icon">🌺</div>
+                <div class="prize-value">💎 7.90</div>
+            </div>
+        </div>
+
+        <button class="open-btn" id="openBtn" onclick="openCase()">
+            Открыть <span>🚀</span>
+        </button>
+    </div>
+
+    <div class="modal" id="prizeModal">
+        <div class="modal-content">
+            <div class="modal-prize-icon" id="modalPrizeIcon">🏆</div>
+            <div class="modal-prize-name" id="modalPrizeName">Оскар</div>
+            <div class="modal-prize-value" id="modalPrizeValue">💎 82.17</div>
+            <button class="modal-close" onclick="closePrizeModal()">Закрыть</button>
+        </div>
+    </div>
+
+    <script>
+        let tg = window.Telegram?.WebApp;
+        let isTelegram = false;
+        
+        if (tg) {
+            tg.ready();
+            tg.expand();
+            tg.setHeaderColor('#0a0a0a');
+            tg.setBackgroundColor('#0a0a0a');
+            isTelegram = true;
+        }
+
+        let balance = 100.00;
+        let currentCase = null;
+        let currentPrizes = [];
+        let isOpening = false;
+
+        const cases = {
+            1: { icon: '🔐', price: 69.30, prizes: [
+                { icon: '🏆', name: 'Оскар', value: 82.17 },
+                { icon: '✨', name: 'Парфюм', value: 75.66 },
+                { icon: '💀', name: 'Зелье', value: 69.30 },
+                { icon: '🐱', name: 'Шлем', value: 25.27 },
+                { icon: '🚬', name: 'Сигара', value: 23.50 },
+                { icon: '💍', name: 'Кольцо', value: 17.00 },
+                { icon: '🦋', name: 'Бабочка', value: 11.40 },
+                { icon: '🧪', name: 'Зелье', value: 8.64 },
+                { icon: '🌺', name: 'Цветок', value: 7.90 }
+            ]},
+            2: { icon: '🌙', price: 2.25, prizes: [
+                { icon: '🌙', name: 'Луна', value: 5.00 },
+                { icon: '⭐', name: 'Звезда', value: 3.50 },
+                { icon: '💫', name: 'Комета', value: 2.25 },
+                { icon: '✨', name: 'Блеск', value: 1.80 },
+                { icon: '🌠', name: 'Метеор', value: 1.50 }
+            ]},
+            3: { icon: '✨', price: 75.66, prizes: [
+                { icon: '✨', name: 'Парфюм N°5', value: 85.00 },
+                { icon: '💎', name: 'Бриллиант', value: 75.66 },
+                { icon: '👑', name: 'Корона', value: 65.00 },
+                { icon: '💍', name: 'Кольцо', value: 55.00 },
+                { icon: '🏆', name: 'Трофей', value: 45.00 }
+            ]}
+        };
+
+        document.getElementById('balance').textContent = balance.toFixed(2);
+
+        document.querySelectorAll('.case-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const caseNum = parseInt(card.dataset.case);
+                showCaseDetail(caseNum);
+            });
+        });
+
+        function showCaseDetail(caseNum) {
+            currentCase = cases[caseNum];
+            if (!currentCase) return;
+
+            isOpening = false;
+            
+            const mainPage = document.getElementById('mainPage');
+            const detailPage = document.getElementById('caseDetailPage');
+            
+            mainPage.style.display = 'none';
+            detailPage.style.display = 'block';
+            detailPage.classList.add('active');
+            
+            document.getElementById('detailIcon').textContent = currentCase.icon;
+            document.getElementById('detailPrice').textContent = `💎 ${currentCase.price.toFixed(2)}`;
+            
+            const prizesGrid = document.getElementById('prizesGrid');
+            prizesGrid.innerHTML = '';
+            currentPrizes = currentCase.prizes;
+            
+            currentPrizes.forEach(prize => {
+                const prizeItem = document.createElement('div');
+                prizeItem.className = 'prize-item';
+                prizeItem.innerHTML = `
+                    <div class="prize-icon">${prize.icon}</div>
+                    <div class="prize-value">💎 ${prize.value.toFixed(2)}</div>
+                `;
+                prizeItem.dataset.icon = prize.icon;
+                prizeItem.dataset.name = prize.name;
+                prizeItem.dataset.value = prize.value;
+                prizesGrid.appendChild(prizeItem);
+            });
+
+            const openBtn = document.getElementById('openBtn');
+            openBtn.disabled = false;
+            openBtn.innerHTML = 'Открыть <span>🚀</span>';
+
+            const modal = document.getElementById('prizeModal');
+            modal.classList.remove('active');
+
+            if (tg) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
+        }
+
+        function goBack() {
+            const mainPage = document.getElementById('mainPage');
+            const detailPage = document.getElementById('caseDetailPage');
+            
+            detailPage.style.display = 'none';
+            detailPage.classList.remove('active');
+            mainPage.style.display = 'block';
+            mainPage.classList.remove('hidden');
+            
+            const modal = document.getElementById('prizeModal');
+            modal.classList.remove('active');
+            
+            document.querySelectorAll('.prize-item').forEach(item => {
+                item.classList.remove('win');
+            });
+            
+            if (tg) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
+        }
+
+        function openCase() {
+            if (isOpening) return;
+            
+            const price = currentCase.price;
+            if (balance < price) {
+                if (tg) {
+                    tg.showAlert('Недостаточно баланса!');
+                    tg.HapticFeedback.notificationOccurred('error');
+                } else {
+                    alert('Недостаточно баланса!');
+                }
+                return;
+            }
+
+            isOpening = true;
+            balance -= price;
+            document.getElementById('balance').textContent = balance.toFixed(2);
+            
+            const openBtn = document.getElementById('openBtn');
+            openBtn.disabled = true;
+            openBtn.innerHTML = 'Крутится... <span class="spinning">🎰</span>';
+
+            if (tg) {
+                tg.HapticFeedback.impactOccurred('heavy');
+            }
+
+            const prizeItems = document.querySelectorAll('.prize-item');
+            let spinCount = 0;
+            const spinDuration = 2000;
+            const spinInterval = 50;
+            const totalSpins = spinDuration / spinInterval;
+
+            prizeItems.forEach(item => {
+                item.classList.add('spinning-prizes');
+            });
+
+            const randomPrize = currentPrizes[Math.floor(Math.random() * currentPrizes.length)];
+            
+            let currentIndex = 0;
+            const shuffleInterval = setInterval(() => {
+                prizeItems.forEach(item => item.classList.remove('win'));
+                const randomItem = prizeItems[Math.floor(Math.random() * prizeItems.length)];
+                randomItem.classList.add('win');
+                
+                currentIndex++;
+                if (currentIndex >= totalSpins) {
+                    clearInterval(shuffleInterval);
+                    prizeItems.forEach(item => item.classList.remove('spinning-prizes'));
+                    
+                    setTimeout(() => {
+                        prizeItems.forEach(item => {
+                            if (item.dataset.icon === randomPrize.icon) {
+                                item.classList.add('win');
+                            } else {
+                                item.classList.remove('win');
+                            }
+                        });
+                        
+                        showPrizeModal(randomPrize);
+                        isOpening = false;
+                        openBtn.disabled = false;
+                        openBtn.innerHTML = 'Открыть <span>🚀</span>';
+                        
+                        if (tg) {
+                            tg.HapticFeedback.notificationOccurred('success');
+                        }
+                    }, 500);
+                }
+            }, spinInterval);
+        }
+
+        function showPrizeModal(prize) {
+            document.getElementById('modalPrizeIcon').textContent = prize.icon;
+            document.getElementById('modalPrizeName').textContent = prize.name;
+            document.getElementById('modalPrizeValue').textContent = `💎 ${prize.value.toFixed(2)}`;
+            document.getElementById('prizeModal').classList.add('active');
+        }
+
+        function closePrizeModal() {
+            document.getElementById('prizeModal').classList.remove('active');
+            
+            document.querySelectorAll('.prize-item').forEach(item => {
+                item.classList.remove('win');
+            });
+            
+            if (tg) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
+        }
+
+        document.querySelector('.balance-section button').addEventListener('click', () => {
+            if (tg) {
+                tg.showAlert('Пополнение баланса');
+                tg.HapticFeedback.impactOccurred('light');
+            } else {
+                alert('Пополнение баланса');
+            }
+        });
+    </script>
+</body>
+</html>
