@@ -3178,20 +3178,54 @@
             // Случайный момент краша (от 1.01 до 10.0)
             crashTarget = 1.01 + Math.random() * 9.0;
             
-            // Время до краша (от 5 до 30 секунд)
-            const timeToCrash = 5000 + Math.random() * 25000;
+            // Время до краша (от 3 до 20 секунд)
+            const timeToCrash = 3000 + Math.random() * 17000;
             
             setTimeout(() => {
                 if (crashRoundActive) {
-                    crashDirection = -1; // Начинаем падение
+                    // Резко обрушиваем график
+                    crashDirection = -1;
+                    crashMultiplier = 0.01; // Резко падаем до нуля
+                    
                     if (tg) {
                         tg.showAlert('КРАШ! Все не забранные ставки потеряны!');
                         tg.HapticFeedback.notificationOccurred('error');
                     }
+                    
+                    // Сразу обрабатываем краш
+                    crashRoundActive = false;
+                    processCrashRound();
+                    
+                    // Через 10 секунд начинаем новый раунд
+                    showCrashCooldown(10, ctx, canvas);
                 }
             }, timeToCrash);
             
             startCrashAnimation(ctx, canvas);
+        }
+        
+        // Показ кулдауна перед новым раундом
+        function showCrashCooldown(seconds, ctx, canvas) {
+            const multiplierElement = document.getElementById('currentMultiplier');
+            let remaining = seconds;
+            
+            const countdown = setInterval(() => {
+                if (multiplierElement) {
+                    multiplierElement.textContent = `Новый раунд через ${remaining}...`;
+                    multiplierElement.style.color = '#ffaa00';
+                }
+                
+                remaining--;
+                
+                if (remaining < 0) {
+                    clearInterval(countdown);
+                    if (multiplierElement) {
+                        multiplierElement.textContent = 'x1.00';
+                        multiplierElement.style.color = '#00ff00';
+                    }
+                    startNewCrashRound(ctx, canvas);
+                }
+            }, 1000);
         }
 
         // Анимация графика краша
@@ -3200,31 +3234,26 @@
                 cancelAnimationFrame(crashAnimationId);
             }
             
-            let speed = 0.005 + Math.random() * 0.01;
-            let crashSpeed = 0.05; // Скорость падения при краше
+            let speed = 0.008 + Math.random() * 0.015;
             
             const animate = () => {
+                if (!crashRoundActive && crashMultiplier <= 0.01) {
+                    // Раунд завершен, ждем кулдаун
+                    return;
+                }
+                
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                // Обновляем множитель
-                if (crashDirection === 1) {
+                // Обновляем множитель только если раунд активен
+                if (crashRoundActive && crashDirection === 1) {
                     // Движение вверх (рост)
                     crashMultiplier += speed;
                     if (crashMultiplier >= crashTarget) {
-                        crashDirection = -1; // Начинаем краш
+                        crashDirection = -1; // Достигли цели, начинаем краш
                     }
-                } else {
-                    // Падение (краш)
-                    crashMultiplier -= crashSpeed;
-                    if (crashMultiplier <= 0.01) {
-                        // Краш завершен - начинаем новый раунд
-                        crashRoundActive = false;
-                        processCrashRound();
-                        setTimeout(() => {
-                            startNewCrashRound(ctx, canvas);
-                        }, 2000);
-                        return;
-                    }
+                } else if (crashDirection === -1) {
+                    // Резкое падение - сразу до нуля
+                    crashMultiplier = 0.01;
                 }
                 
                 // Добавляем точку на график
@@ -3253,15 +3282,30 @@
                 }
                 ctx.stroke();
                 
+                // Рисуем вертикальную линию при краше (резкое падение)
+                if (crashDirection === -1 && crashMultiplier <= 0.01) {
+                    ctx.strokeStyle = '#ff0000';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    const lastPoint = crashGraphPoints[crashGraphPoints.length - 2];
+                    if (lastPoint) {
+                        ctx.moveTo(lastPoint.x, lastPoint.y);
+                        ctx.lineTo(lastPoint.x, canvas.height - 50);
+                    }
+                    ctx.stroke();
+                }
+                
                 // Обновляем отображение множителя
                 const multiplierElement = document.getElementById('currentMultiplier');
-                if (multiplierElement) {
+                if (multiplierElement && crashRoundActive) {
                     multiplierElement.textContent = `x${crashMultiplier.toFixed(2)}`;
                     multiplierElement.style.color = crashDirection === 1 ? '#00ff00' : '#ff0000';
                 }
                 
-                // Проверяем выигрыши
-                checkCrashWins();
+                // Проверяем выигрыши только если раунд активен
+                if (crashRoundActive) {
+                    checkCrashWins();
+                }
                 
                 crashAnimationId = requestAnimationFrame(animate);
             };
