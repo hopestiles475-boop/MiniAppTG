@@ -1179,6 +1179,13 @@
             document.getElementById('modalPrizeName').textContent = prize.name;
             document.getElementById('modalPrizeValue').textContent = `💎 ${prize.value.toFixed(2)}`;
             document.getElementById('prizeModal').classList.add('active');
+            
+            // Скрываем кнопку "Открыть" со страницы деталей когда показывается модальное окно
+            const openBtn = document.getElementById('openBtn');
+            if (openBtn) {
+                openBtn.classList.remove('show');
+                openBtn.style.cssText = 'display: none !important;';
+            }
         }
 
         function closePrizeModal() {
