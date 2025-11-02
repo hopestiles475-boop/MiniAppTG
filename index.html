@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>NFT Cases</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/@tonconnect/sdk@2/dist/tonconnect.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -1152,6 +1153,264 @@
             font-size: 20px;
         }
 
+        /* Модальное окно пополнения */
+        .top-up-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .top-up-modal-content {
+            background: #1a1a1a;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 400px;
+            width: 100%;
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .top-up-modal-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .top-up-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .top-up-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 600;
+        }
+
+        .top-up-input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .top-up-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .top-up-info {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .top-up-info p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .top-up-info span {
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        .tonkeeper-btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 16px;
+            border: none;
+            background: linear-gradient(135deg, #0088cc 0%, #006699 100%);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(0, 136, 204, 0.4);
+        }
+
+        .tonkeeper-btn:active {
+            transform: scale(0.98);
+        }
+
+        .tonkeeper-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .payment-status {
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .payment-status p {
+            margin: 0;
+        }
+
+        /* Выбор способа оплаты */
+        .payment-method-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .payment-method-btn {
+            flex: 1;
+            padding: 14px 20px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .payment-method-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+        }
+
+        .payment-method-btn:active {
+            transform: scale(0.98);
+        }
+
+        .payment-section {
+            margin-top: 10px;
+        }
+
+        .telegram-bot-info {
+            background: rgba(0, 136, 204, 0.1);
+            border: 1px solid rgba(0, 136, 204, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .telegram-bot-info p {
+            margin: 5px 0;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+
+        .telegram-bot-info .bot-instruction {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+        }
+
+        .telegram-bot-btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 16px;
+            border: none;
+            background: linear-gradient(135deg, #0088cc 0%, #006699 100%);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(0, 136, 204, 0.4);
+            margin-bottom: 15px;
+        }
+
+        .telegram-bot-btn:active {
+            transform: scale(0.98);
+        }
+
+        .telegram-bot-steps {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .telegram-bot-steps p {
+            margin: 0 0 10px 0;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .telegram-bot-steps ol {
+            margin: 0;
+            padding-left: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .telegram-bot-steps code {
+            background: rgba(102, 126, 234, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #667eea;
+        }
+
+        .telegram-bot-steps span {
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        .check-payment-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .check-payment-btn:active {
+            transform: scale(0.98);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
         .inventory-section {
             margin-top: 30px;
         }
@@ -2180,9 +2439,9 @@
         </div>
 
         <div class="top-up-buttons">
-            <button class="top-up-btn primary">
+            <button class="top-up-btn primary" id="topUpBtn">
                 <span class="btn-icon"><span class="currency-icon" style="width: 18px; height: 18px; display: inline-block;"></span></span>
-                <span>Пополнить</span>
+                <span>Пополнить через Tonkeeper</span>
             </button>
         </div>
 
@@ -3885,16 +4144,431 @@
         });
         
         // Обработчики кнопок пополнения
-        document.querySelectorAll('.top-up-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (tg) {
-                    tg.showAlert('Пополнение баланса');
-                    tg.HapticFeedback.impactOccurred('medium');
-                } else {
-                    alert('Пополнение баланса');
+        // Модальное окно для пополнения
+        const topUpModal = document.createElement('div');
+        topUpModal.id = 'topUpModal';
+        topUpModal.className = 'top-up-modal';
+        topUpModal.style.display = 'none';
+        topUpModal.innerHTML = `
+            <div class="top-up-modal-content">
+                <button class="modal-close-btn" id="closeTopUpModal">×</button>
+                <h2 class="top-up-modal-title">Пополнить баланс</h2>
+                
+                <!-- Выбор способа пополнения -->
+                <div class="payment-method-selector">
+                    <button class="payment-method-btn active" data-method="tonkeeper" id="methodTonkeeper">
+                        <span>🔵</span>
+                        <span>Tonkeeper</span>
+                    </button>
+                    <button class="payment-method-btn" data-method="telegram" id="methodTelegram">
+                        <span>🤖</span>
+                        <span>Telegram Bot</span>
+                    </button>
+                </div>
+
+                <!-- Форма пополнения -->
+                <div class="top-up-form" id="topUpForm">
+                    <label class="top-up-label">Сумма пополнения (TON):</label>
+                    <input type="number" id="topUpAmount" class="top-up-input" placeholder="0.1" min="0.1" step="0.1" value="0.1">
+                    <div class="top-up-info">
+                        <p>Вы получите: <span id="topUpReceive">0.10</span> TON на баланс</p>
+                    </div>
+                    
+                    <!-- Контент для Tonkeeper -->
+                    <div id="tonkeeperSection" class="payment-section">
+                        <button id="connectTonkeeperBtn" class="tonkeeper-btn">
+                            <span>🔗</span>
+                            <span>Подключить Tonkeeper</span>
+                        </button>
+                    </div>
+
+                    <!-- Контент для Telegram Bot -->
+                    <div id="telegramSection" class="payment-section" style="display: none;">
+                        <div class="telegram-bot-info">
+                            <p>Пополнение через Telegram Bot</p>
+                            <p class="bot-instruction">Отправьте команду боту для создания платежа</p>
+                        </div>
+                        <button id="openTelegramBotBtn" class="telegram-bot-btn">
+                            <span>🤖</span>
+                            <span>Открыть бота</span>
+                        </button>
+                        <div class="telegram-bot-steps">
+                            <p><strong>Инструкция:</strong></p>
+                            <ol>
+                                <li>Нажмите "Открыть бота"</li>
+                                <li>Отправьте боту команду: <code>/pay</code></li>
+                                <li>Укажите сумму: <span id="telegramAmount">0.10</span> TON</li>
+                                <li>Следуйте инструкциям бота</li>
+                            </ol>
+                        </div>
+                        <button id="checkTelegramPaymentBtn" class="check-payment-btn">
+                            <span>✓</span>
+                            <span>Проверить платеж</span>
+                        </button>
+                    </div>
+
+                    <div id="paymentStatus" class="payment-status" style="display: none;"></div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(topUpModal);
+        
+        let selectedPaymentMethod = 'tonkeeper';
+
+        // Инициализация TonConnect
+        let tonconnect = null;
+        let wallet = null;
+        
+        function initTonConnect() {
+            try {
+                if (typeof TonConnect !== 'undefined') {
+                    tonconnect = new TonConnect({
+                        manifestUrl: window.location.origin + '/tonconnect-manifest.json'
+                    });
+                    
+                    // Проверяем, подключен ли кошелек
+                    tonconnect.restoreConnection().then(walletInfo => {
+                        if (walletInfo) {
+                            wallet = walletInfo;
+                            updateTonkeeperButton();
+                        }
+                    }).catch(err => {
+                        console.log('Wallet not connected');
+                    });
                 }
-            });
+            } catch (error) {
+                console.error('Ошибка инициализации TonConnect:', error);
+            }
+        }
+
+        // Подключение к Tonkeeper
+        async function connectTonkeeper() {
+            if (!tonconnect) {
+                if (tg) {
+                    tg.showAlert('TonConnect не загружен. Проверьте подключение к интернету.');
+                } else {
+                    alert('TonConnect не загружен. Проверьте подключение к интернету.');
+                }
+                return;
+            }
+
+            try {
+                const connectButton = document.getElementById('connectTonkeeperBtn');
+                connectButton.disabled = true;
+                connectButton.textContent = 'Подключение...';
+
+                const wallets = await tonconnect.getWallets();
+                if (wallets.length === 0) {
+                    throw new Error('Tonkeeper не найден. Установите Tonkeeper для продолжения.');
+                }
+
+                const walletConnectionSource = {
+                    universalLink: wallets[0].universalLink,
+                    bridgeUrl: wallets[0].bridgeUrl
+                };
+
+                wallet = await tonconnect.connect(walletConnectionSource);
+                updateTonkeeperButton();
+                
+                if (tg) {
+                    tg.showAlert('Кошелек подключен!');
+                    tg.HapticFeedback.notificationOccurred('success');
+                }
+            } catch (error) {
+                console.error('Ошибка подключения к Tonkeeper:', error);
+                if (tg) {
+                    tg.showAlert('Ошибка подключения: ' + error.message);
+                    tg.HapticFeedback.notificationOccurred('error');
+                } else {
+                    alert('Ошибка подключения: ' + error.message);
+                }
+                
+                const connectButton = document.getElementById('connectTonkeeperBtn');
+                if (connectButton) {
+                    connectButton.disabled = false;
+                    connectButton.innerHTML = '<span>🔗</span><span>Подключить Tonkeeper</span>';
+                }
+            }
+        }
+
+        // Обновление кнопки Tonkeeper
+        function updateTonkeeperButton() {
+            const connectButton = document.getElementById('connectTonkeeperBtn');
+            if (!connectButton) return;
+
+            if (wallet) {
+                connectButton.innerHTML = `
+                    <span>✅</span>
+                    <span>Подключен: ${wallet.account.address.slice(0, 6)}...${wallet.account.address.slice(-4)}</span>
+                `;
+                connectButton.onclick = sendPayment;
+            } else {
+                connectButton.innerHTML = `
+                    <span>🔗</span>
+                    <span>Подключить Tonkeeper</span>
+                `;
+                connectButton.onclick = connectTonkeeper;
+            }
+        }
+
+        // Отправка платежа
+        async function sendPayment() {
+            if (!wallet || !tonconnect) {
+                if (tg) {
+                    tg.showAlert('Сначала подключите кошелек');
+                } else {
+                    alert('Сначала подключите кошелек');
+                }
+                return;
+            }
+
+            const amountInput = document.getElementById('topUpAmount');
+            const amount = parseFloat(amountInput.value) || 0.1;
+            
+            if (amount < 0.1) {
+                if (tg) {
+                    tg.showAlert('Минимальная сумма: 0.1 TON');
+                } else {
+                    alert('Минимальная сумма: 0.1 TON');
+                }
+                return;
+            }
+
+            // Адрес получателя (ЗАМЕНИТЕ НА ВАШ РЕАЛЬНЫЙ АДРЕС КОШЕЛЬКА)
+            // Получите адрес вашего кошелька TON и вставьте его здесь
+            const recipientAddress = 'EQD___________________________'; // TODO: Замените на реальный адрес
+            
+            // Конвертируем TON в nanotons (1 TON = 1,000,000,000 nanotons)
+            const amountInNano = (amount * 1000000000).toString();
+
+            try {
+                const statusDiv = document.getElementById('paymentStatus');
+                statusDiv.style.display = 'block';
+                statusDiv.innerHTML = '<p>Отправка транзакции...</p>';
+                statusDiv.style.color = '#667eea';
+
+                const transaction = {
+                    validUntil: Math.floor(Date.now() / 1000) + 360,
+                    messages: [
+                        {
+                            address: recipientAddress,
+                            amount: amountInNano
+                        }
+                    ]
+                };
+
+                const result = await tonconnect.sendTransaction(transaction);
+                
+                statusDiv.innerHTML = '<p>✅ Транзакция отправлена! Ожидание подтверждения...</p>';
+                statusDiv.style.color = '#00ff00';
+
+                // Проверяем транзакцию на сервере
+                checkPaymentStatus(result.boc, amount);
+
+            } catch (error) {
+                console.error('Ошибка отправки транзакции:', error);
+                const statusDiv = document.getElementById('paymentStatus');
+                statusDiv.style.display = 'block';
+                statusDiv.innerHTML = '<p>❌ Ошибка: ' + error.message + '</p>';
+                statusDiv.style.color = '#ff0000';
+                
+                if (tg) {
+                    tg.showAlert('Ошибка отправки транзакции: ' + error.message);
+                    tg.HapticFeedback.notificationOccurred('error');
+                }
+            }
+        }
+
+        // Проверка статуса платежа на сервере
+        async function checkPaymentStatus(boc, amount) {
+            try {
+                const userId = getUserId();
+                if (!userId) {
+                    throw new Error('Пользователь не определен');
+                }
+
+                const response = await fetch(`${API_BASE_URL}/payments/verify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        boc: boc,
+                        amount: amount,
+                        timestamp: Date.now()
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка проверки платежа');
+                }
+
+                const data = await response.json();
+                
+                if (data.verified) {
+                    // Пополняем баланс
+                    balance += amount;
+                    document.getElementById('balance').textContent = balance.toFixed(2);
+                    saveInventory();
+                    
+                    const statusDiv = document.getElementById('paymentStatus');
+                    statusDiv.innerHTML = '<p>✅ Платеж подтвержден! Баланс пополнен.</p>';
+                    statusDiv.style.color = '#00ff00';
+
+                    if (tg) {
+                        tg.showAlert(`Баланс пополнен на ${amount.toFixed(2)} TON!`);
+                        tg.HapticFeedback.notificationOccurred('success');
+                    }
+
+                    setTimeout(() => {
+                        topUpModal.style.display = 'none';
+                        statusDiv.style.display = 'none';
+                    }, 2000);
+                } else {
+                    // Повторная проверка через 5 секунд
+                    setTimeout(() => checkPaymentStatus(boc, amount), 5000);
+                }
+            } catch (error) {
+                console.error('Ошибка проверки платежа:', error);
+                const statusDiv = document.getElementById('paymentStatus');
+                statusDiv.innerHTML = '<p>⏳ Проверка платежа...</p>';
+                statusDiv.style.color = '#667eea';
+                setTimeout(() => checkPaymentStatus(boc, amount), 5000);
+            }
+        }
+
+        // Переключение между методами оплаты
+        document.getElementById('methodTonkeeper').addEventListener('click', () => {
+            selectedPaymentMethod = 'tonkeeper';
+            document.getElementById('methodTonkeeper').classList.add('active');
+            document.getElementById('methodTelegram').classList.remove('active');
+            document.getElementById('tonkeeperSection').style.display = 'block';
+            document.getElementById('telegramSection').style.display = 'none';
         });
+
+        document.getElementById('methodTelegram').addEventListener('click', () => {
+            selectedPaymentMethod = 'telegram';
+            document.getElementById('methodTelegram').classList.add('active');
+            document.getElementById('methodTonkeeper').classList.remove('active');
+            document.getElementById('tonkeeperSection').style.display = 'none';
+            document.getElementById('telegramSection').style.display = 'block';
+        });
+
+        // Открытие Telegram бота
+        document.getElementById('openTelegramBotBtn').addEventListener('click', () => {
+            // Замените на username вашего бота (например: @your_crypto_bot)
+            const botUsername = 'your_crypto_bot'; // TODO: Замените на реальный username бота
+            const amount = parseFloat(document.getElementById('topUpAmount').value) || 0.1;
+            const userId = getUserId();
+            
+            // Открываем бота с параметрами
+            const botUrl = `https://t.me/${botUsername}?start=pay_${userId}_${amount}`;
+            
+            if (tg) {
+                tg.openLink(botUrl);
+                tg.HapticFeedback.impactOccurred('medium');
+            } else {
+                window.open(botUrl, '_blank');
+            }
+        });
+
+        // Проверка платежа через Telegram Bot
+        async function checkTelegramPayment() {
+            const amount = parseFloat(document.getElementById('topUpAmount').value) || 0.1;
+            const userId = getUserId();
+            
+            if (!userId) {
+                if (tg) {
+                    tg.showAlert('Пользователь не определен');
+                } else {
+                    alert('Пользователь не определен');
+                }
+                return;
+            }
+
+            const statusDiv = document.getElementById('paymentStatus');
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = '<p>⏳ Проверка платежа...</p>';
+            statusDiv.style.color = '#667eea';
+
+            try {
+                // Проверяем платеж на сервере
+                const response = await fetch(`${API_BASE_URL}/payments/check-telegram`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        amount: amount,
+                        timestamp: Date.now()
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка проверки платежа');
+                }
+
+                const data = await response.json();
+                
+                if (data.verified && data.paymentFound) {
+                    // Пополняем баланс
+                    balance += amount;
+                    document.getElementById('balance').textContent = balance.toFixed(2);
+                    saveInventory();
+                    
+                    statusDiv.innerHTML = '<p>✅ Платеж подтвержден! Баланс пополнен.</p>';
+                    statusDiv.style.color = '#00ff00';
+
+                    if (tg) {
+                        tg.showAlert(`Баланс пополнен на ${amount.toFixed(2)} TON!`);
+                        tg.HapticFeedback.notificationOccurred('success');
+                    }
+
+                    setTimeout(() => {
+                        topUpModal.style.display = 'none';
+                        statusDiv.style.display = 'none';
+                    }, 2000);
+                } else {
+                    statusDiv.innerHTML = '<p>⏳ Платеж еще не найден. Попробуйте еще раз через несколько секунд.</p>';
+                    statusDiv.style.color = '#ffaa00';
+                }
+            } catch (error) {
+                console.error('Ошибка проверки платежа:', error);
+                statusDiv.innerHTML = '<p>❌ Ошибка проверки платежа. Попробуйте позже.</p>';
+                statusDiv.style.color = '#ff0000';
+                
+                if (tg) {
+                    tg.showAlert('Ошибка проверки платежа');
+                    tg.HapticFeedback.notificationOccurred('error');
+                }
+            }
+        }
+
+        // Обработчики событий
+        document.getElementById('topUpBtn').addEventListener('click', () => {
+            topUpModal.style.display = 'flex';
+            if (tg) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
+        });
+
+        document.getElementById('closeTopUpModal').addEventListener('click', () => {
+            topUpModal.style.display = 'none';
+        });
+
+        document.getElementById('topUpAmount').addEventListener('input', (e) => {
+            const amount = parseFloat(e.target.value) || 0.1;
+            document.getElementById('topUpReceive').textContent = amount.toFixed(2);
+            document.getElementById('telegramAmount').textContent = amount.toFixed(2);
+        });
+
+        document.getElementById('connectTonkeeperBtn').addEventListener('click', connectTonkeeper);
+        document.getElementById('checkTelegramPaymentBtn').addEventListener('click', checkTelegramPayment);
+
+        // Инициализация при загрузке
+        initTonConnect();
         
         // Обработчик кнопки "Продать все"
         const sellAllBtn = document.getElementById('sellAllBtn');
@@ -4445,11 +5119,37 @@
                         document.getElementById('diceBalance').textContent = balance.toFixed(2);
                         saveInventory();
                         
+                        // Сохраняем результат игры на сервер
+                        saveDiceGameToServer({
+                            userId: getUserId(),
+                            username: getUsername(),
+                            result: finalRoll,
+                            threshold: diceGameState.threshold,
+                            rollType: diceGameState.rollType,
+                            betAmount: diceGameState.betAmount,
+                            multiplier: multiplier,
+                            winnings: winnings,
+                            won: true
+                        });
+                        
                         if (tg) {
                             tg.showAlert(`Выигрыш ${winnings.toFixed(2)}!`);
                             tg.HapticFeedback.notificationOccurred('success');
                         }
                     } else {
+                        // Сохраняем результат проигрыша на сервер
+                        saveDiceGameToServer({
+                            userId: getUserId(),
+                            username: getUsername(),
+                            result: finalRoll,
+                            threshold: diceGameState.threshold,
+                            rollType: diceGameState.rollType,
+                            betAmount: diceGameState.betAmount,
+                            multiplier: 0,
+                            winnings: 0,
+                            won: false
+                        });
+                        
                         if (tg) {
                             tg.showAlert('Проигрыш!');
                             tg.HapticFeedback.notificationOccurred('error');
@@ -4491,6 +5191,34 @@
             if (startBtn) {
                 startBtn.disabled = false;
                 startBtn.textContent = 'START';
+            }
+        }
+
+        // Сохранение результата игры Dice на сервер
+        async function saveDiceGameToServer(gameData) {
+            try {
+                const userId = getUserId();
+                if (!userId) {
+                    return;
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/dice/games`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ...gameData,
+                        userId: userId,
+                        timestamp: Date.now()
+                    })
+                });
+                
+                if (!response.ok) {
+                    console.log('Не удалось сохранить результат игры на сервер');
+                }
+            } catch (error) {
+                console.log('Ошибка при сохранении результата игры:', error);
             }
         }
 
