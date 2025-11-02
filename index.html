@@ -399,16 +399,16 @@
             display: flex;
             gap: 20px;
             position: absolute;
-            left: 0;
+            left: 50%;
             top: 50%;
-            transform: translateY(-50%);
+            transform: translate(-50%, -50%);
             will-change: transform;
             white-space: nowrap;
             width: auto;
             height: 100%;
             align-items: center;
             margin: 0;
-            padding: 0 50%;
+            padding: 0;
             box-sizing: content-box;
         }
 
@@ -1071,7 +1071,8 @@
                             item.style.display = 'flex';
                         });
                         
-                        const itemWidth = 150 + 20;
+                        const itemWidth = 150 + 20; // 150px ширина + 20px gap
+                        const containerWidth = rouletteContainer.offsetWidth;
                         
                         // Находим все подарки с нужным иконом
                         const matchingIndices = [];
@@ -1096,20 +1097,30 @@
                             targetIndex = Math.floor(giftItems.length / 2);
                         }
                         
-                        const containerWidth = rouletteContainer.offsetWidth;
-                        const centerX = containerWidth / 2;
+                        // Расчет позиций
+                        // Трек центрирован в контейнере через left: 50% и transform: translate(-50%, -50%)
+                        // Поэтому позиция 0 = центр контейнера
+                        // Отрицательные значения = движение влево, положительные = вправо
                         
-                        // Простая прокрутка: много раз крутим, потом останавливаемся на цели
-                        const spinDuration = 4000; // Увеличиваем до 4 секунд
-                        const spins = 15; // 15 полных прокруток
-                        const totalDistance = spins * currentPrizes.length * itemWidth;
-                        const targetPosition = targetIndex * itemWidth - centerX + itemWidth / 2;
-                        const finalPosition = -totalDistance + targetPosition;
+                        // Целевая позиция: центрируем выбранный подарок
+                        const targetItemCenter = targetIndex * itemWidth + itemWidth / 2;
+                        const totalTrackWidth = giftItems.length * itemWidth;
+                        const targetItemOffset = targetItemCenter - totalTrackWidth / 2;
                         
-                        // Устанавливаем начальную позицию так, чтобы первый подарок был виден в центре
-                        const startPosition = containerWidth / 2 - itemWidth / 2;
+                        // Начальная позиция: добавляем много прокруток для эффекта
+                        const spins = 15;
+                        const extraDistance = spins * currentPrizes.length * itemWidth;
+                        const startPosition = targetItemOffset + extraDistance;
+                        
+                        // Финальная позиция: центрируем выбранный подарок
+                        const finalPosition = targetItemOffset;
+                        
+                        const spinDuration = 4000;
+                        
+                        // Устанавливаем начальную позицию
                         rouletteTrack.style.left = '50%';
-                        rouletteTrack.style.transform = `translate(-50%, -50%) translateX(${startPosition}px)`;
+                        rouletteTrack.style.top = '50%';
+                        rouletteTrack.style.transform = `translate(calc(-50% + ${startPosition}px), -50%)`;
                         rouletteTrack.style.transition = 'none';
                         rouletteTrack.style.display = 'flex';
                         rouletteTrack.style.visibility = 'visible';
@@ -1122,42 +1133,54 @@
                             
                             // Простая функция замедления
                             const ease = 1 - Math.pow(1 - progress, 3);
-                            const currentPosition = startPosition + (finalPosition - startPosition) * ease;
+                            const currentOffset = startPosition + (finalPosition - startPosition) * ease;
                             
-                            rouletteTrack.style.transform = `translate(-50%, -50%) translateX(${currentPosition}px)`;
+                            // Применяем трансформацию - трек центрирован, смещаем по X
+                            rouletteTrack.style.transform = `translate(calc(-50% + ${currentOffset}px), -50%)`;
                             
                             // Обновляем выбранный элемент и ВСЕГДА делаем все видимыми
                             giftItems.forEach((item, index) => {
                                 // ВАЖНО: Принудительно делаем все элементы видимыми на каждом кадре
-                                item.style.cssText += `
+                                item.style.cssText = `
                                     opacity: 1 !important;
                                     visibility: visible !important;
                                     display: flex !important;
                                     transition: none !important;
+                                    flex-shrink: 0 !important;
+                                    width: 150px !important;
+                                    min-width: 150px !important;
+                                    max-width: 150px !important;
+                                    height: 150px !important;
                                 `;
                                 
                                 // Убеждаемся, что изображения внутри тоже видимы
                                 const images = item.querySelectorAll('img');
                                 images.forEach(img => {
-                                    img.style.cssText += `
+                                    img.style.cssText = `
                                         opacity: 1 !important;
                                         visibility: visible !important;
                                         display: block !important;
+                                        width: 80px !important;
+                                        height: 80px !important;
                                     `;
                                 });
                                 
                                 // Убеждаемся, что текст тоже видим
                                 const textElements = item.querySelectorAll('.gift-name');
                                 textElements.forEach(text => {
-                                    text.style.cssText += `
+                                    text.style.cssText = `
                                         opacity: 1 !important;
                                         visibility: visible !important;
                                     `;
                                 });
                                 
-                                const itemCenter = index * itemWidth + itemWidth / 2;
-                                const itemPos = itemCenter + currentPosition;
-                                const distance = Math.abs(itemPos - centerX);
+                                // Расчет позиции элемента относительно центра контейнера
+                                // Трек центрирован, поэтому центр трека = центр контейнера
+                                // Позиция элемента = его offset от начала трека - половина ширины трека + текущее смещение
+                                const itemOffset = index * itemWidth + itemWidth / 2;
+                                const totalTrackWidth = giftItems.length * itemWidth;
+                                const itemCenter = itemOffset - totalTrackWidth / 2 + currentOffset;
+                                const distance = Math.abs(itemCenter);
                                 
                                 if (distance < itemWidth / 2) {
                                     item.classList.add('selected');
