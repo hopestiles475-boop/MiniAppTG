@@ -1060,14 +1060,19 @@
                     
                     // Скрываем иконку только во время рулетки
                     detailIcon.style.display = 'none';
+                    
+                    // Сначала создаем рулетку, потом показываем
+                    createRoulette();
+                    
+                    // Убеждаемся, что контейнер видим
+                    rouletteContainer.style.display = 'block';
                     rouletteContainer.classList.add('active');
 
                     if (tg) {
                         tg.HapticFeedback.impactOccurred('heavy');
                     }
-
-                    createRoulette();
                     
+                    // Даем время на отрисовку элементов перед анимацией
                     setTimeout(() => {
                         const randomPrize = currentPrizes[Math.floor(Math.random() * currentPrizes.length)];
                         const spinDuration = 4000; // Длительность 4 секунды
@@ -1203,9 +1208,16 @@
                 giftItem.style.opacity = '1';
                 giftItem.style.display = 'flex';
                 giftItem.style.pointerEvents = 'auto';
-                giftItem.style.transition = 'none'; // Убираем transition для мгновенного отображения
+                giftItem.style.transition = 'none';
+                giftItem.style.position = 'relative';
+                giftItem.style.zIndex = '2';
                 rouletteTrack.appendChild(giftItem);
             });
+            
+            // Убеждаемся, что трек видим
+            rouletteTrack.style.display = 'flex';
+            rouletteTrack.style.visibility = 'visible';
+            rouletteTrack.style.opacity = '1';
         }
 
         function showCaseDetail(caseNum) {
