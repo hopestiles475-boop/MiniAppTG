@@ -950,10 +950,22 @@
             detailPage.classList.remove('active');
         });
 
-        const cases = {
-            1: { icon: 'IconCase/2c0JGQXrElCDlaNGbYHwgipHo2-yq00qIxcU39IganVzrqDys2-no-bg-preview%20%28carve.photos%29.png', price: 0.1, prizes: [
-                { icon: 'ItemCase1/_Jne2Jf3nM6erEUU5TEnvU7PWFOiElGs2WJc0zQ250JHxRd6md_v1huDDCpZRSesDCZP53pWDPEnqfojbzsYqjbD.png', name: 'Оскар', value: 82.17 },
-                { icon: 'ItemCase1/4dOUEOHs9WSNk5pRBkEnCptGIs16lB5xe4E7mh3sWF6XAkHcwQvINscw7cXwhK5IUXv5eOdct9_vxDZtoaMTm8GJ.png', name: 'Парфюм', value: 75.66 },
+        // ==========================================
+        // КОНФИГУРАЦИЯ КЕЙСОВ
+        // Здесь вы можете легко добавлять и редактировать кейсы и предметы
+        // ==========================================
+        
+        // КОНФИГУРАЦИЯ КЕЙСА #1
+        const case1Config = {
+            // Иконка кейса (путь к изображению)
+            icon: 'IconCase/2c0JGQXrElCDlaNGbYHwgipHo2-yq00qIxcU39IganVzrqDys2-no-bg-preview%20%28carve.photos%29.png',
+            // Цена открытия кейса
+            price: 0.1,
+            // Список предметов в кейсе
+            // Формат: { icon: 'путь к изображению', name: 'Название предмета', value: цена }
+            items: [
+                { icon: 'ItemCase1/_Jne2Jf3nM6erEUU5TEnvU7PWFOiElGs2WJc0zQ250JHxRd6md_v1huDDCpZRSesDCZP53pWDPEnqfojbzsYqjbD.png', name: 'Лоли поп', value: 82.17 },
+                { icon: 'ItemCase1/4dOUEOHs9WSNk5pRBkEnCptGIs16lB5xe4E7mh3sWF6XAkHcwQvINscw7cXwhK5IUXv5eOdct9_vxDZtoaMTm8GJ.png', name: 'Бабочка', value: 75.66 },
                 { icon: 'ItemCase1/GsJZ-oPiqQHoyerbmc-z_L_NTi8cBWgKmS9ueEOwk5_PHeYbWeRwn6Jxic2d1Yhl8IZwt0rBUg5ZfvrkYkYp0UrO.png', name: 'Зелье', value: 69.30 },
                 { icon: 'ItemCase1/qlq8mJd7J1-60XWhd29rLbtjBfzeXSPLMVgzkcBDTNfHL50TBMHG2B0h2jB1bAd-rJWlHO1NtkI0zAsWF4BgcVHn.png', name: 'Шлем', value: 25.27 },
                 { icon: 'ItemCase1/QrKwYOzBzIX1ilzkfuCuiFdyCRU9jBm5pASbp_z2Sb6ATFNaaB1Zr1XfNGehXeHTYhldZNO8x4_l0ueW2t4MZ62W.png', name: 'Сигара', value: 23.50 },
@@ -961,8 +973,21 @@
                 { icon: 'ItemCase1/XQTRb7Jx7OBjYfqnitHsZGV9pmln2Nhr9n5oYkJvZsF_dtkAYxPHS8Npi_qa6Pxcx0o368YwkcY9uRHmabTE5-LS.png', name: 'Бабочка', value: 11.40 },
                 { icon: 'ItemCase1/Y6HIRzDSCdUNCqWtHRsCpePjILr5QyrOnOD0T9PtrYjgu3Ff3XVbLGxLT1snsWyNNMzfDvTlhms0y1_Wwev6tz9-.png', name: 'Зелье', value: 8.64 },
                 { icon: 'ItemCase1/YLHOesDBQxjSVcanvj-iKz2mgFXRfweB38vb951G5LvwfJ8ytmlfe3PFUk3k_AgekpyW9A3uIpzEjM87k6_aUVS1.png', name: 'Цветок', value: 7.90 }
-            ]}
+            ]
         };
+
+        // Преобразуем конфигурацию в формат для работы приложения
+        const cases = {
+            1: {
+                icon: case1Config.icon,
+                price: case1Config.price,
+                prizes: case1Config.items
+            }
+        };
+        
+        // ==========================================
+        // КОНЕЦ КОНФИГУРАЦИИ
+        // ==========================================
 
         document.getElementById('balance').textContent = balance.toFixed(2);
 
@@ -1184,14 +1209,28 @@
                 giftItem.className = 'gift-item';
                 
                 // Проверяем, является ли иконка изображением
-                if (prize.icon.includes('.png') || prize.icon.includes('.jpg') || prize.icon.includes('.jpeg')) {
-                    giftItem.innerHTML = `
-                        <img src="${prize.icon}" alt="${prize.name}" style="width: 80px; height: 80px; object-fit: contain;">
-                        <div class="gift-name">${prize.name}</div>
-                    `;
+                const iconStr = String(prize.icon || '');
+                if (iconStr.toLowerCase().includes('.png') || iconStr.toLowerCase().includes('.jpg') || iconStr.toLowerCase().includes('.jpeg')) {
+                    const img = document.createElement('img');
+                    img.src = prize.icon;
+                    img.alt = prize.name;
+                    img.style.width = '80px';
+                    img.style.height = '80px';
+                    img.style.objectFit = 'contain';
+                    img.onerror = function() {
+                        console.error('Failed to load gift image:', this.src);
+                        this.style.display = 'none';
+                    };
+                    
+                    const nameDiv = document.createElement('div');
+                    nameDiv.className = 'gift-name';
+                    nameDiv.textContent = prize.name;
+                    
+                    giftItem.appendChild(img);
+                    giftItem.appendChild(nameDiv);
                 } else {
                     giftItem.innerHTML = `
-                        ${prize.icon}
+                        ${prize.icon || '?'}
                         <div class="gift-name">${prize.name}</div>
                     `;
                 }
@@ -1295,10 +1334,29 @@
                 
                 // Проверяем, является ли иконка изображением
                 let iconHtml = '';
-                if (prize.icon.includes('.png') || prize.icon.includes('.jpg') || prize.icon.includes('.jpeg')) {
-                    iconHtml = `<div class="prize-icon"><img src="${prize.icon}" alt="${prize.name}" style="width: 60px; height: 60px; object-fit: contain;"></div>`;
+                const iconStr = String(prize.icon || '');
+                if (iconStr.toLowerCase().includes('.png') || iconStr.toLowerCase().includes('.jpg') || iconStr.toLowerCase().includes('.jpeg')) {
+                    const img = document.createElement('img');
+                    img.src = prize.icon;
+                    img.alt = prize.name;
+                    img.style.width = '60px';
+                    img.style.height = '60px';
+                    img.style.objectFit = 'contain';
+                    img.onerror = function() {
+                        console.error('Failed to load prize image:', this.src);
+                        this.style.display = 'none';
+                        const parent = this.parentElement;
+                        if (parent) {
+                            parent.textContent = prize.name || '?';
+                        }
+                    };
+                    
+                    const iconDiv = document.createElement('div');
+                    iconDiv.className = 'prize-icon';
+                    iconDiv.appendChild(img);
+                    iconHtml = iconDiv.outerHTML;
                 } else {
-                    iconHtml = `<div class="prize-icon">${prize.icon}</div>`;
+                    iconHtml = `<div class="prize-icon">${prize.icon || '?'}</div>`;
                 }
                 
                 prizeItem.innerHTML = `
@@ -1382,10 +1440,22 @@
             const modalPrizeIcon = document.getElementById('modalPrizeIcon');
             
             // Проверяем, является ли иконка изображением
-            if (prize.icon.includes('.png') || prize.icon.includes('.jpg') || prize.icon.includes('.jpeg')) {
-                modalPrizeIcon.innerHTML = `<img src="${prize.icon}" alt="${prize.name}" style="width: 120px; height: 120px; object-fit: contain;">`;
+            const iconStr = String(prize.icon || '');
+            if (iconStr.toLowerCase().includes('.png') || iconStr.toLowerCase().includes('.jpg') || iconStr.toLowerCase().includes('.jpeg')) {
+                const img = document.createElement('img');
+                img.src = prize.icon;
+                img.alt = prize.name;
+                img.style.width = '120px';
+                img.style.height = '120px';
+                img.style.objectFit = 'contain';
+                img.onerror = function() {
+                    console.error('Failed to load modal prize image:', this.src);
+                    modalPrizeIcon.textContent = prize.name || '?';
+                };
+                modalPrizeIcon.innerHTML = '';
+                modalPrizeIcon.appendChild(img);
             } else {
-                modalPrizeIcon.textContent = prize.icon;
+                modalPrizeIcon.textContent = prize.icon || '?';
             }
             
             document.getElementById('modalPrizeName').textContent = prize.name;
