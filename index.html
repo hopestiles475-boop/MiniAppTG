@@ -1364,15 +1364,115 @@
         // Инвентарь пользователя (выигранные подарки)
         let userInventory = [];
         
+        // Получение ID пользователя из Telegram
+        function getUserId() {
+            const user = tg?.initDataUnsafe?.user;
+            return user?.id || null;
+        }
+        
+        // Получение данных пользователя
+        function getUsername() {
+            const user = tg?.initDataUnsafe?.user;
+            return user?.username || user?.first_name || 'Unknown';
+        }
+        
+        // Загрузка данных пользователя с сервера (баланс и инвентарь)
+        async function loadUserData() {
+            const userId = getUserId();
+            if (!userId) {
+                console.log('User ID not available, using local storage');
+                loadInventory();
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/${userId}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data) {
+                        // Загружаем баланс
+                        if (data.balance !== undefined) {
+                            balance = parseFloat(data.balance) || 100.00;
+                            document.getElementById('balance').textContent = balance.toFixed(2);
+                        }
+                        
+                        // Загружаем инвентарь
+                        if (data.inventory && Array.isArray(data.inventory)) {
+                            userInventory = data.inventory;
+                            updateInventory();
+                        } else {
+                            loadInventory();
+                        }
+                    }
+                } else {
+                    console.log('Failed to load user data, using local storage');
+                    loadInventory();
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                loadInventory();
+            }
+        }
+        
+        // Сохранение данных пользователя на сервер (баланс и инвентарь)
+        async function saveUserData() {
+            const userId = getUserId();
+            if (!userId) {
+                console.log('User ID not available, saving to local storage only');
+                saveInventory();
+                return;
+            }
+            
+            try {
+                const userData = {
+                    userId: userId,
+                    username: getUsername(),
+                    balance: balance,
+                    inventory: userInventory,
+                    updatedAt: Date.now()
+                };
+                
+                const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                });
+                
+                if (response.ok) {
+                    console.log('User data saved successfully');
+                    // Также сохраняем локально для офлайн-режима
+                    saveInventory();
+                } else {
+                    console.error('Failed to save user data to server');
+                    saveInventory();
+                }
+            } catch (error) {
+                console.error('Error saving user data:', error);
+                // При ошибке сохраняем локально
+                saveInventory();
+            }
+        }
+        
         // Загрузка инвентаря из localStorage
         function loadInventory() {
             try {
                 const stored = localStorage.getItem('userInventory');
+                const storedBalance = localStorage.getItem('userBalance');
+                
                 if (stored) {
                     userInventory = JSON.parse(stored);
                 } else {
                     userInventory = [];
                 }
+                
+                if (storedBalance) {
+                    balance = parseFloat(storedBalance) || 100.00;
+                    document.getElementById('balance').textContent = balance.toFixed(2);
+                }
+                
                 updateInventory();
             } catch (e) {
                 console.error('Failed to load inventory:', e);
@@ -1384,6 +1484,7 @@
         function saveInventory() {
             try {
                 localStorage.setItem('userInventory', JSON.stringify(userInventory));
+                localStorage.setItem('userBalance', balance.toString());
             } catch (e) {
                 console.error('Failed to save inventory:', e);
             }
@@ -1399,6 +1500,7 @@
                 id: Date.now() + Math.random()
             });
             saveInventory();
+            saveUserData(); // Сохраняем на сервер
             updateInventory();
         }
         
@@ -1530,8 +1632,8 @@
             // Загружаем подарки с сервера или из localStorage
             fetchGlobalPrizes();
             
-            // Загружаем инвентарь пользователя
-            loadInventory();
+            // Загружаем данные пользователя (баланс и инвентарь) с сервера
+            loadUserData();
             
             // Обновляем информацию профиля
             updateProfileInfo();
@@ -1643,6 +1745,7 @@
                     isOpening = true;
                     balance -= price;
                     document.getElementById('balance').textContent = balance.toFixed(2);
+                    saveUserData(); // Сохраняем баланс на сервер
                     
                     const detailIcon = document.getElementById('detailIcon');
                     const rouletteContainer = document.getElementById('rouletteContainer');
@@ -2191,13 +2294,14 @@
             detailPage.style.display = 'none';
             detailPage.classList.remove('active');
             
+            // Обязательно скрываем кнопку "Открыть" при возврате назад
             if (openBtn) {
                 openBtn.classList.remove('show');
-                openBtn.style.cssText = 'display: none !important;';
-                openBtn.disabled = false;
-                openBtn.style.pointerEvents = 'auto';
-                openBtn.style.opacity = '1';
-                openBtn.style.cursor = 'pointer';
+                openBtn.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important;';
+                openBtn.disabled = true;
+                openBtn.style.pointerEvents = 'none';
+                openBtn.style.opacity = '0';
+                openBtn.style.cursor = 'default';
                 openBtn.innerHTML = 'Открыть <span>🚀</span>';
             }
             
@@ -2499,6 +2603,7 @@
                         document.getElementById('balance').textContent = balance.toFixed(2);
                         userInventory = [];
                         saveInventory();
+                        saveUserData(); // Сохраняем на сервер
                         updateInventory();
                         tg.HapticFeedback.notificationOccurred('success');
                     }
@@ -2509,6 +2614,7 @@
                     document.getElementById('balance').textContent = balance.toFixed(2);
                     userInventory = [];
                     saveInventory();
+                    saveUserData(); // Сохраняем на сервер
                     updateInventory();
                 }
             }
@@ -2529,12 +2635,20 @@
                     return;
                 }
                 
+                const openBtn = document.getElementById('openBtn');
+                
                 if (page === 'cases') {
                     mainPage.style.display = 'block';
                     mainPage.classList.remove('hidden');
                     caseDetailPage.style.display = 'none';
                     caseDetailPage.classList.remove('active');
                     profilePage.style.display = 'none';
+                    // Скрываем кнопку "Открыть" при возврате на главную
+                    if (openBtn) {
+                        openBtn.style.display = 'none';
+                        openBtn.classList.remove('show');
+                        openBtn.disabled = true;
+                    }
                 } else if (page === 'profile') {
                     mainPage.style.display = 'none';
                     mainPage.classList.add('hidden');
@@ -2543,12 +2657,24 @@
                     profilePage.style.display = 'block';
                     profilePage.style.visibility = 'visible';
                     profilePage.style.opacity = '1';
+                    // Скрываем кнопку "Открыть" при переходе в профиль
+                    if (openBtn) {
+                        openBtn.style.display = 'none';
+                        openBtn.classList.remove('show');
+                        openBtn.disabled = true;
+                    }
                     updateInventory();
                     updateProfileInfo();
                     if (tg) {
                         tg.HapticFeedback.impactOccurred('light');
                     }
                 } else if (page === 'crash') {
+                    // Скрываем кнопку "Открыть" при переходе в краш
+                    if (openBtn) {
+                        openBtn.style.display = 'none';
+                        openBtn.classList.remove('show');
+                        openBtn.disabled = true;
+                    }
                     if (tg) {
                         tg.showAlert('Страница Краш в разработке');
                     }
@@ -2646,6 +2772,7 @@
                         // Удаляем предмет из инвентаря
                         userInventory = userInventory.filter(invItem => invItem.id !== item.id);
                         saveInventory();
+                        saveUserData(); // Сохраняем на сервер
                         updateInventory();
                         closeInventoryModal();
                         
@@ -2660,6 +2787,7 @@
                     // Удаляем предмет из инвентаря
                     userInventory = userInventory.filter(invItem => invItem.id !== item.id);
                     saveInventory();
+                    saveUserData(); // Сохраняем на сервер
                     updateInventory();
                     closeInventoryModal();
                 }
