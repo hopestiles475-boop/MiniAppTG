@@ -153,6 +153,7 @@
 
         .tabs {
             display: flex;
+            justify-content: center;
             gap: 10px;
             padding: 0 20px;
             margin-bottom: 15px;
@@ -1133,6 +1134,199 @@
             color: rgba(255, 255, 255, 0.3);
         }
 
+        .mines-page {
+            padding: 20px;
+            padding-bottom: 120px;
+            min-height: 100vh;
+            background: #0a0a0a;
+        }
+
+        .mines-header {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .mines-balance {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 16px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .mines-game-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .mines-controls {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .mines-bet-control {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .mines-bet-control label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .mines-select {
+            padding: 10px 15px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .mines-multiplier-display {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .mines-multiplier-label {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .mines-multiplier-value {
+            color: #00ff00;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .mines-cash-out-btn,
+        .mines-start-btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            border: none;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .mines-start-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .mines-start-btn:active {
+            transform: scale(0.98);
+        }
+
+        .mines-cash-out-btn {
+            background: linear-gradient(135deg, #00ff00 0%, #00cc00 100%);
+            color: #000;
+            box-shadow: 0 4px 20px rgba(0, 255, 0, 0.4);
+        }
+
+        .mines-cash-out-btn:active {
+            transform: scale(0.98);
+        }
+
+        .mines-cash-out-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .mines-grid-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .mines-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .mines-cell {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .mines-cell:active {
+            transform: scale(0.95);
+        }
+
+        .mines-cell.opened {
+            background: rgba(102, 126, 234, 0.3);
+            border-color: rgba(102, 126, 234, 0.5);
+            cursor: default;
+        }
+
+        .mines-cell.mine {
+            background: #ff0000;
+            border-color: #ff3333;
+        }
+
+        .mines-cell.safe {
+            background: rgba(0, 255, 0, 0.2);
+            border-color: rgba(0, 255, 0, 0.4);
+        }
+
+        .mines-stats {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 15px;
+        }
+
+        .mines-stat-item {
+            text-align: center;
+        }
+
+        .mines-stat-label {
+            display: block;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .mines-stat-item span:last-child {
+            display: block;
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
         .inventory-slot .next-icon {
             font-size: 30px;
             color: rgba(255, 255, 255, 0.5);
@@ -1582,6 +1776,55 @@
         </div>
     </div>
 
+    <div id="minesPage" class="mines-page" style="display: none;">
+        <div class="mines-header">
+            <div class="mines-balance">
+                <span class="currency-icon"></span>
+                <span id="minesBalance">0.00</span>
+            </div>
+        </div>
+        
+        <div class="mines-game-container">
+            <div class="mines-controls">
+                <div class="mines-bet-control">
+                    <label>Ставка:</label>
+                    <select id="minesBetAmount" class="mines-select">
+                        <option value="0.1">0.1</option>
+                        <option value="0.5">0.5</option>
+                        <option value="1.0">1.0</option>
+                        <option value="5.0">5.0</option>
+                        <option value="10.0">10.0</option>
+                    </select>
+                </div>
+                <div class="mines-multiplier-display">
+                    <div class="mines-multiplier-label">Множитель:</div>
+                    <div class="mines-multiplier-value" id="minesMultiplier">x1.00</div>
+                </div>
+                <button id="minesCashOutBtn" class="mines-cash-out-btn" disabled>Забрать</button>
+                <button id="minesStartBtn" class="mines-start-btn">Начать игру</button>
+            </div>
+            
+            <div class="mines-grid-container">
+                <div id="minesGrid" class="mines-grid"></div>
+            </div>
+            
+            <div class="mines-stats">
+                <div class="mines-stat-item">
+                    <span class="mines-stat-label">Открыто:</span>
+                    <span id="minesOpenedCount">0</span>
+                </div>
+                <div class="mines-stat-item">
+                    <span class="mines-stat-label">Мин:</span>
+                    <span id="minesTotalCount">3</span>
+                </div>
+                <div class="mines-stat-item">
+                    <span class="mines-stat-label">Выигрыш:</span>
+                    <span id="minesWinnings">0.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="bottom-nav">
         <div class="nav-item active" data-page="cases">
             <div class="nav-icon">🎁</div>
@@ -1590,6 +1833,10 @@
         <div class="nav-item" data-page="crash">
             <div class="nav-icon">🚀</div>
             <div class="nav-label">Краш</div>
+        </div>
+        <div class="nav-item" data-page="mines">
+            <div class="nav-icon">💣</div>
+            <div class="nav-label">Мины</div>
         </div>
         <div class="nav-item" data-page="profile">
             <div class="nav-icon">👤</div>
@@ -2962,6 +3209,41 @@
                     if (tg) {
                         tg.HapticFeedback.impactOccurred('light');
                     }
+                } else if (page === 'mines') {
+                    // Скрываем header при переходе на мины
+                    if (header) {
+                        header.style.display = 'none';
+                    }
+                    
+                    // Скрываем все остальные страницы и элементы
+                    mainPage.style.display = 'none';
+                    mainPage.classList.add('hidden');
+                    caseDetailPage.style.display = 'none';
+                    caseDetailPage.classList.remove('active');
+                    profilePage.style.display = 'none';
+                    
+                    const subscribeBtn = document.querySelector('.subscribe-btn');
+                    const tabs = document.querySelector('.tabs');
+                    const casesCarousel = document.querySelector('.cases-carousel');
+                    if (subscribeBtn) subscribeBtn.style.display = 'none';
+                    if (tabs) tabs.style.display = 'none';
+                    if (casesCarousel) casesCarousel.style.display = 'none';
+                    
+                    // Показываем страницу мин
+                    const minesPage = document.getElementById('minesPage');
+                    if (minesPage) {
+                        minesPage.style.display = 'block';
+                        document.getElementById('minesBalance').textContent = balance.toFixed(2);
+                        initMinesGame();
+                    }
+                    
+                    if (crashPage) {
+                        crashPage.style.display = 'none';
+                    }
+                    
+                    if (tg) {
+                        tg.HapticFeedback.impactOccurred('light');
+                    }
                 }
             });
         });
@@ -3040,6 +3322,220 @@
         }
         
         window.closeInventoryModal = closeInventoryModal;
+
+        // ИГРА МИНЫ
+        let minesGameState = {
+            grid: [],
+            mines: [],
+            opened: [],
+            gameActive: false,
+            betAmount: 0.1,
+            currentMultiplier: 1.0,
+            minesCount: 3,
+            gridSize: 25
+        };
+
+        function initMinesGame() {
+            const grid = document.getElementById('minesGrid');
+            if (!grid) return;
+            
+            grid.innerHTML = '';
+            minesGameState.grid = [];
+            minesGameState.opened = [];
+            minesGameState.gameActive = false;
+            minesGameState.currentMultiplier = 1.0;
+            
+            for (let i = 0; i < minesGameState.gridSize; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'mines-cell';
+                cell.dataset.index = i;
+                cell.textContent = '?';
+                grid.appendChild(cell);
+                minesGameState.grid.push({ isMine: false, revealed: false, index: i });
+            }
+            
+            document.getElementById('minesOpenedCount').textContent = '0';
+            document.getElementById('minesMultiplier').textContent = 'x1.00';
+            document.getElementById('minesWinnings').textContent = '0.00';
+            document.getElementById('minesCashOutBtn').disabled = true;
+            document.getElementById('minesStartBtn').textContent = 'Начать игру';
+            document.getElementById('minesStartBtn').disabled = false;
+            document.getElementById('minesBetAmount').disabled = false;
+            
+            // Убираем старые обработчики
+            const cells = grid.querySelectorAll('.mines-cell');
+            cells.forEach(cell => {
+                cell.replaceWith(cell.cloneNode(true));
+            });
+        }
+
+        function startMinesGame() {
+            if (minesGameState.gameActive) return;
+            
+            minesGameState.betAmount = parseFloat(document.getElementById('minesBetAmount').value) || 0.1;
+            
+            if (balance < minesGameState.betAmount) {
+                if (tg) {
+                    tg.showAlert('Недостаточно средств!');
+                } else {
+                    alert('Недостаточно средств!');
+                }
+                return;
+            }
+            
+            balance -= minesGameState.betAmount;
+            document.getElementById('balance').textContent = balance.toFixed(2);
+            document.getElementById('minesBalance').textContent = balance.toFixed(2);
+            saveInventory();
+            
+            // Генерируем мины
+            minesGameState.mines = [];
+            minesGameState.opened = [];
+            minesGameState.currentMultiplier = 1.0;
+            minesGameState.gameActive = true;
+            
+            const gridSize = minesGameState.gridSize;
+            while (minesGameState.mines.length < minesGameState.minesCount) {
+                const randomIndex = Math.floor(Math.random() * gridSize);
+                if (!minesGameState.mines.includes(randomIndex)) {
+                    minesGameState.mines.push(randomIndex);
+                    minesGameState.grid[randomIndex].isMine = true;
+                }
+            }
+            
+            document.getElementById('minesStartBtn').textContent = 'Игра идет...';
+            document.getElementById('minesStartBtn').disabled = true;
+            document.getElementById('minesBetAmount').disabled = true;
+            document.getElementById('minesCashOutBtn').disabled = false;
+            
+            updateMinesDisplay();
+        }
+
+        function openMinesCell(index) {
+            if (!minesGameState.gameActive) return;
+            if (minesGameState.opened.includes(index)) return;
+            
+            const cell = minesGameState.grid[index];
+            if (cell.isMine) {
+                // Проигрыш
+                endMinesGame(false);
+                revealAllMines();
+                if (tg) {
+                    tg.showAlert('МИНА! Вы проиграли!');
+                    tg.HapticFeedback.notificationOccurred('error');
+                } else {
+                    alert('МИНА! Вы проиграли!');
+                }
+                return;
+            }
+            
+            minesGameState.opened.push(index);
+            cell.revealed = true;
+            
+            // Обновляем множитель
+            const openedCount = minesGameState.opened.length;
+            minesGameState.currentMultiplier = 1.0 + (openedCount * 0.1);
+            
+            updateMinesDisplay();
+            updateMinesMultiplier();
+            
+            if (tg) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
+        }
+
+        function cashOutMines() {
+            if (!minesGameState.gameActive) return;
+            
+            const winnings = minesGameState.betAmount * minesGameState.currentMultiplier;
+            balance += winnings;
+            
+            document.getElementById('balance').textContent = balance.toFixed(2);
+            document.getElementById('minesBalance').textContent = balance.toFixed(2);
+            saveInventory();
+            
+            endMinesGame(true);
+            
+            if (tg) {
+                tg.showAlert(`Вы выиграли ${winnings.toFixed(2)}!`);
+                tg.HapticFeedback.notificationOccurred('success');
+            } else {
+                alert(`Вы выиграли ${winnings.toFixed(2)}!`);
+            }
+        }
+
+        function endMinesGame(won) {
+            minesGameState.gameActive = false;
+            document.getElementById('minesCashOutBtn').disabled = true;
+            document.getElementById('minesStartBtn').textContent = 'Новая игра';
+            document.getElementById('minesStartBtn').disabled = false;
+            document.getElementById('minesBetAmount').disabled = false;
+            
+            if (!won) {
+                revealAllMines();
+            }
+        }
+
+        function revealAllMines() {
+            minesGameState.mines.forEach(mineIndex => {
+                const cellElement = document.querySelector(`.mines-cell[data-index="${mineIndex}"]`);
+                if (cellElement) {
+                    cellElement.classList.add('mine');
+                    cellElement.textContent = '💣';
+                }
+            });
+        }
+
+        function updateMinesDisplay() {
+            const cells = document.querySelectorAll('.mines-cell');
+            cells.forEach((cellElement, index) => {
+                const cell = minesGameState.grid[index];
+                if (minesGameState.opened.includes(index)) {
+                    cellElement.classList.add('opened', 'safe');
+                    cellElement.textContent = '✓';
+                } else {
+                    cellElement.classList.remove('opened', 'safe', 'mine');
+                    if (!minesGameState.gameActive) {
+                        cellElement.textContent = '?';
+                    } else {
+                        cellElement.textContent = '?';
+                    }
+                }
+            });
+            
+            document.getElementById('minesOpenedCount').textContent = minesGameState.opened.length;
+        }
+
+        function updateMinesMultiplier() {
+            document.getElementById('minesMultiplier').textContent = `x${minesGameState.currentMultiplier.toFixed(2)}`;
+            const winnings = minesGameState.betAmount * minesGameState.currentMultiplier;
+            document.getElementById('minesWinnings').textContent = winnings.toFixed(2);
+        }
+
+        // Инициализация игры при загрузке
+        document.addEventListener('DOMContentLoaded', () => {
+            const minesStartBtn = document.getElementById('minesStartBtn');
+            const minesCashOutBtn = document.getElementById('minesCashOutBtn');
+            const minesGrid = document.getElementById('minesGrid');
+            
+            if (minesStartBtn) {
+                minesStartBtn.addEventListener('click', startMinesGame);
+            }
+            
+            if (minesCashOutBtn) {
+                minesCashOutBtn.addEventListener('click', cashOutMines);
+            }
+            
+            if (minesGrid) {
+                minesGrid.addEventListener('click', (e) => {
+                    const cell = e.target.closest('.mines-cell');
+                    if (cell && minesGameState.gameActive) {
+                        const index = parseInt(cell.dataset.index);
+                        openMinesCell(index);
+                    }
+                });
+            }
+        });
         
         // Продажа выбранного предмета
         function sellSelectedItem() {
