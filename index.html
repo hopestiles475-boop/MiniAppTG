@@ -1070,7 +1070,7 @@
                     
                     setTimeout(() => {
                         const randomPrize = currentPrizes[Math.floor(Math.random() * currentPrizes.length)];
-                        const spinDuration = 3000;
+                        const spinDuration = 5000; // Увеличиваем длительность до 5 секунд
                         const rouletteTrack = document.getElementById('rouletteTrack');
                         const giftItems = rouletteTrack.querySelectorAll('.gift-item');
                         const itemWidth = 150 + 20;
@@ -1099,7 +1099,8 @@
                         const centerX = containerWidth / 2;
                         const targetItemCenter = targetIndex * itemWidth + (itemWidth / 2);
                         const targetX = centerX - targetItemCenter;
-                        const extraSpins = 5;
+                        // Увеличиваем количество прокруток для бесконечного эффекта
+                        const extraSpins = 20; // Увеличиваем с 5 до 20
                         const spinDistance = extraSpins * currentPrizes.length * itemWidth;
                         const startX = 0;
                         const finalX = targetX - spinDistance;
@@ -1109,7 +1110,19 @@
                             const elapsed = Date.now() - startTime;
                             const progress = Math.min(elapsed / spinDuration, 1);
                             
-                            const easeOut = 1 - Math.pow(1 - progress, 3);
+                            // Используем более плавную функцию easing для длительной прокрутки
+                            // Начало быстрое, потом постепенно замедляется
+                            let easeOut;
+                            if (progress < 0.7) {
+                                // Первые 70% прокрутки - быстро
+                                const fastProgress = progress / 0.7;
+                                easeOut = fastProgress * 0.8;
+                            } else {
+                                // Последние 30% - медленно замедляется
+                                const slowProgress = (progress - 0.7) / 0.3;
+                                easeOut = 0.8 + (1 - Math.pow(1 - slowProgress, 3)) * 0.2;
+                            }
+                            
                             const currentX = startX + (finalX - startX) * easeOut;
                             
                             const trackCenter = containerWidth / 2;
