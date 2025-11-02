@@ -26,6 +26,12 @@
             justify-content: space-between;
             padding: 15px 20px;
         }
+        
+        /* Скрываем header на странице краша */
+        #crashPage ~ .header,
+        .crash-page ~ .header {
+            display: none;
+        }
 
         .profile-section {
             display: flex;
@@ -2965,38 +2971,68 @@
                     openBtn.style.pointerEvents = 'none';
                 }
                 
+                const crashPage = document.getElementById('crashPage');
+                
+                // Показываем/скрываем header в зависимости от страницы
+                const header = document.querySelector('.header');
+                
                 if (page === 'cases') {
+                    // Показываем header
+                    if (header) {
+                        header.style.display = 'flex';
+                    }
+                    // Показываем главную страницу
                     mainPage.style.display = 'block';
                     mainPage.classList.remove('hidden');
+                    // Скрываем все остальные страницы
                     caseDetailPage.style.display = 'none';
                     caseDetailPage.classList.remove('active');
                     profilePage.style.display = 'none';
+                    if (crashPage) {
+                        crashPage.style.display = 'none';
+                    }
                 } else if (page === 'profile') {
+                    // Показываем header
+                    if (header) {
+                        header.style.display = 'flex';
+                    }
+                    // Показываем профиль
+                    profilePage.style.display = 'block';
+                    profilePage.style.visibility = 'visible';
+                    profilePage.style.opacity = '1';
+                    // Скрываем все остальные страницы
                     mainPage.style.display = 'none';
                     mainPage.classList.add('hidden');
                     caseDetailPage.style.display = 'none';
                     caseDetailPage.classList.remove('active');
-                    profilePage.style.display = 'block';
-                    profilePage.style.visibility = 'visible';
-                    profilePage.style.opacity = '1';
+                    if (crashPage) {
+                        crashPage.style.display = 'none';
+                    }
                     updateInventory();
                     updateProfileInfo();
                     if (tg) {
                         tg.HapticFeedback.impactOccurred('light');
                     }
                 } else if (page === 'crash') {
-                    mainPage.style.display = 'none';
-                    mainPage.classList.add('hidden');
-                    caseDetailPage.style.display = 'none';
-                    caseDetailPage.classList.remove('active');
-                    profilePage.style.display = 'none';
-                    const crashPage = document.getElementById('crashPage');
+                    // Скрываем header при переходе на краш
+                    const header = document.querySelector('.header');
+                    if (header) {
+                        header.style.display = 'none';
+                    }
+                    
+                    // Показываем страницу краша
                     if (crashPage) {
                         crashPage.style.display = 'block';
                         // Обновляем баланс на странице краша
                         document.getElementById('crashBalance').textContent = balance.toFixed(2);
                         initCrashGame();
                     }
+                    // Скрываем все остальные страницы
+                    mainPage.style.display = 'none';
+                    mainPage.classList.add('hidden');
+                    caseDetailPage.style.display = 'none';
+                    caseDetailPage.classList.remove('active');
+                    profilePage.style.display = 'none';
                     // Скрываем кнопку "Открыть" при переходе в краш
                     if (openBtn) {
                         openBtn.style.display = 'none';
