@@ -382,7 +382,7 @@
     </div>
 
     <div class="case-detail-page" id="caseDetailPage" style="display: none;">
-        <button class="back-btn" onclick="goBack()">← Назад</button>
+        <button class="back-btn" onclick="window.goBack()">← Назад</button>
         <div class="case-detail-header">
             <div class="case-detail-icon" id="detailIcon">🔐</div>
             <div class="case-detail-price" id="detailPrice">💎 69.30</div>
@@ -423,6 +423,18 @@
         let currentCase = null;
         let currentPrizes = [];
         let isOpening = false;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const mainPage = document.getElementById('mainPage');
+            const detailPage = document.getElementById('caseDetailPage');
+            
+            mainPage.style.display = 'block';
+            mainPage.classList.remove('hidden');
+            detailPage.style.display = 'none';
+            detailPage.classList.remove('active');
+            
+            console.log('Page initialized - main page visible');
+        });
 
         const cases = {
             1: { icon: '🔐', price: 69.30, prizes: [
@@ -617,25 +629,34 @@
         }
 
         function goBack() {
+            console.log('goBack called');
             const mainPage = document.getElementById('mainPage');
             const detailPage = document.getElementById('caseDetailPage');
+            const modal = document.getElementById('prizeModal');
             
+            console.log('Switching back - showing main, hiding detail');
             detailPage.style.display = 'none';
             detailPage.classList.remove('active');
+            
             mainPage.style.display = 'block';
             mainPage.classList.remove('hidden');
             
-            const modal = document.getElementById('prizeModal');
+            modal.style.display = 'none';
             modal.classList.remove('active');
             
             document.querySelectorAll('.prize-item').forEach(item => {
-                item.classList.remove('win');
+                item.classList.remove('win', 'spinning-prizes');
             });
+            
+            isOpening = false;
+            currentCase = null;
             
             if (tg) {
                 tg.HapticFeedback.impactOccurred('light');
             }
         }
+        
+        window.goBack = goBack;
 
 
         function showPrizeModal(prize) {
