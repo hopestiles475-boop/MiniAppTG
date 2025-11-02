@@ -617,10 +617,19 @@
             gap: 10px !important;
             z-index: 99999 !important;
             box-shadow: 0 8px 40px rgba(102, 126, 234, 0.8), 0 0 30px rgba(102, 126, 234, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
-            visibility: visible !important;
-            opacity: 1 !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
             transition: all 0.3s !important;
             backdrop-filter: blur(10px) !important;
+        }
+        
+        /* Скрываем кнопку на всех страницах кроме страницы деталей кейса */
+        #mainPage:not(.hidden) ~ .open-btn,
+        #profilePage[style*="block"] ~ .open-btn,
+        #profilePage:not([style*="none"]) ~ .open-btn {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
         }
         
         .open-btn:hover {
@@ -1745,6 +1754,7 @@
                     isOpening = true;
                     balance -= price;
                     document.getElementById('balance').textContent = balance.toFixed(2);
+                    saveInventory(); // Сохраняем баланс локально
                     saveUserData(); // Сохраняем баланс на сервер
                     
                     const detailIcon = document.getElementById('detailIcon');
@@ -2128,9 +2138,14 @@
             const mainPage = document.getElementById('mainPage');
             const detailPage = document.getElementById('caseDetailPage');
             const modal = document.getElementById('prizeModal');
+            const profilePage = document.getElementById('profilePage');
             
+            // Скрываем все страницы кроме деталей кейса
             mainPage.style.display = 'none';
             mainPage.classList.add('hidden');
+            if (profilePage) {
+                profilePage.style.display = 'none';
+            }
             
             detailPage.style.display = 'block';
             detailPage.classList.add('active');
@@ -2602,7 +2617,7 @@
                         balance += totalValue;
                         document.getElementById('balance').textContent = balance.toFixed(2);
                         userInventory = [];
-                        saveInventory();
+                        saveInventory(); // Сохраняем баланс локально
                         saveUserData(); // Сохраняем на сервер
                         updateInventory();
                         tg.HapticFeedback.notificationOccurred('success');
@@ -2613,7 +2628,7 @@
                     balance += totalValue;
                     document.getElementById('balance').textContent = balance.toFixed(2);
                     userInventory = [];
-                    saveInventory();
+                    saveInventory(); // Сохраняем баланс локально
                     saveUserData(); // Сохраняем на сервер
                     updateInventory();
                 }
@@ -2637,18 +2652,22 @@
                 
                 const openBtn = document.getElementById('openBtn');
                 
+                // Всегда скрываем кнопку при переключении вкладок
+                if (openBtn) {
+                    openBtn.style.display = 'none';
+                    openBtn.style.visibility = 'hidden';
+                    openBtn.style.opacity = '0';
+                    openBtn.classList.remove('show');
+                    openBtn.disabled = true;
+                    openBtn.style.pointerEvents = 'none';
+                }
+                
                 if (page === 'cases') {
                     mainPage.style.display = 'block';
                     mainPage.classList.remove('hidden');
                     caseDetailPage.style.display = 'none';
                     caseDetailPage.classList.remove('active');
                     profilePage.style.display = 'none';
-                    // Скрываем кнопку "Открыть" при возврате на главную
-                    if (openBtn) {
-                        openBtn.style.display = 'none';
-                        openBtn.classList.remove('show');
-                        openBtn.disabled = true;
-                    }
                 } else if (page === 'profile') {
                     mainPage.style.display = 'none';
                     mainPage.classList.add('hidden');
@@ -2657,24 +2676,12 @@
                     profilePage.style.display = 'block';
                     profilePage.style.visibility = 'visible';
                     profilePage.style.opacity = '1';
-                    // Скрываем кнопку "Открыть" при переходе в профиль
-                    if (openBtn) {
-                        openBtn.style.display = 'none';
-                        openBtn.classList.remove('show');
-                        openBtn.disabled = true;
-                    }
                     updateInventory();
                     updateProfileInfo();
                     if (tg) {
                         tg.HapticFeedback.impactOccurred('light');
                     }
                 } else if (page === 'crash') {
-                    // Скрываем кнопку "Открыть" при переходе в краш
-                    if (openBtn) {
-                        openBtn.style.display = 'none';
-                        openBtn.classList.remove('show');
-                        openBtn.disabled = true;
-                    }
                     if (tg) {
                         tg.showAlert('Страница Краш в разработке');
                     }
@@ -2771,7 +2778,7 @@
                         
                         // Удаляем предмет из инвентаря
                         userInventory = userInventory.filter(invItem => invItem.id !== item.id);
-                        saveInventory();
+                        saveInventory(); // Сохраняем баланс локально
                         saveUserData(); // Сохраняем на сервер
                         updateInventory();
                         closeInventoryModal();
@@ -2786,7 +2793,7 @@
                     
                     // Удаляем предмет из инвентаря
                     userInventory = userInventory.filter(invItem => invItem.id !== item.id);
-                    saveInventory();
+                    saveInventory(); // Сохраняем баланс локально
                     saveUserData(); // Сохраняем на сервер
                     updateInventory();
                     closeInventoryModal();
