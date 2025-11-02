@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -942,12 +942,10 @@
                     const rouletteContainer = document.getElementById('rouletteContainer');
                     const openBtn = document.getElementById('openBtn');
                     
-                    // Отключаем кнопку сразу же в начале
+                    // Полностью скрываем кнопку при начале прокрутки
+                    openBtn.classList.remove('show');
+                    openBtn.style.cssText = 'display: none !important;';
                     openBtn.disabled = true;
-                    openBtn.style.pointerEvents = 'none';
-                    openBtn.style.opacity = '0.5';
-                    openBtn.style.cursor = 'not-allowed';
-                    openBtn.innerHTML = 'Крутится... <span class="spinning">🎰</span>';
                     
                     detailIcon.style.display = 'none';
                     rouletteContainer.classList.add('active');
@@ -1025,11 +1023,6 @@
                                         rouletteContainer.classList.remove('active');
                                         
                                         isOpening = false;
-                                        openBtn.disabled = false;
-                                        openBtn.style.pointerEvents = 'auto';
-                                        openBtn.style.opacity = '1';
-                                        openBtn.style.cursor = 'pointer';
-                                        openBtn.innerHTML = 'Открыть <span>🚀</span>';
                                         
                                         if (tg) {
                                             tg.HapticFeedback.notificationOccurred('success');
@@ -1193,6 +1186,18 @@
             document.querySelectorAll('.prize-item').forEach(item => {
                 item.classList.remove('win');
             });
+            
+            // Показываем кнопку "Открыть" обратно после закрытия модального окна
+            const openBtn = document.getElementById('openBtn');
+            const detailPage = document.getElementById('caseDetailPage');
+            
+            if (openBtn && detailPage && detailPage.classList.contains('active')) {
+                openBtn.disabled = false;
+                openBtn.classList.add('show');
+                openBtn.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important;';
+                openBtn.innerHTML = 'Открыть <span>🚀</span>';
+            }
+            
             if (tg) {
                 tg.HapticFeedback.impactOccurred('light');
             }
