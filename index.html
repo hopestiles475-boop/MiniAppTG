@@ -128,6 +128,14 @@
             color: white;
         }
 
+        #mainPage {
+            display: block;
+        }
+
+        #mainPage.hidden {
+            display: none !important;
+        }
+
         .case-detail-page {
             display: none !important;
             padding: 20px;
@@ -138,8 +146,12 @@
             display: block !important;
         }
 
-        #mainPage.hidden {
+        .modal {
             display: none !important;
+        }
+
+        .modal.active {
+            display: flex !important;
         }
 
         .case-detail-header {
@@ -369,7 +381,7 @@
         </div>
     </div>
 
-    <div class="case-detail-page" id="caseDetailPage">
+    <div class="case-detail-page" id="caseDetailPage" style="display: none;">
         <button class="back-btn" onclick="goBack()">← Назад</button>
         <div class="case-detail-header">
             <div class="case-detail-icon" id="detailIcon">🔐</div>
@@ -381,7 +393,7 @@
         <div class="prizes-grid" id="prizesGrid">
         </div>
 
-        <button class="open-btn" id="openBtn" onclick="window.openCase()">
+        <button class="open-btn" id="openBtn" type="button">
             Открыть <span>🚀</span>
         </button>
     </div>
@@ -444,10 +456,13 @@
 
         document.querySelectorAll('.case-card').forEach(card => {
             card.addEventListener('click', (e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 const caseNum = parseInt(card.dataset.case);
                 console.log('Clicked case:', caseNum);
-                showCaseDetail(caseNum);
+                if (!isOpening) {
+                    showCaseDetail(caseNum);
+                }
             });
         });
 
@@ -530,6 +545,12 @@
 
         function showCaseDetail(caseNum) {
             console.log('showCaseDetail called with:', caseNum);
+            
+            if (isOpening) {
+                console.log('Already opening, ignoring');
+                return;
+            }
+            
             currentCase = cases[caseNum];
             if (!currentCase) {
                 console.log('No case found');
@@ -542,9 +563,13 @@
             const detailPage = document.getElementById('caseDetailPage');
             const modal = document.getElementById('prizeModal');
             
+            console.log('Switching pages - hiding main, showing detail');
             mainPage.style.display = 'none';
+            mainPage.classList.add('hidden');
+            
             detailPage.style.display = 'block';
             detailPage.classList.add('active');
+            
             modal.style.display = 'none';
             modal.classList.remove('active');
             
@@ -572,6 +597,15 @@
             const openBtn = document.getElementById('openBtn');
             openBtn.disabled = false;
             openBtn.innerHTML = 'Открыть <span>🚀</span>';
+            
+            openBtn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Open button clicked');
+                if (currentCase && !isOpening) {
+                    window.openCase();
+                }
+            };
 
             document.querySelectorAll('.prize-item').forEach(item => {
                 item.classList.remove('win', 'spinning-prizes');
