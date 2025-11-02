@@ -119,23 +119,34 @@
 
         .subscribe-btn {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             margin: 15px 20px;
-            padding: 15px 20px;
+            padding: 20px;
             border-radius: 16px;
             border: none;
             color: white;
-            font-size: 16px;
-            font-weight: 600;
             cursor: pointer;
+            gap: 15px;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s;
+        }
+
+        .subscribe-btn:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.2);
         }
 
         .subscribe-inner {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            width: 100%;
         }
 
         .subscribe-icon {
@@ -145,10 +156,16 @@
         .subscribe-action {
             background: white;
             color: #667eea;
-            padding: 8px 16px;
+            padding: 12px 24px;
             border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 16px;
+            font-weight: 700;
+            transition: all 0.3s;
+            box-shadow: 0 2px 10px rgba(255, 255, 255, 0.2);
+        }
+
+        .subscribe-action:active {
+            transform: scale(0.95);
         }
 
         .tabs {
@@ -987,6 +1004,8 @@
             padding: 20px;
             padding-bottom: 120px;
             min-height: 100vh;
+            position: relative;
+            z-index: 1;
         }
 
         .profile-header {
@@ -1139,6 +1158,8 @@
             padding-bottom: 120px;
             min-height: 100vh;
             background: #0a0a0a;
+            position: relative;
+            z-index: 1;
         }
 
         .mines-header {
@@ -3183,6 +3204,25 @@
                     if (header) {
                         header.style.display = 'flex';
                     }
+                    // Скрываем все остальные страницы
+                    caseDetailPage.style.display = 'none';
+                    caseDetailPage.classList.remove('active');
+                    
+                    profilePage.style.display = 'none';
+                    profilePage.style.visibility = 'hidden';
+                    profilePage.style.opacity = '0';
+                    
+                    if (crashPage) {
+                        crashPage.style.display = 'none';
+                    }
+                    
+                    const minesPage = document.getElementById('minesPage');
+                    if (minesPage) {
+                        minesPage.style.display = 'none';
+                        minesPage.style.visibility = 'hidden';
+                        minesPage.style.opacity = '0';
+                    }
+                    
                     // Показываем главную страницу и все её элементы
                     mainPage.style.display = 'block';
                     mainPage.classList.remove('hidden');
@@ -3192,30 +3232,38 @@
                     if (subscribeBtn) subscribeBtn.style.display = 'block';
                     if (tabs) tabs.style.display = 'flex';
                     if (casesCarousel) casesCarousel.style.display = 'block';
-                    // Скрываем все остальные страницы
-                    caseDetailPage.style.display = 'none';
-                    caseDetailPage.classList.remove('active');
-                    profilePage.style.display = 'none';
-                    if (crashPage) {
-                        crashPage.style.display = 'none';
-                    }
                 } else if (page === 'profile') {
                     // Показываем header
                     if (header) {
                         header.style.display = 'flex';
                     }
-                    // Показываем профиль
-                    profilePage.style.display = 'block';
-                    profilePage.style.visibility = 'visible';
-                    profilePage.style.opacity = '1';
-                    // Скрываем все остальные страницы
+                    // Скрываем все остальные страницы и элементы
                     mainPage.style.display = 'none';
                     mainPage.classList.add('hidden');
                     caseDetailPage.style.display = 'none';
                     caseDetailPage.classList.remove('active');
+                    
+                    const subscribeBtn = document.querySelector('.subscribe-btn');
+                    const tabs = document.querySelector('.tabs');
+                    const casesCarousel = document.querySelector('.cases-carousel');
+                    if (subscribeBtn) subscribeBtn.style.display = 'none';
+                    if (tabs) tabs.style.display = 'none';
+                    if (casesCarousel) casesCarousel.style.display = 'none';
+                    
                     if (crashPage) {
                         crashPage.style.display = 'none';
                     }
+                    
+                    const minesPage = document.getElementById('minesPage');
+                    if (minesPage) {
+                        minesPage.style.display = 'none';
+                    }
+                    
+                    // Показываем профиль
+                    profilePage.style.display = 'block';
+                    profilePage.style.visibility = 'visible';
+                    profilePage.style.opacity = '1';
+                    
                     updateInventory();
                     updateProfileInfo();
                     if (tg) {
@@ -3233,7 +3281,17 @@
                     mainPage.classList.add('hidden');
                     caseDetailPage.style.display = 'none';
                     caseDetailPage.classList.remove('active');
+                    
                     profilePage.style.display = 'none';
+                    profilePage.style.visibility = 'hidden';
+                    profilePage.style.opacity = '0';
+                    
+                    const minesPage = document.getElementById('minesPage');
+                    if (minesPage) {
+                        minesPage.style.display = 'none';
+                        minesPage.style.visibility = 'hidden';
+                        minesPage.style.opacity = '0';
+                    }
                     
                     // Убеждаемся, что все элементы главной страницы скрыты
                     const subscribeBtn = document.querySelector('.subscribe-btn');
@@ -3246,6 +3304,8 @@
                     // Показываем страницу краша
                     if (crashPage) {
                         crashPage.style.display = 'block';
+                        crashPage.style.visibility = 'visible';
+                        crashPage.style.opacity = '1';
                         // Обновляем баланс на странице краша
                         document.getElementById('crashBalance').textContent = balance.toFixed(2);
                         initCrashGame();
@@ -3273,7 +3333,10 @@
                     mainPage.classList.add('hidden');
                     caseDetailPage.style.display = 'none';
                     caseDetailPage.classList.remove('active');
+                    
                     profilePage.style.display = 'none';
+                    profilePage.style.visibility = 'hidden';
+                    profilePage.style.opacity = '0';
                     
                     const subscribeBtn = document.querySelector('.subscribe-btn');
                     const tabs = document.querySelector('.tabs');
@@ -3282,16 +3345,18 @@
                     if (tabs) tabs.style.display = 'none';
                     if (casesCarousel) casesCarousel.style.display = 'none';
                     
+                    if (crashPage) {
+                        crashPage.style.display = 'none';
+                    }
+                    
                     // Показываем страницу мин
                     const minesPage = document.getElementById('minesPage');
                     if (minesPage) {
                         minesPage.style.display = 'block';
+                        minesPage.style.visibility = 'visible';
+                        minesPage.style.opacity = '1';
                         document.getElementById('minesBalance').textContent = balance.toFixed(2);
                         initMinesGame();
-                    }
-                    
-                    if (crashPage) {
-                        crashPage.style.display = 'none';
                     }
                     
                     if (tg) {
