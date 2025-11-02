@@ -2981,9 +2981,17 @@
                     if (header) {
                         header.style.display = 'flex';
                     }
-                    // Показываем главную страницу
+                    // Показываем главную страницу и все её элементы
                     mainPage.style.display = 'block';
                     mainPage.classList.remove('hidden');
+                    const subscribeBtn = document.querySelector('.subscribe-btn');
+                    const tabs = document.querySelector('.tabs');
+                    const liveSection = document.querySelector('.live-section');
+                    const casesCarousel = document.querySelector('.cases-carousel');
+                    if (subscribeBtn) subscribeBtn.style.display = 'block';
+                    if (tabs) tabs.style.display = 'flex';
+                    if (liveSection) liveSection.style.display = 'block';
+                    if (casesCarousel) casesCarousel.style.display = 'block';
                     // Скрываем все остальные страницы
                     caseDetailPage.style.display = 'none';
                     caseDetailPage.classList.remove('active');
@@ -3020,6 +3028,23 @@
                         header.style.display = 'none';
                     }
                     
+                    // Скрываем все остальные страницы и элементы
+                    mainPage.style.display = 'none';
+                    mainPage.classList.add('hidden');
+                    caseDetailPage.style.display = 'none';
+                    caseDetailPage.classList.remove('active');
+                    profilePage.style.display = 'none';
+                    
+                    // Убеждаемся, что все элементы главной страницы скрыты
+                    const subscribeBtn = document.querySelector('.subscribe-btn');
+                    const tabs = document.querySelector('.tabs');
+                    const liveSection = document.querySelector('.live-section');
+                    const casesCarousel = document.querySelector('.cases-carousel');
+                    if (subscribeBtn) subscribeBtn.style.display = 'none';
+                    if (tabs) tabs.style.display = 'none';
+                    if (liveSection) liveSection.style.display = 'none';
+                    if (casesCarousel) casesCarousel.style.display = 'none';
+                    
                     // Показываем страницу краша
                     if (crashPage) {
                         crashPage.style.display = 'block';
@@ -3027,12 +3052,6 @@
                         document.getElementById('crashBalance').textContent = balance.toFixed(2);
                         initCrashGame();
                     }
-                    // Скрываем все остальные страницы
-                    mainPage.style.display = 'none';
-                    mainPage.classList.add('hidden');
-                    caseDetailPage.style.display = 'none';
-                    caseDetailPage.classList.remove('active');
-                    profilePage.style.display = 'none';
                     // Скрываем кнопку "Открыть" при переходе в краш
                     if (openBtn) {
                         openBtn.style.display = 'none';
