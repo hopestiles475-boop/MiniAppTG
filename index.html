@@ -3457,6 +3457,12 @@
             minesGameState.currentMultiplier = 1.0;
             minesGameState.gameActive = true;
             
+            // Сбрасываем все клетки
+            minesGameState.grid.forEach(cell => {
+                cell.isMine = false;
+                cell.revealed = false;
+            });
+            
             const gridSize = minesGameState.gridSize;
             while (minesGameState.mines.length < minesGameState.minesCount) {
                 const randomIndex = Math.floor(Math.random() * gridSize);
@@ -3466,10 +3472,19 @@
                 }
             }
             
+            // Обновляем отображение множителя в начале игры
+            updateMinesMultiplier();
+            
             document.getElementById('minesStartBtn').textContent = 'Игра идет...';
             document.getElementById('minesStartBtn').disabled = true;
             document.getElementById('minesBetAmount').disabled = true;
             document.getElementById('minesCashOutBtn').disabled = false;
+            
+            // Блокируем кнопки выбора количества мин во время игры
+            document.querySelectorAll('.mines-count-btn').forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+            });
             
             updateMinesDisplay();
         }
@@ -3544,6 +3559,12 @@
             document.getElementById('minesStartBtn').disabled = false;
             document.getElementById('minesBetAmount').disabled = false;
             
+            // Разблокируем кнопки выбора количества мин
+            document.querySelectorAll('.mines-count-btn').forEach(btn => {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            });
+            
             if (!won) {
                 revealAllMines();
             }
@@ -3580,9 +3601,17 @@
         }
 
         function updateMinesMultiplier() {
-            document.getElementById('minesMultiplier').textContent = `x${minesGameState.currentMultiplier.toFixed(2)}`;
-            const winnings = minesGameState.betAmount * minesGameState.currentMultiplier;
-            document.getElementById('minesWinnings').textContent = winnings.toFixed(2);
+            const multiplierEl = document.getElementById('minesMultiplier');
+            const winningsEl = document.getElementById('minesWinnings');
+            
+            if (multiplierEl) {
+                multiplierEl.textContent = `x${minesGameState.currentMultiplier.toFixed(2)}`;
+            }
+            
+            if (winningsEl) {
+                const winnings = minesGameState.betAmount * minesGameState.currentMultiplier;
+                winningsEl.textContent = winnings.toFixed(2);
+            }
         }
 
         // Инициализация игры при загрузке
