@@ -18,6 +18,7 @@
             color: var(--tg-theme-text-color, #ffffff);
             min-height: 100vh;
             overflow-x: hidden;
+            padding-bottom: 80px;
         }
 
         .header {
@@ -25,7 +26,28 @@
             align-items: center;
             justify-content: space-between;
             padding: 15px 20px;
-            background: var(--tg-theme-bg-color, #0a0a0a);
+        }
+
+        .profile-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .username {
+            font-weight: 600;
+            font-size: 16px;
         }
 
         .balance-section {
@@ -47,7 +69,7 @@
         }
 
         .ton-balance {
-            font-size: 20px;
+            font-size: 24px;
             font-weight: 700;
             margin: 10px 20px;
         }
@@ -60,6 +82,109 @@
             font-size: 12px;
             font-weight: 600;
             margin-left: 10px;
+        }
+
+        .subscribe-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 15px 20px;
+            padding: 15px 20px;
+            border-radius: 16px;
+            border: none;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .subscribe-inner {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .subscribe-icon {
+            font-size: 24px;
+        }
+
+        .subscribe-action {
+            background: white;
+            color: #667eea;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            padding: 0 20px;
+            margin-bottom: 15px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .live-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 20px;
+            margin-bottom: 20px;
+        }
+
+        .live-badge {
+            background: #00ff00;
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .live-carousel {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .live-carousel::-webkit-scrollbar {
+            display: none;
+        }
+
+        .live-item {
+            min-width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .live-item.active {
+            border-color: #00ff00;
         }
 
         .cases-carousel {
@@ -76,13 +201,14 @@
         }
 
         .case-card {
-            min-width: 280px;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
-            border-radius: 20px;
-            padding: 20px;
+            min-width: 200px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+            border-radius: 16px;
+            padding: 15px;
             border: 2px solid rgba(255, 255, 255, 0.1);
             cursor: pointer;
             transition: all 0.3s;
+            position: relative;
         }
 
         .case-card:active {
@@ -92,15 +218,19 @@
         .case-icon {
             font-size: 80px;
             text-align: center;
-            margin: 20px 0;
+            margin: 15px 0;
         }
 
-        .case-price {
-            text-align: center;
-            font-size: 24px;
-            font-weight: 700;
-            color: #667eea;
-            margin-top: 10px;
+        .case-price-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #00d4ff;
         }
 
         .pagination {
@@ -144,14 +274,6 @@
 
         .case-detail-page.active {
             display: block !important;
-        }
-
-        .modal {
-            display: none !important;
-        }
-
-        .modal.active {
-            display: flex !important;
         }
 
         .case-detail-header {
@@ -273,7 +395,7 @@
         }
 
         .modal {
-            display: none;
+            display: none !important;
             position: fixed;
             top: 0;
             left: 0;
@@ -287,7 +409,7 @@
         }
 
         .modal.active {
-            display: flex;
+            display: flex !important;
         }
 
         .modal-content {
@@ -340,13 +462,51 @@
             width: 100%;
         }
 
-        .hidden {
-            display: none;
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 20px;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .nav-item.active {
+            color: #667eea;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+        }
+
+        .nav-label {
+            font-size: 12px;
+            font-weight: 500;
         }
     </style>
 </head>
 <body>
     <div class="header">
+        <div class="profile-section">
+            <div class="avatar">👤</div>
+            <div class="username" id="username">User</div>
+        </div>
         <div class="balance-section">
             <span class="diamond-icon">💎</span>
             <span class="balance-text" id="balance">0.00</span>
@@ -359,18 +519,54 @@
     </div>
 
     <div id="mainPage">
+        <button class="subscribe-btn">
+            <div class="subscribe-inner">
+                <div class="subscribe-icon">🐸</div>
+                <span>Подпишись на нас</span>
+            </div>
+            <div class="subscribe-action">Подписаться</div>
+        </button>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="paid">Платные</button>
+            <button class="tab" data-tab="free">Бесплатные</button>
+        </div>
+
+        <div class="live-section">
+            <div class="live-badge">LIVE</div>
+            <div class="live-carousel">
+                <div class="live-item active">🌙</div>
+                <div class="live-item">❄️</div>
+                <div class="live-item">💝</div>
+                <div class="live-item">🍭</div>
+                <div class="live-item">🕷️</div>
+            </div>
+        </div>
+
         <div class="cases-carousel" id="casesCarousel">
-            <div class="case-card" data-case="1" data-price="69.30">
-                <div class="case-icon">🔐</div>
-                <div class="case-price">💎 69.30</div>
+            <div class="case-card" data-case="1" data-price="0.1">
+                <div class="case-price-badge">💎 0.1</div>
+                <div class="case-icon">🐸</div>
             </div>
-            <div class="case-card" data-case="2" data-price="2.25">
-                <div class="case-icon">🌙</div>
-                <div class="case-price">💎 2.25</div>
+            <div class="case-card" data-case="2" data-price="0.5">
+                <div class="case-price-badge">💎 0.5</div>
+                <div class="case-icon">💀</div>
             </div>
-            <div class="case-card" data-case="3" data-price="75.66">
-                <div class="case-icon">✨</div>
-                <div class="case-price">💎 75.66</div>
+            <div class="case-card" data-case="3" data-price="1">
+                <div class="case-price-badge">💎 1</div>
+                <div class="case-icon">🧸</div>
+            </div>
+            <div class="case-card" data-case="4" data-price="1">
+                <div class="case-price-badge">💎 1</div>
+                <div class="case-icon">💰</div>
+            </div>
+            <div class="case-card" data-case="5" data-price="1.5">
+                <div class="case-price-badge">💎 1.5</div>
+                <div class="case-icon">💎</div>
+            </div>
+            <div class="case-card" data-case="6" data-price="2">
+                <div class="case-price-badge">💎 2</div>
+                <div class="case-icon">🏆</div>
             </div>
         </div>
 
@@ -384,8 +580,8 @@
     <div class="case-detail-page" id="caseDetailPage" style="display: none;">
         <button class="back-btn" onclick="window.goBack()">← Назад</button>
         <div class="case-detail-header">
-            <div class="case-detail-icon" id="detailIcon">🔐</div>
-            <div class="case-detail-price" id="detailPrice">💎 69.30</div>
+            <div class="case-detail-icon" id="detailIcon">🌙</div>
+            <div class="case-detail-price" id="detailPrice">💎 2.25</div>
         </div>
 
         <div class="whats-inside-title">Что внутри?</div>
@@ -407,6 +603,21 @@
         </div>
     </div>
 
+    <div class="bottom-nav">
+        <div class="nav-item active" data-page="cases">
+            <div class="nav-icon">🎁</div>
+            <div class="nav-label">Кейсы</div>
+        </div>
+        <div class="nav-item" data-page="crash">
+            <div class="nav-icon">🚀</div>
+            <div class="nav-label">Краш</div>
+        </div>
+        <div class="nav-item" data-page="profile">
+            <div class="nav-icon">👤</div>
+            <div class="nav-label">Профиль</div>
+        </div>
+    </div>
+
     <script>
         let tg = window.Telegram?.WebApp;
         let isTelegram = false;
@@ -423,6 +634,7 @@
         let currentCase = null;
         let currentPrizes = [];
         let isOpening = false;
+        let currentTab = 'paid';
 
         document.addEventListener('DOMContentLoaded', function() {
             const mainPage = document.getElementById('mainPage');
@@ -432,12 +644,10 @@
             mainPage.classList.remove('hidden');
             detailPage.style.display = 'none';
             detailPage.classList.remove('active');
-            
-            console.log('Page initialized - main page visible');
         });
 
         const cases = {
-            1: { icon: '🔐', price: 69.30, prizes: [
+            1: { icon: '🐸', price: 0.1, prizes: [
                 { icon: '🏆', name: 'Оскар', value: 82.17 },
                 { icon: '✨', name: 'Парфюм', value: 75.66 },
                 { icon: '💀', name: 'Зелье', value: 69.30 },
@@ -448,30 +658,57 @@
                 { icon: '🧪', name: 'Зелье', value: 8.64 },
                 { icon: '🌺', name: 'Цветок', value: 7.90 }
             ]},
-            2: { icon: '🌙', price: 2.25, prizes: [
-                { icon: '🌙', name: 'Луна', value: 5.00 },
-                { icon: '⭐', name: 'Звезда', value: 3.50 },
-                { icon: '💫', name: 'Комета', value: 2.25 },
-                { icon: '✨', name: 'Блеск', value: 1.80 },
-                { icon: '🌠', name: 'Метеор', value: 1.50 }
+            2: { icon: '💀', price: 0.5, prizes: [
+                { icon: '💀', name: 'Череп', value: 45.00 },
+                { icon: '🎱', name: '8-ball', value: 35.00 },
+                { icon: '💍', name: 'Кольцо', value: 25.00 },
+                { icon: '👑', name: 'Корона', value: 20.00 },
+                { icon: '💎', name: 'Кристалл', value: 15.00 }
             ]},
-            3: { icon: '✨', price: 75.66, prizes: [
-                { icon: '✨', name: 'Парфюм N°5', value: 85.00 },
-                { icon: '💎', name: 'Бриллиант', value: 75.66 },
-                { icon: '👑', name: 'Корона', value: 65.00 },
-                { icon: '💍', name: 'Кольцо', value: 55.00 },
-                { icon: '🏆', name: 'Трофей', value: 45.00 }
+            3: { icon: '🧸', price: 1, prizes: [
+                { icon: '🧸', name: 'Мишка', value: 30.00 },
+                { icon: '🍼', name: 'Бутылочка', value: 25.00 },
+                { icon: '🎩', name: 'Цилиндр', value: 20.00 },
+                { icon: '🎁', name: 'Подарок', value: 15.00 }
+            ]},
+            4: { icon: '💰', price: 1, prizes: [
+                { icon: '💰', name: '200 TON', value: 200.00 },
+                { icon: '💵', name: '100 TON', value: 100.00 },
+                { icon: '💴', name: '50 TON', value: 50.00 }
+            ]},
+            5: { icon: '💎', price: 1.5, prizes: [
+                { icon: '💎', name: 'Кристалл', value: 40.00 },
+                { icon: '🪙', name: 'Монета', value: 30.00 },
+                { icon: '⌚', name: 'Часы', value: 25.00 }
+            ]},
+            6: { icon: '🏆', price: 2, prizes: [
+                { icon: '🏆', name: 'Трофей', value: 50.00 },
+                { icon: '💠', name: 'Кристалл', value: 35.00 },
+                { icon: '🧪', name: 'Зелье', value: 20.00 },
+                { icon: '🐱', name: 'Кот', value: 15.00 }
             ]}
         };
 
         document.getElementById('balance').textContent = balance.toFixed(2);
+
+        const user = tg?.initDataUnsafe?.user;
+        if (user) {
+            document.getElementById('username').textContent = user.first_name || 'User';
+        }
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentTab = tab.dataset.tab;
+            });
+        });
 
         document.querySelectorAll('.case-card').forEach(card => {
             card.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 const caseNum = parseInt(card.dataset.case);
-                console.log('Clicked case:', caseNum);
                 if (!isOpening) {
                     showCaseDetail(caseNum);
                 }
@@ -479,7 +716,6 @@
         });
 
         window.openCase = function() {
-            console.log('openCase called, currentCase:', currentCase, 'isOpening:', isOpening);
             if (currentCase && !isOpening) {
                 const openCaseFunc = function() {
                     if (isOpening) return;
@@ -508,7 +744,6 @@
                     }
 
                     const prizeItems = document.querySelectorAll('.prize-item');
-                    let spinCount = 0;
                     const spinDuration = 2000;
                     const spinInterval = 50;
                     const totalSpins = spinDuration / spinInterval;
@@ -556,18 +791,10 @@
         };
 
         function showCaseDetail(caseNum) {
-            console.log('showCaseDetail called with:', caseNum);
-            
-            if (isOpening) {
-                console.log('Already opening, ignoring');
-                return;
-            }
+            if (isOpening) return;
             
             currentCase = cases[caseNum];
-            if (!currentCase) {
-                console.log('No case found');
-                return;
-            }
+            if (!currentCase) return;
 
             isOpening = false;
             
@@ -575,7 +802,6 @@
             const detailPage = document.getElementById('caseDetailPage');
             const modal = document.getElementById('prizeModal');
             
-            console.log('Switching pages - hiding main, showing detail');
             mainPage.style.display = 'none';
             mainPage.classList.add('hidden');
             
@@ -613,7 +839,6 @@
             openBtn.onclick = function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Open button clicked');
                 if (currentCase && !isOpening) {
                     window.openCase();
                 }
@@ -629,12 +854,10 @@
         }
 
         function goBack() {
-            console.log('goBack called');
             const mainPage = document.getElementById('mainPage');
             const detailPage = document.getElementById('caseDetailPage');
             const modal = document.getElementById('prizeModal');
             
-            console.log('Switching back - showing main, hiding detail');
             detailPage.style.display = 'none';
             detailPage.classList.remove('active');
             
@@ -658,7 +881,6 @@
         
         window.goBack = goBack;
 
-
         function showPrizeModal(prize) {
             document.getElementById('modalPrizeIcon').textContent = prize.icon;
             document.getElementById('modalPrizeName').textContent = prize.name;
@@ -668,15 +890,22 @@
 
         function closePrizeModal() {
             document.getElementById('prizeModal').classList.remove('active');
-            
             document.querySelectorAll('.prize-item').forEach(item => {
                 item.classList.remove('win');
             });
-            
             if (tg) {
                 tg.HapticFeedback.impactOccurred('light');
             }
         }
+
+        document.querySelector('.subscribe-btn').addEventListener('click', () => {
+            if (tg) {
+                tg.openTelegramLink('https://t.me/your_channel');
+                tg.HapticFeedback.impactOccurred('medium');
+            } else {
+                window.open('https://t.me/your_channel', '_blank');
+            }
+        });
 
         document.querySelector('.balance-section button').addEventListener('click', () => {
             if (tg) {
@@ -685,6 +914,20 @@
             } else {
                 alert('Пополнение баланса');
             }
+        });
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const page = item.dataset.page;
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                
+                if (page === 'crash' || page === 'profile') {
+                    if (tg) {
+                        tg.showAlert(`Страница ${page === 'crash' ? 'Краш' : 'Профиль'} в разработке`);
+                    }
+                }
+            });
         });
     </script>
 </body>
