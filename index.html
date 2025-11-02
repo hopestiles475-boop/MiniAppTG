@@ -193,8 +193,8 @@
         }
 
         .cases-carousel {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            display: flex;
+            flex-direction: column;
             gap: 15px;
             padding: 20px;
             width: 100%;
@@ -215,11 +215,10 @@
             transition: all 0.3s;
             position: relative;
             box-sizing: border-box;
-            aspect-ratio: 1;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
+            flex-direction: row;
             align-items: center;
+            gap: 15px;
         }
 
         .case-card:active {
@@ -233,22 +232,20 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 100%;
-            height: 100%;
+            width: 120px;
+            min-width: 120px;
+            height: 120px;
             background: transparent;
             border-radius: 12px;
             padding: 10px;
-            flex: 1;
+            flex-shrink: 0;
         }
 
         .case-icon img {
             width: 100%;
-            max-width: 100%;
-            height: auto;
-            max-height: 100%;
+            height: 100%;
             object-fit: contain;
             display: block;
-            margin: 0 auto;
         }
 
         .case-icon:empty {
@@ -272,8 +269,31 @@
             color: #00d4ff;
         }
 
+        .case-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding-left: 10px;
+        }
+
+        .case-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 5px;
+        }
+
+        .case-description {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
         .pagination {
-            display: none;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px;
         }
 
         .page-btn {
@@ -796,26 +816,50 @@
             <div class="case-card" data-case="1" data-price="0.1">
                 <div class="case-price-badge">💎 0.1</div>
                 <div class="case-icon"><img src="IconCase/2c0JGQXrElCDlaNGbYHwgipHo2-yq00qIxcU39IganVzrqDys2-no-bg-preview%20%28carve.photos%29.png" alt="Case 1" onerror="console.error('Failed to load image:', this.src)"></div>
+                <div class="case-info">
+                    <div class="case-name">Кейс #1</div>
+                    <div class="case-description">9 предметов</div>
+                </div>
             </div>
             <div class="case-card" data-case="2" data-price="0.5">
                 <div class="case-price-badge">💎 0.5</div>
                 <div class="case-icon"><img src="IconCase/9aVA4BPQdJkDmeyatmkd6NJ_9J2m4FdaFV_ug-glYkQynUls9f-no-bg-preview%20%28carve.photos%29.png" alt="Case 2" onerror="console.error('Failed to load image:', this.src)"></div>
+                <div class="case-info">
+                    <div class="case-name">Кейс #2</div>
+                    <div class="case-description">5 предметов</div>
+                </div>
             </div>
             <div class="case-card" data-case="3" data-price="1">
                 <div class="case-price-badge">💎 1</div>
                 <div class="case-icon"><img src="IconCase/9b9VAwbActN_OS8u0KzdDrk5B3IWp4jVymIWNKj5sJJgtuSCa7-no-bg-preview%20%28carve.photos%29.png" alt="Case 3" onerror="console.error('Failed to load image:', this.src)"></div>
+                <div class="case-info">
+                    <div class="case-name">Кейс #3</div>
+                    <div class="case-description">4 предмета</div>
+                </div>
             </div>
             <div class="case-card" data-case="4" data-price="1">
                 <div class="case-price-badge">💎 1</div>
                 <div class="case-icon"><img src="IconCase/aAsoXWgFH3cEc0D0oLbcdJ7kbpDtyk9SKUaL06o_JAlgbnS-aJ-no-bg-preview%20%28carve.photos%29.png" alt="Case 4" onerror="console.error('Failed to load image:', this.src)"></div>
+                <div class="case-info">
+                    <div class="case-name">Кейс #4</div>
+                    <div class="case-description">3 предмета</div>
+                </div>
             </div>
             <div class="case-card" data-case="5" data-price="1.5">
                 <div class="case-price-badge">💎 1.5</div>
                 <div class="case-icon"><img src="IconCase/goywMgHtLcJIDbu4rcpamr77BtAz9mFVgIUxw7W5ZqJdtmto6p-no-bg-preview%20%28carve.photos%29.png" alt="Case 5" onerror="console.error('Failed to load image:', this.src)"></div>
+                <div class="case-info">
+                    <div class="case-name">Кейс #5</div>
+                    <div class="case-description">3 предмета</div>
+                </div>
             </div>
             <div class="case-card" data-case="6" data-price="2">
                 <div class="case-price-badge">💎 2</div>
                 <div class="case-icon"><img src="IconCase/n-qxKQFxqb-ncpLgDbrfbfCXPwWkBlk-BXBVoN5J9cIpd3FJ0C-no-bg-preview%20%28carve.photos%29.png" alt="Case 6" onerror="console.error('Failed to load image:', this.src)"></div>
+                <div class="case-info">
+                    <div class="case-name">Кейс #6</div>
+                    <div class="case-description">4 предмета</div>
+                </div>
             </div>
         </div>
 
