@@ -3200,11 +3200,9 @@
                     ctx.fillText(`${remaining}...`, canvas.width / 2, canvas.height / 2 + 20);
                 }
                 
-                // В элементе множителя показываем просто кулдаун без текста
+                // Скрываем элемент множителя во время кулдауна (показываем только на canvas)
                 if (multiplierElement) {
-                    multiplierElement.textContent = `${remaining}`;
-                    multiplierElement.style.color = '#ffaa00';
-                    multiplierElement.style.borderColor = '#ffaa00';
+                    multiplierElement.style.display = 'none';
                 }
                 
                 // Обновляем текст кнопки для активных ставок
@@ -3221,6 +3219,14 @@
                 
                 if (remaining < 0) {
                     clearInterval(countdown);
+                    
+                    // Показываем элемент множителя обратно
+                    if (multiplierElement) {
+                        multiplierElement.style.display = 'block';
+                        multiplierElement.textContent = 'x1.00';
+                        multiplierElement.style.color = '#00ff00';
+                        multiplierElement.style.borderColor = '#00ff00';
+                    }
                     
                     // Обновляем кнопку для активных ставок
                     if (makeBetBtn && userBet && !userBet.cashedOut && crashRoundActive === false) {
