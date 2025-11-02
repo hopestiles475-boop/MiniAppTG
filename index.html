@@ -3233,11 +3233,16 @@
                     crashDirection = 1;
                     crashGraphPoints = [{ x: 0, y: canvas.height - 50, multiplier: 1.00 }];
                     
-                    // Случайный момент краша (от 1.01 до 10.0)
-                    crashTarget = 1.01 + Math.random() * 9.0;
+                    // Одинаковый краш для всех игроков (на основе времени начала раунда)
+                    const roundStartTime = Date.now();
+                    const seed = roundStartTime % 1000000; // Используем остаток от времени как seed
+                    const random = seed / 1000000; // Преобразуем в 0-1
                     
-                    // Время до краша (от 3 до 20 секунд)
-                    const timeToCrash = 3000 + Math.random() * 17000;
+                    // Момент краша (от 1.01 до 10.0) - одинаковый для всех
+                    crashTarget = 1.01 + random * 9.0;
+                    
+                    // Время до краша (от 3 до 20 секунд) - одинаковое для всех
+                    const timeToCrash = 3000 + random * 17000;
                     
                     setTimeout(() => {
                         if (crashRoundActive) {
@@ -3441,11 +3446,10 @@
             const betsList = document.getElementById('betsList');
             if (!betsList) return;
             
-            const header = betsList.querySelector('.bets-list-header');
             betsList.innerHTML = '';
             const headerDiv = document.createElement('div');
             headerDiv.className = 'bets-list-header';
-            headerDiv.textContent = 'Активные ставки';
+            headerDiv.textContent = `Ставки (${crashPlayers.length})`;
             betsList.appendChild(headerDiv);
             
             // Сортируем игроков: сначала активные, потом выведенные
@@ -3484,9 +3488,10 @@
                 const details = document.createElement('div');
                 details.className = 'bet-item-details';
                 if (player.itemName) {
-                    details.innerHTML = `🎁 ${player.itemName} x${(player.cashOutMultiplier || crashMultiplier).toFixed(2)}`;
+                    const betValue = player.itemValue || 0;
+                    details.innerHTML = `🎁 ${player.itemName}<br><span style="font-size: 12px; opacity: 0.8;">Ставка: ${betValue.toFixed(2)}</span>`;
                 } else {
-                    details.innerHTML = `<span class="currency-icon" style="width: 12px; height: 12px; display: inline-block;"></span> ${player.betAmount.toFixed(2)} x${(player.cashOutMultiplier || crashMultiplier).toFixed(2)}`;
+                    details.innerHTML = `<span class="currency-icon" style="width: 12px; height: 12px; display: inline-block;"></span> ${player.betAmount.toFixed(2)}<br><span style="font-size: 12px; opacity: 0.8;">Множитель: ${(player.cashOutMultiplier || crashMultiplier).toFixed(2)}</span>`;
                 }
                 info.appendChild(details);
                 
