@@ -3200,8 +3200,9 @@
                     ctx.fillText(`${remaining}...`, canvas.width / 2, canvas.height / 2 + 20);
                 }
                 
-                // Скрываем элемент множителя во время кулдауна (показываем только на canvas)
+                // Очищаем и скрываем элемент множителя во время кулдауна (показываем только на canvas)
                 if (multiplierElement) {
+                    multiplierElement.textContent = '';
                     multiplierElement.style.display = 'none';
                 }
                 
