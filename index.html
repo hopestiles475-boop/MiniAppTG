@@ -295,8 +295,15 @@
             border-radius: 16px;
             background: rgba(255, 255, 255, 0.05);
             display: none;
-            padding: 0 75px;
+            padding: 0;
             box-sizing: border-box;
+        }
+        
+        .roulette-wrapper {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: visible;
         }
 
         .roulette-container.active {
@@ -307,15 +314,17 @@
             display: flex;
             gap: 20px;
             position: absolute;
-            left: 0;
+            left: 50%;
             top: 50%;
-            transform: translateY(-50%);
-            transition: transform 0.05s linear;
+            transform: translate(-50%, -50%);
             will-change: transform;
+            white-space: nowrap;
         }
 
         .gift-item {
+            width: 150px;
             min-width: 150px;
+            max-width: 150px;
             height: 150px;
             background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
             border-radius: 16px;
@@ -326,6 +335,9 @@
             border: 3px solid rgba(255, 255, 255, 0.2);
             font-size: 80px;
             position: relative;
+            flex-shrink: 0;
+            visibility: visible;
+            opacity: 1;
         }
 
         .gift-item.selected {
@@ -426,7 +438,7 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            z-index: 150;
+            z-index: 9999;
             box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
             visibility: visible;
             opacity: 1;
@@ -436,6 +448,12 @@
             display: flex !important;
             visibility: visible !important;
             opacity: 1 !important;
+        }
+
+        @media (min-width: 768px) {
+            .open-btn.show {
+                display: flex !important;
+            }
         }
 
         .open-btn:disabled {
@@ -662,8 +680,10 @@
             <div class="case-detail-price" id="detailPrice">💎 2.25</div>
             
             <div class="roulette-container" id="rouletteContainer">
-                <div class="center-indicator"></div>
-                <div class="roulette-track" id="rouletteTrack"></div>
+                <div class="roulette-wrapper">
+                    <div class="center-indicator"></div>
+                    <div class="roulette-track" id="rouletteTrack"></div>
+                </div>
             </div>
         </div>
 
@@ -674,7 +694,7 @@
 
     </div>
 
-    <button class="open-btn" id="openBtn" type="button" style="display: none;">
+    <button class="open-btn" id="openBtn" type="button">
         Открыть <span>🚀</span>
     </button>
 
@@ -834,83 +854,86 @@
 
                     createRoulette();
                     
-                    const randomPrize = currentPrizes[Math.floor(Math.random() * currentPrizes.length)];
-                    const spinDuration = 3000;
-                    const rouletteTrack = document.getElementById('rouletteTrack');
-                    const giftItems = rouletteTrack.querySelectorAll('.gift-item');
-                    const itemWidth = 150 + 20;
-                    
-                    let targetIndex = -1;
-                    for (let i = 0; i < giftItems.length; i++) {
-                        if (giftItems[i].dataset.icon === randomPrize.icon) {
-                            targetIndex = i;
-                            break;
-                        }
-                    }
-                    
-                    if (targetIndex === -1) {
-                        targetIndex = Math.floor(giftItems.length / 2);
-                    }
-                    
-                    const startX = 0;
-                    const containerWidth = rouletteContainer.offsetWidth;
-                    const centerX = containerWidth / 2;
-                    const targetItemCenter = targetIndex * itemWidth + (itemWidth / 2);
-                    const targetX = centerX - targetItemCenter;
-                    const extraSpins = 5;
-                    const finalX = targetX - (extraSpins * currentPrizes.length * itemWidth);
-                    
-                    let startTime = Date.now();
-                    const animateRoulette = () => {
-                        const elapsed = Date.now() - startTime;
-                        const progress = Math.min(elapsed / spinDuration, 1);
+                    setTimeout(() => {
+                        const randomPrize = currentPrizes[Math.floor(Math.random() * currentPrizes.length)];
+                        const spinDuration = 3000;
+                        const rouletteTrack = document.getElementById('rouletteTrack');
+                        const giftItems = rouletteTrack.querySelectorAll('.gift-item');
+                        const itemWidth = 150 + 20;
                         
-                        const easeOut = 1 - Math.pow(1 - progress, 3);
-                        const currentX = startX + (finalX - startX) * easeOut;
-                        
-                        rouletteTrack.style.transform = `translate(${currentX}px, -50%)`;
-                        
-                        const centerX = rouletteContainer.offsetWidth / 2;
-                        giftItems.forEach((item, index) => {
-                            const itemLeft = currentX + index * itemWidth;
-                            const itemCenter = itemLeft + itemWidth / 2;
-                            const distance = Math.abs(itemCenter - centerX);
-                            
-                            if (distance < itemWidth / 2) {
-                                item.classList.add('selected');
-                            } else {
-                                item.classList.remove('selected');
+                        let targetIndex = -1;
+                        for (let i = 0; i < giftItems.length; i++) {
+                            if (giftItems[i].dataset.icon === randomPrize.icon) {
+                                targetIndex = i;
+                                break;
                             }
-                        });
-                        
-                        if (progress < 1) {
-                            requestAnimationFrame(animateRoulette);
-                        } else {
-                            setTimeout(() => {
-                                giftItems.forEach(item => item.classList.remove('selected'));
-                                if (giftItems[targetIndex]) {
-                                    giftItems[targetIndex].classList.add('selected');
-                                }
-                                
-                                setTimeout(() => {
-                                    showPrizeModal(randomPrize);
-                                    
-                                    detailIcon.style.display = 'block';
-                                    rouletteContainer.classList.remove('active');
-                                    
-                                    isOpening = false;
-                                    openBtn.disabled = false;
-                                    openBtn.innerHTML = 'Открыть <span>🚀</span>';
-                                    
-                                    if (tg) {
-                                        tg.HapticFeedback.notificationOccurred('success');
-                                    }
-                                }, 500);
-                            }, 300);
                         }
-                    };
-                    
-                    requestAnimationFrame(animateRoulette);
+                        
+                        if (targetIndex === -1) {
+                            targetIndex = Math.floor(giftItems.length / 2);
+                        }
+                        
+                        const containerWidth = rouletteContainer.offsetWidth;
+                        const centerX = containerWidth / 2;
+                        const targetItemCenter = targetIndex * itemWidth + (itemWidth / 2);
+                        const targetX = centerX - targetItemCenter;
+                        const extraSpins = 5;
+                        const spinDistance = extraSpins * currentPrizes.length * itemWidth;
+                        const startX = 0;
+                        const finalX = targetX - spinDistance;
+                        
+                        let startTime = Date.now();
+                        const animateRoulette = () => {
+                            const elapsed = Date.now() - startTime;
+                            const progress = Math.min(elapsed / spinDuration, 1);
+                            
+                            const easeOut = 1 - Math.pow(1 - progress, 3);
+                            const currentX = startX + (finalX - startX) * easeOut;
+                            
+                            const trackCenter = containerWidth / 2;
+                            const newX = trackCenter - targetItemCenter + currentX;
+                            rouletteTrack.style.transform = `translate(calc(-50% + ${newX}px), -50%)`;
+                            
+                            giftItems.forEach((item, index) => {
+                                const itemPos = newX + index * itemWidth - trackCenter + (itemWidth / 2);
+                                const distance = Math.abs(itemPos);
+                                
+                                if (distance < itemWidth / 2) {
+                                    item.classList.add('selected');
+                                } else {
+                                    item.classList.remove('selected');
+                                }
+                            });
+                            
+                            if (progress < 1) {
+                                requestAnimationFrame(animateRoulette);
+                            } else {
+                                setTimeout(() => {
+                                    giftItems.forEach(item => item.classList.remove('selected'));
+                                    if (giftItems[targetIndex]) {
+                                        giftItems[targetIndex].classList.add('selected');
+                                    }
+                                    
+                                    setTimeout(() => {
+                                        showPrizeModal(randomPrize);
+                                        
+                                        detailIcon.style.display = 'block';
+                                        rouletteContainer.classList.remove('active');
+                                        
+                                        isOpening = false;
+                                        openBtn.disabled = false;
+                                        openBtn.innerHTML = 'Открыть <span>🚀</span>';
+                                        
+                                        if (tg) {
+                                            tg.HapticFeedback.notificationOccurred('success');
+                                        }
+                                    }, 500);
+                                }, 300);
+                            }
+                        };
+                        
+                        requestAnimationFrame(animateRoulette);
+                    }, 100);
                 };
                 openCaseFunc();
             }
@@ -989,18 +1012,21 @@
             if (openBtn) {
                 openBtn.disabled = false;
                 openBtn.classList.add('show');
-                openBtn.style.display = 'flex';
-                openBtn.style.visibility = 'visible';
+                openBtn.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important;';
                 openBtn.innerHTML = 'Открыть <span>🚀</span>';
                 
                 openBtn.onclick = function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('Open button clicked');
+                    console.log('Open button clicked', { currentCase, isOpening });
                     if (currentCase && !isOpening) {
                         window.openCase();
                     }
                 };
+                
+                console.log('Open button configured', openBtn.classList.contains('show'), openBtn.style.display);
+            } else {
+                console.error('Open button not found!');
             }
 
             document.querySelectorAll('.prize-item').forEach(item => {
