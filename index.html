@@ -1375,11 +1375,15 @@
         document.addEventListener('DOMContentLoaded', function() {
             const mainPage = document.getElementById('mainPage');
             const detailPage = document.getElementById('caseDetailPage');
+            const profilePage = document.getElementById('profilePage');
             
             mainPage.style.display = 'block';
             mainPage.classList.remove('hidden');
             detailPage.style.display = 'none';
             detailPage.classList.remove('active');
+            if (profilePage) {
+                profilePage.style.display = 'none';
+            }
             
             // Загружаем подарки с сервера или из localStorage
             fetchGlobalPrizes();
@@ -2383,6 +2387,11 @@
                 const caseDetailPage = document.getElementById('caseDetailPage');
                 const profilePage = document.getElementById('profilePage');
                 
+                if (!mainPage || !caseDetailPage || !profilePage) {
+                    console.error('Pages not found!');
+                    return;
+                }
+                
                 if (page === 'cases') {
                     mainPage.style.display = 'block';
                     mainPage.classList.remove('hidden');
@@ -2395,6 +2404,8 @@
                     caseDetailPage.style.display = 'none';
                     caseDetailPage.classList.remove('active');
                     profilePage.style.display = 'block';
+                    profilePage.style.visibility = 'visible';
+                    profilePage.style.opacity = '1';
                     updateInventory();
                     updateProfileInfo();
                     if (tg) {
