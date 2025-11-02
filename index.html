@@ -1185,7 +1185,7 @@
             font-weight: 600;
         }
 
-        .mines-select {
+        .mines-input {
             padding: 10px 15px;
             border-radius: 12px;
             border: 2px solid rgba(255, 255, 255, 0.2);
@@ -1193,7 +1193,58 @@
             color: white;
             font-size: 16px;
             font-weight: 600;
+            width: 150px;
+            text-align: right;
+            box-sizing: border-box;
+        }
+
+        .mines-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .mines-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .mines-count-control {
+            margin-bottom: 15px;
+        }
+
+        .mines-count-control label {
+            display: block;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .mines-count-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .mines-count-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .mines-count-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+        }
+
+        .mines-count-btn:active {
+            transform: scale(0.95);
         }
 
         .mines-multiplier-display {
@@ -1788,13 +1839,15 @@
             <div class="mines-controls">
                 <div class="mines-bet-control">
                     <label>Ставка:</label>
-                    <select id="minesBetAmount" class="mines-select">
-                        <option value="0.1">0.1</option>
-                        <option value="0.5">0.5</option>
-                        <option value="1.0">1.0</option>
-                        <option value="5.0">5.0</option>
-                        <option value="10.0">10.0</option>
-                    </select>
+                    <input type="number" id="minesBetAmount" class="mines-input" value="0.1" min="0.01" step="0.01" placeholder="0.00">
+                </div>
+                <div class="mines-count-control">
+                    <label>Количество мин:</label>
+                    <div class="mines-count-buttons">
+                        <button class="mines-count-btn" data-count="3">3</button>
+                        <button class="mines-count-btn active" data-count="5">5</button>
+                        <button class="mines-count-btn" data-count="10">10</button>
+                    </div>
                 </div>
                 <div class="mines-multiplier-display">
                     <div class="mines-multiplier-label">Множитель:</div>
@@ -3331,7 +3384,7 @@
             gameActive: false,
             betAmount: 0.1,
             currentMultiplier: 1.0,
-            minesCount: 3,
+            minesCount: 5,
             gridSize: 25
         };
 
@@ -3357,10 +3410,20 @@
             document.getElementById('minesOpenedCount').textContent = '0';
             document.getElementById('minesMultiplier').textContent = 'x1.00';
             document.getElementById('minesWinnings').textContent = '0.00';
+            document.getElementById('minesTotalCount').textContent = minesGameState.minesCount;
             document.getElementById('minesCashOutBtn').disabled = true;
             document.getElementById('minesStartBtn').textContent = 'Начать игру';
             document.getElementById('minesStartBtn').disabled = false;
             document.getElementById('minesBetAmount').disabled = false;
+            
+            // Обновляем активную кнопку выбора мин
+            document.querySelectorAll('.mines-count-btn').forEach(btn => {
+                if (parseInt(btn.dataset.count) === minesGameState.minesCount) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
             
             // Убираем старые обработчики
             const cells = grid.querySelectorAll('.mines-cell');
@@ -3432,9 +3495,19 @@
             minesGameState.opened.push(index);
             cell.revealed = true;
             
-            // Обновляем множитель
+            // Обновляем множитель (чем больше мин, тем больше увеличение)
             const openedCount = minesGameState.opened.length;
-            minesGameState.currentMultiplier = 1.0 + (openedCount * 0.1);
+            let multiplierIncrease;
+            if (minesGameState.minesCount === 3) {
+                multiplierIncrease = 0.15; // +0.15 за клетку для 3 мин
+            } else if (minesGameState.minesCount === 5) {
+                multiplierIncrease = 0.2; // +0.2 за клетку для 5 мин
+            } else if (minesGameState.minesCount === 10) {
+                multiplierIncrease = 0.3; // +0.3 за клетку для 10 мин
+            } else {
+                multiplierIncrease = 0.1;
+            }
+            minesGameState.currentMultiplier = 1.0 + (openedCount * multiplierIncrease);
             
             updateMinesDisplay();
             updateMinesMultiplier();
@@ -3535,6 +3608,25 @@
                     }
                 });
             }
+            
+            // Обработчики кнопок выбора количества мин
+            document.querySelectorAll('.mines-count-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (minesGameState.gameActive) {
+                        if (tg) {
+                            tg.showAlert('Нельзя изменить количество мин во время игры!');
+                        } else {
+                            alert('Нельзя изменить количество мин во время игры!');
+                        }
+                        return;
+                    }
+                    
+                    document.querySelectorAll('.mines-count-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    minesGameState.minesCount = parseInt(btn.dataset.count);
+                    document.getElementById('minesTotalCount').textContent = minesGameState.minesCount;
+                });
+            });
         });
         
         // Продажа выбранного предмета
