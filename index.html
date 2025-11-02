@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -275,6 +275,11 @@
             display: block !important;
         }
 
+        .case-detail-page.active ~ .open-btn,
+        .case-detail-page.active + .open-btn {
+            display: flex !important;
+        }
+
 
         .case-detail-header {
             text-align: center;
@@ -422,26 +427,26 @@
         }
 
         .open-btn {
-            position: fixed;
-            bottom: 100px;
-            left: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 18px;
-            border-radius: 16px;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            z-index: 9999;
-            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
-            visibility: visible;
-            opacity: 1;
+            position: fixed !important;
+            bottom: 100px !important;
+            left: 20px !important;
+            right: 20px !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: white !important;
+            border: none !important;
+            padding: 18px !important;
+            border-radius: 16px !important;
+            font-size: 18px !important;
+            font-weight: 700 !important;
+            cursor: pointer !important;
+            display: none !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 10px !important;
+            z-index: 99999 !important;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4) !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
 
         .open-btn.show {
@@ -450,10 +455,11 @@
             opacity: 1 !important;
         }
 
-        @media (min-width: 768px) {
-            .open-btn.show {
-                display: flex !important;
-            }
+        #caseDetailPage.active ~ #openBtn,
+        #caseDetailPage.active + #openBtn {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
 
         .open-btn:disabled {
@@ -1012,19 +1018,16 @@
             if (openBtn) {
                 openBtn.disabled = false;
                 openBtn.classList.add('show');
-                openBtn.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important;';
+                openBtn.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; bottom: 100px !important; left: 20px !important; right: 20px !important; z-index: 99999 !important;';
                 openBtn.innerHTML = 'Открыть <span>🚀</span>';
                 
                 openBtn.onclick = function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('Open button clicked', { currentCase, isOpening });
                     if (currentCase && !isOpening) {
                         window.openCase();
                     }
                 };
-                
-                console.log('Open button configured', openBtn.classList.contains('show'), openBtn.style.display);
             } else {
                 console.error('Open button not found!');
             }
@@ -1047,7 +1050,10 @@
             detailPage.style.display = 'none';
             detailPage.classList.remove('active');
             
-            openBtn.classList.remove('show');
+            if (openBtn) {
+                openBtn.classList.remove('show');
+                openBtn.style.cssText = 'display: none !important;';
+            }
             
             mainPage.style.display = 'block';
             mainPage.classList.remove('hidden');
