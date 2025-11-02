@@ -1206,6 +1206,259 @@
             width: 10px;
             height: 10px;
         }
+
+        .crash-page {
+            padding: 20px;
+            padding-bottom: 120px;
+            min-height: 100vh;
+            background: var(--tg-theme-bg-color, #0a0a0a);
+        }
+
+        .crash-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .players-count {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 255, 0, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: #00ff00;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .players-icon {
+            font-size: 18px;
+        }
+
+        .crash-balance {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+        }
+
+        .crash-graph-container {
+            width: 100%;
+            height: 250px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .crash-graph {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        #crashCanvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .current-multiplier {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 24px;
+            font-weight: 700;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+        }
+
+        .crash-controls {
+            margin-bottom: 20px;
+        }
+
+        .multiplier-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .multiplier-btn {
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .multiplier-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+        }
+
+        .multiplier-btn:active {
+            transform: scale(0.95);
+        }
+
+        .bet-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .bet-type-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.3s;
+        }
+
+        .bet-type-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+        }
+
+        .bet-amount-input,
+        .bet-item-select {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 16px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        .bet-amount-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .bet-amount-input:focus,
+        .bet-item-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .make-bet-btn {
+            width: 100%;
+            padding: 18px;
+            border-radius: 16px;
+            border: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .make-bet-btn:active {
+            transform: scale(0.98);
+        }
+
+        .make-bet-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .bets-list {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .bets-list-header {
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .bet-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        .bet-item-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .bet-item-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .bet-item-username {
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .bet-item-details {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .bet-item-winnings {
+            font-size: 16px;
+            font-weight: 700;
+            color: #00ff00;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .bet-item-winnings .currency-icon {
+            width: 14px;
+            height: 14px;
+        }
     </style>
 </head>
 <body>
@@ -1328,6 +1581,56 @@
             </div>
             <div class="inventory-grid" id="inventoryGrid">
             </div>
+        </div>
+    </div>
+
+    <div class="crash-page" id="crashPage" style="display: none;">
+        <div class="crash-header">
+            <div class="players-count">
+                <span class="players-icon">👥</span>
+                <span id="playersCount">0</span>
+            </div>
+            <div class="crash-balance">
+                <span class="diamond-icon"></span>
+                <span class="balance-text" id="crashBalance">0.00</span>
+                <button style="background: transparent; border: none; color: #ffffff; font-size: 18px; cursor: pointer; padding: 0 5px;">+</button>
+            </div>
+        </div>
+
+        <div class="crash-graph-container">
+            <div class="crash-graph" id="crashGraph">
+                <canvas id="crashCanvas"></canvas>
+                <div class="current-multiplier" id="currentMultiplier">x1.00</div>
+            </div>
+        </div>
+
+        <div class="crash-controls">
+            <div class="multiplier-buttons" id="multiplierButtons">
+                <button class="multiplier-btn" data-mult="auto">Авто</button>
+                <button class="multiplier-btn active" data-mult="1.5">x1.5</button>
+                <button class="multiplier-btn" data-mult="2.0">x2.0</button>
+                <button class="multiplier-btn" data-mult="3.0">x3.0</button>
+                <button class="multiplier-btn" data-mult="5.0">x5.0</button>
+            </div>
+            <div class="bet-buttons">
+                <button class="bet-type-btn active" data-type="balance" id="betBalanceBtn">
+                    <span class="currency-icon" style="width: 16px; height: 16px; display: inline-block;"></span>
+                    <span>Баланс</span>
+                </button>
+                <button class="bet-type-btn" data-type="item" id="betItemBtn">
+                    <span>🎁</span>
+                    <span>Подарок</span>
+                </button>
+            </div>
+            <input type="number" class="bet-amount-input" id="betAmountInput" placeholder="Сумма ставки" min="0.01" step="0.01">
+            <select class="bet-item-select" id="betItemSelect" style="display: none;">
+                <option value="">Выберите предмет</option>
+            </select>
+            <button class="make-bet-btn" id="makeBetBtn">Сделать ставку</button>
+        </div>
+
+        <div class="bets-list" id="betsList">
+            <div class="bets-list-header">Активные ставки</div>
         </div>
     </div>
 
@@ -2682,8 +2985,29 @@
                         tg.HapticFeedback.impactOccurred('light');
                     }
                 } else if (page === 'crash') {
+                    mainPage.style.display = 'none';
+                    mainPage.classList.add('hidden');
+                    caseDetailPage.style.display = 'none';
+                    caseDetailPage.classList.remove('active');
+                    profilePage.style.display = 'none';
+                    const crashPage = document.getElementById('crashPage');
+                    if (crashPage) {
+                        crashPage.style.display = 'block';
+                        // Обновляем баланс на странице краша
+                        document.getElementById('crashBalance').textContent = balance.toFixed(2);
+                        initCrashGame();
+                    }
+                    // Скрываем кнопку "Открыть" при переходе в краш
+                    if (openBtn) {
+                        openBtn.style.display = 'none';
+                        openBtn.style.visibility = 'hidden';
+                        openBtn.style.opacity = '0';
+                        openBtn.classList.remove('show');
+                        openBtn.disabled = true;
+                        openBtn.style.pointerEvents = 'none';
+                    }
                     if (tg) {
-                        tg.showAlert('Страница Краш в разработке');
+                        tg.HapticFeedback.impactOccurred('light');
                     }
                 }
             });
@@ -2806,6 +3130,447 @@
         if (sellItemBtn) {
             sellItemBtn.addEventListener('click', sellSelectedItem);
         }
+
+        // ========== КРАШ ИГРА ==========
+        let crashMultiplier = 1.00;
+        let crashAnimationId = null;
+        let crashGameRunning = false;
+        let crashPlayers = [];
+        let crashGraphPoints = [];
+        let selectedMultiplier = null;
+        let betType = 'balance';
+        let userBet = null;
+        let crashRoundActive = false;
+        let crashTarget = 1.00;
+        let crashDirection = 1; // 1 = вверх, -1 = вниз (краш)
+
+        // Инициализация игры Краш
+        function initCrashGame() {
+            const canvas = document.getElementById('crashCanvas');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            startNewCrashRound(ctx, canvas);
+            updateCrashBetsList();
+            updateBetItemSelect();
+            
+            // Обновляем список ставок каждую секунду
+            if (window.crashBetsInterval) {
+                clearInterval(window.crashBetsInterval);
+            }
+            window.crashBetsInterval = setInterval(() => {
+                if (document.getElementById('crashPage')?.style.display === 'block') {
+                    updateCrashBetsList();
+                }
+            }, 500);
+        }
+
+        // Начало нового раунда краша
+        function startNewCrashRound(ctx, canvas) {
+            crashRoundActive = true;
+            crashMultiplier = 1.00;
+            crashDirection = 1; // Начинаем движение вверх
+            crashGraphPoints = [{ x: 0, y: canvas.height - 50, multiplier: 1.00 }];
+            
+            // Случайный момент краша (от 1.01 до 10.0)
+            crashTarget = 1.01 + Math.random() * 9.0;
+            
+            // Время до краша (от 5 до 30 секунд)
+            const timeToCrash = 5000 + Math.random() * 25000;
+            
+            setTimeout(() => {
+                if (crashRoundActive) {
+                    crashDirection = -1; // Начинаем падение
+                    if (tg) {
+                        tg.showAlert('КРАШ! Все не забранные ставки потеряны!');
+                        tg.HapticFeedback.notificationOccurred('error');
+                    }
+                }
+            }, timeToCrash);
+            
+            startCrashAnimation(ctx, canvas);
+        }
+
+        // Анимация графика краша
+        function startCrashAnimation(ctx, canvas) {
+            if (crashAnimationId) {
+                cancelAnimationFrame(crashAnimationId);
+            }
+            
+            let speed = 0.005 + Math.random() * 0.01;
+            let crashSpeed = 0.05; // Скорость падения при краше
+            
+            const animate = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Обновляем множитель
+                if (crashDirection === 1) {
+                    // Движение вверх (рост)
+                    crashMultiplier += speed;
+                    if (crashMultiplier >= crashTarget) {
+                        crashDirection = -1; // Начинаем краш
+                    }
+                } else {
+                    // Падение (краш)
+                    crashMultiplier -= crashSpeed;
+                    if (crashMultiplier <= 0.01) {
+                        // Краш завершен - начинаем новый раунд
+                        crashRoundActive = false;
+                        processCrashRound();
+                        setTimeout(() => {
+                            startNewCrashRound(ctx, canvas);
+                        }, 2000);
+                        return;
+                    }
+                }
+                
+                // Добавляем точку на график
+                const x = crashGraphPoints.length * 2;
+                // Преобразуем множитель в Y координату (1.0 = низ, выше = выше на графике)
+                const multiplierPercent = ((crashMultiplier - 1.0) / 9.0) * 100;
+                const y = canvas.height - 50 - (multiplierPercent / 100) * (canvas.height - 100);
+                
+                crashGraphPoints.push({ x, y, multiplier: crashMultiplier });
+                
+                // Ограничиваем количество точек
+                if (crashGraphPoints.length > canvas.width / 2) {
+                    crashGraphPoints = crashGraphPoints.slice(-Math.floor(canvas.width / 2));
+                    crashGraphPoints.forEach((point, i) => {
+                        point.x = i * 2;
+                    });
+                }
+                
+                // Рисуем график
+                ctx.strokeStyle = crashDirection === 1 ? '#00ff00' : '#ff0000';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(crashGraphPoints[0].x, crashGraphPoints[0].y);
+                for (let i = 1; i < crashGraphPoints.length; i++) {
+                    ctx.lineTo(crashGraphPoints[i].x, crashGraphPoints[i].y);
+                }
+                ctx.stroke();
+                
+                // Обновляем отображение множителя
+                const multiplierElement = document.getElementById('currentMultiplier');
+                if (multiplierElement) {
+                    multiplierElement.textContent = `x${crashMultiplier.toFixed(2)}`;
+                    multiplierElement.style.color = crashDirection === 1 ? '#00ff00' : '#ff0000';
+                }
+                
+                // Проверяем выигрыши
+                checkCrashWins();
+                
+                crashAnimationId = requestAnimationFrame(animate);
+            };
+            
+            animate();
+        }
+        
+        // Обработка завершения раунда краша
+        function processCrashRound() {
+            // Все не забранные ставки теряются
+            let lostCount = 0;
+            crashPlayers.forEach(player => {
+                if (!player.cashedOut) {
+                    // Ставка потеряна - человек ничего не получает
+                    player.cashedOut = true;
+                    player.winnings = 0;
+                    player.cashOutMultiplier = 0;
+                    lostCount++;
+                    
+                    // Если это ставка текущего пользователя, сбрасываем состояние
+                    if (player.id === userBet?.id) {
+                        userBet = null;
+                        const makeBetBtn = document.getElementById('makeBetBtn');
+                        if (makeBetBtn) {
+                            makeBetBtn.textContent = 'Сделать ставку';
+                        }
+                    }
+                }
+            });
+            
+            if (lostCount > 0 && tg) {
+                tg.showAlert(`КРАШ! Потеряно ${lostCount} ставок`);
+                tg.HapticFeedback.notificationOccurred('error');
+            }
+            
+            updateCrashBetsList();
+            
+            // Очищаем список игроков для нового раунда через несколько секунд
+            setTimeout(() => {
+                crashPlayers = [];
+                updateCrashBetsList();
+            }, 5000);
+        }
+
+        // Проверка выигрышей игроков
+        function checkCrashWins() {
+            crashPlayers.forEach(player => {
+                if (!player.cashedOut && player.autoCash && crashMultiplier >= player.autoCash) {
+                    cashOutPlayer(player.id);
+                }
+            });
+            // Обновляем список каждую секунду для отображения текущих выигрышей
+            if (crashPlayers.length > 0 && crashPlayers.some(p => !p.cashedOut)) {
+                setTimeout(() => updateCrashBetsList(), 1000);
+            }
+        }
+
+        // Вывод ставки
+        function cashOutPlayer(playerId) {
+            const player = crashPlayers.find(p => p.id === playerId);
+            if (!player || player.cashedOut) return;
+            
+            const betValue = player.itemValue || player.betAmount;
+            const winnings = betValue * crashMultiplier;
+            player.cashedOut = true;
+            player.winnings = winnings;
+            player.cashOutMultiplier = crashMultiplier;
+            
+            // Если это ставка текущего пользователя, добавляем выигрыш к балансу
+            if (playerId === userBet?.id) {
+                balance += winnings;
+                document.getElementById('balance').textContent = balance.toFixed(2);
+                document.getElementById('crashBalance').textContent = balance.toFixed(2);
+                saveInventory();
+                saveUserData();
+                
+                if (tg) {
+                    tg.showAlert(`Вы выиграли ${winnings.toFixed(2)}!`);
+                    tg.HapticFeedback.notificationOccurred('success');
+                }
+                
+                userBet = null;
+                const makeBetBtn = document.getElementById('makeBetBtn');
+                if (makeBetBtn) {
+                    makeBetBtn.textContent = 'Сделать ставку';
+                }
+            }
+            
+            updateCrashBetsList();
+        }
+
+        // Обновление списка ставок
+        function updateCrashBetsList() {
+            const betsList = document.getElementById('betsList');
+            if (!betsList) return;
+            
+            const header = betsList.querySelector('.bets-list-header');
+            betsList.innerHTML = '';
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'bets-list-header';
+            headerDiv.textContent = 'Активные ставки';
+            betsList.appendChild(headerDiv);
+            
+            // Сортируем игроков: сначала активные, потом выведенные
+            const activePlayers = crashPlayers.filter(p => !p.cashedOut);
+            const cashedPlayers = crashPlayers.filter(p => p.cashedOut);
+            const sortedPlayers = [...activePlayers, ...cashedPlayers].reverse();
+            
+            sortedPlayers.forEach(player => {
+                const betItem = document.createElement('div');
+                betItem.className = 'bet-item';
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'bet-item-avatar';
+                const user = tg?.initDataUnsafe?.user;
+                if (player.userId === user?.id && user?.photo_url) {
+                    const img = document.createElement('img');
+                    img.src = user.photo_url;
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = 'cover';
+                    img.style.borderRadius = '50%';
+                    avatar.appendChild(img);
+                } else {
+                    avatar.textContent = player.avatar || '👤';
+                }
+                betItem.appendChild(avatar);
+                
+                const info = document.createElement('div');
+                info.className = 'bet-item-info';
+                
+                const username = document.createElement('div');
+                username.className = 'bet-item-username';
+                username.textContent = player.username;
+                info.appendChild(username);
+                
+                const details = document.createElement('div');
+                details.className = 'bet-item-details';
+                if (player.itemName) {
+                    details.innerHTML = `🎁 ${player.itemName} x${(player.cashOutMultiplier || crashMultiplier).toFixed(2)}`;
+                } else {
+                    details.innerHTML = `<span class="currency-icon" style="width: 12px; height: 12px; display: inline-block;"></span> ${player.betAmount.toFixed(2)} x${(player.cashOutMultiplier || crashMultiplier).toFixed(2)}`;
+                }
+                info.appendChild(details);
+                
+                betItem.appendChild(info);
+                
+                const winnings = document.createElement('div');
+                winnings.className = 'bet-item-winnings';
+                if (player.cashedOut) {
+                    if (player.winnings > 0) {
+                        winnings.innerHTML = `<span class="currency-icon" style="width: 14px; height: 14px; display: inline-block;"></span> ${player.winnings.toFixed(2)} ✅`;
+                        winnings.style.color = '#00ff00';
+                    } else {
+                        winnings.innerHTML = `❌ Потеряно`;
+                        winnings.style.color = '#ff0000';
+                    }
+                } else {
+                    const betValue = player.itemValue || player.betAmount;
+                    const currentWinnings = betValue * crashMultiplier;
+                    winnings.innerHTML = `<span class="currency-icon" style="width: 14px; height: 14px; display: inline-block;"></span> ${currentWinnings.toFixed(2)}`;
+                    winnings.style.color = '#667eea';
+                }
+                betItem.appendChild(winnings);
+                
+                betsList.appendChild(betItem);
+            });
+            
+            document.getElementById('playersCount').textContent = crashPlayers.length;
+        }
+
+        // Обновление выбора предметов для ставки
+        function updateBetItemSelect() {
+            const select = document.getElementById('betItemSelect');
+            if (!select) return;
+            
+            select.innerHTML = '<option value="">Выберите предмет</option>';
+            userInventory.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = `${item.name} (${formatPrice(item.value).replace(/<[^>]*>/g, '')})`;
+                option.dataset.item = JSON.stringify(item);
+                select.appendChild(option);
+            });
+        }
+
+        // Переключение типа ставки
+        document.querySelectorAll('.bet-type-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.bet-type-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                betType = btn.dataset.type;
+                
+                const amountInput = document.getElementById('betAmountInput');
+                const itemSelect = document.getElementById('betItemSelect');
+                
+                if (betType === 'balance') {
+                    amountInput.style.display = 'block';
+                    if (itemSelect) itemSelect.style.display = 'none';
+                } else {
+                    amountInput.style.display = 'none';
+                    if (itemSelect) itemSelect.style.display = 'block';
+                }
+            });
+        });
+
+        // Выбор множителя авто-вывода
+        document.querySelectorAll('.multiplier-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.dataset.mult === 'auto') {
+                    selectedMultiplier = null;
+                } else {
+                    selectedMultiplier = parseFloat(btn.dataset.mult);
+                }
+                document.querySelectorAll('.multiplier-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // Сделать ставку
+        const makeBetBtn = document.getElementById('makeBetBtn');
+        if (makeBetBtn) {
+            makeBetBtn.addEventListener('click', () => {
+                if (userBet) {
+                    cashOutPlayer(userBet.id);
+                    userBet = null;
+                    makeBetBtn.textContent = 'Сделать ставку';
+                    return;
+                }
+                
+                const amountInput = document.getElementById('betAmountInput');
+                const itemSelect = document.getElementById('betItemSelect');
+                
+                let betAmount = 0;
+                let itemData = null;
+                
+                if (betType === 'balance') {
+                    betAmount = parseFloat(amountInput.value);
+                    if (!betAmount || betAmount <= 0 || betAmount > balance) {
+                        if (tg) {
+                            tg.showAlert('Неверная сумма ставки!');
+                        } else {
+                            alert('Неверная сумма ставки!');
+                        }
+                        return;
+                    }
+                } else {
+                    const selectedOption = itemSelect.options[itemSelect.selectedIndex];
+                    if (!selectedOption || !selectedOption.value) {
+                        if (tg) {
+                            tg.showAlert('Выберите предмет!');
+                        } else {
+                            alert('Выберите предмет!');
+                        }
+                        return;
+                    }
+                    itemData = JSON.parse(selectedOption.dataset.item);
+                    betAmount = itemData.value;
+                }
+                
+                const user = tg?.initDataUnsafe?.user;
+                const newBet = {
+                    id: Date.now(),
+                    userId: user?.id || Math.random(),
+                    username: user?.first_name || user?.username || 'Игрок',
+                    avatar: user?.photo_url ? null : '👤',
+                    betAmount: betAmount,
+                    itemName: itemData?.name || null,
+                    itemValue: itemData?.value || null,
+                    itemId: itemData?.id || null,
+                    betMultiplier: selectedMultiplier,
+                    autoCash: selectedMultiplier,
+                    cashedOut: false,
+                    timestamp: Date.now()
+                };
+                
+                if (betType === 'balance') {
+                    balance -= betAmount;
+                    document.getElementById('balance').textContent = balance.toFixed(2);
+                    document.getElementById('crashBalance').textContent = balance.toFixed(2);
+                    saveInventory();
+                    saveUserData();
+                } else {
+                    userInventory = userInventory.filter(item => item.id !== itemData.id);
+                    saveInventory();
+                    saveUserData();
+                    updateBetItemSelect();
+                }
+                
+                userBet = newBet;
+                crashPlayers.push(newBet);
+                updateCrashBetsList();
+                makeBetBtn.textContent = 'Забрать';
+                
+                if (tg) {
+                    tg.HapticFeedback.impactOccurred('medium');
+                }
+            });
+        }
+
+        // Обновление баланса на странице краша
+        document.getElementById('crashBalance')?.parentElement.querySelector('button')?.addEventListener('click', () => {
+            if (tg) {
+                tg.showAlert('Пополнение баланса');
+                tg.HapticFeedback.impactOccurred('light');
+            } else {
+                alert('Пополнение баланса');
+            }
+        });
     </script>
 </body>
 </html>
