@@ -3168,62 +3168,101 @@
             }, 500);
         }
 
-        // Начало нового раунда краша
+        // Начало нового раунда краша (с кулдауном для ставок)
         function startNewCrashRound(ctx, canvas) {
-            crashRoundActive = true;
-            crashMultiplier = 1.00;
-            crashDirection = 1; // Начинаем движение вверх
-            crashGraphPoints = [{ x: 0, y: canvas.height - 50, multiplier: 1.00 }];
-            
-            // Случайный момент краша (от 1.01 до 10.0)
-            crashTarget = 1.01 + Math.random() * 9.0;
-            
-            // Время до краша (от 3 до 20 секунд)
-            const timeToCrash = 3000 + Math.random() * 17000;
-            
-            setTimeout(() => {
-                if (crashRoundActive) {
-                    // Резко обрушиваем график
-                    crashDirection = -1;
-                    crashMultiplier = 0.01; // Резко падаем до нуля
-                    
-                    if (tg) {
-                        tg.showAlert('КРАШ! Все не забранные ставки потеряны!');
-                        tg.HapticFeedback.notificationOccurred('error');
-                    }
-                    
-                    // Сразу обрабатываем краш
-                    crashRoundActive = false;
-                    processCrashRound();
-                    
-                    // Через 10 секунд начинаем новый раунд
-                    showCrashCooldown(10, ctx, canvas);
-                }
-            }, timeToCrash);
-            
-            startCrashAnimation(ctx, canvas);
+            // Сначала показываем кулдаун, чтобы люди успели поставить ставки
+            showCrashCooldown(10, ctx, canvas);
         }
         
-        // Показ кулдауна перед новым раундом
+        // Показ кулдауна перед новым раундом (во время кулдауна можно ставить ставки)
         function showCrashCooldown(seconds, ctx, canvas) {
             const multiplierElement = document.getElementById('currentMultiplier');
+            const makeBetBtn = document.getElementById('makeBetBtn');
+            
+            // Разрешаем ставки во время кулдауна
+            crashRoundActive = false; // Раунд еще не начался
+            crashMultiplier = 1.00;
+            
+            // Очищаем график и показываем кулдаун
+            crashGraphPoints = [];
+            
             let remaining = seconds;
             
             const countdown = setInterval(() => {
                 if (multiplierElement) {
-                    multiplierElement.textContent = `Новый раунд через ${remaining}...`;
+                    multiplierElement.textContent = `Ставки через ${remaining}...`;
                     multiplierElement.style.color = '#ffaa00';
+                    multiplierElement.style.borderColor = '#ffaa00';
+                }
+                
+                // Обновляем canvas с текстом кулдауна
+                if (ctx && canvas) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#ffaa00';
+                    ctx.font = 'bold 28px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(`Ставки принимаются`, canvas.width / 2, canvas.height / 2 - 20);
+                    ctx.fillText(`${remaining}...`, canvas.width / 2, canvas.height / 2 + 20);
+                }
+                
+                // Обновляем текст кнопки для активных ставок
+                const makeBetBtn = document.getElementById('makeBetBtn');
+                if (makeBetBtn && userBet && !userBet.cashedOut) {
+                    makeBetBtn.textContent = 'Ставка активна';
+                    makeBetBtn.disabled = true;
+                } else if (makeBetBtn && !userBet) {
+                    makeBetBtn.textContent = 'Сделать ставку';
+                    makeBetBtn.disabled = false;
                 }
                 
                 remaining--;
                 
                 if (remaining < 0) {
                     clearInterval(countdown);
-                    if (multiplierElement) {
-                        multiplierElement.textContent = 'x1.00';
-                        multiplierElement.style.color = '#00ff00';
+                    
+                    // Обновляем кнопку для активных ставок
+                    if (makeBetBtn && userBet && !userBet.cashedOut && crashRoundActive === false) {
+                        makeBetBtn.textContent = 'Забрать';
+                        makeBetBtn.disabled = false;
                     }
-                    startNewCrashRound(ctx, canvas);
+                    
+                    // Начинаем раунд
+                    crashRoundActive = true;
+                    crashMultiplier = 1.00;
+                    crashDirection = 1;
+                    crashGraphPoints = [{ x: 0, y: canvas.height - 50, multiplier: 1.00 }];
+                    
+                    // Случайный момент краша (от 1.01 до 10.0)
+                    crashTarget = 1.01 + Math.random() * 9.0;
+                    
+                    // Время до краша (от 3 до 20 секунд)
+                    const timeToCrash = 3000 + Math.random() * 17000;
+                    
+                    setTimeout(() => {
+                        if (crashRoundActive) {
+                            // Резко обрушиваем график
+                            crashDirection = -1;
+                            crashMultiplier = 0.01;
+                            
+                            if (tg) {
+                                tg.showAlert('КРАШ! Все не забранные ставки потеряны!');
+                                tg.HapticFeedback.notificationOccurred('error');
+                            }
+                            
+                            // Сразу обрабатываем краш
+                            crashRoundActive = false;
+                            processCrashRound();
+                            
+                            // Сразу начинаем новый кулдаун для следующего раунда (чтобы люди успели поставить)
+                            setTimeout(() => {
+                                showCrashCooldown(10, ctx, canvas);
+                            }, 1000);
+                        }
+                    }, timeToCrash);
+                    
+                    // Запускаем анимацию роста графика
+                    startCrashAnimation(ctx, canvas);
                 }
             }, 1000);
         }
@@ -3237,8 +3276,8 @@
             let speed = 0.008 + Math.random() * 0.015;
             
             const animate = () => {
-                if (!crashRoundActive && crashMultiplier <= 0.01) {
-                    // Раунд завершен, ждем кулдаун
+                // Не обновляем график если раунд не активен (кулдаун)
+                if (!crashRoundActive) {
                     return;
                 }
                 
@@ -3529,10 +3568,19 @@
         const makeBetBtn = document.getElementById('makeBetBtn');
         if (makeBetBtn) {
             makeBetBtn.addEventListener('click', () => {
-                if (userBet) {
+                // Если есть активная ставка и раунд идет, можно забрать
+                if (userBet && crashRoundActive && !userBet.cashedOut) {
                     cashOutPlayer(userBet.id);
-                    userBet = null;
-                    makeBetBtn.textContent = 'Сделать ставку';
+                    return;
+                }
+                
+                // Нельзя ставить во время активного раунда (можно только во время кулдауна)
+                if (crashRoundActive) {
+                    if (tg) {
+                        tg.showAlert('Раунд уже идет! Дождитесь следующего кулдауна.');
+                    } else {
+                        alert('Раунд уже идет! Дождитесь следующего кулдауна.');
+                    }
                     return;
                 }
                 
@@ -3598,9 +3646,16 @@
                 userBet = newBet;
                 crashPlayers.push(newBet);
                 updateCrashBetsList();
-                makeBetBtn.textContent = 'Забрать';
+                
+                // Меняем текст кнопки только если раунд активен
+                if (crashRoundActive) {
+                    makeBetBtn.textContent = 'Забрать';
+                } else {
+                    makeBetBtn.textContent = 'Сделать ставку';
+                }
                 
                 if (tg) {
+                    tg.showAlert('Ставка принята! Дождитесь начала раунда.');
                     tg.HapticFeedback.impactOccurred('medium');
                 }
             });
