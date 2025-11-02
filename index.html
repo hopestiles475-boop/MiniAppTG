@@ -3242,29 +3242,8 @@
                     crashTarget = 1.01 + random * 9.0;
                     
                     // Время до краша (от 3 до 20 секунд) - одинаковое для всех
-                    const timeToCrash = 3000 + random * 17000;
-                    
-                    setTimeout(() => {
-                        if (crashRoundActive) {
-                            // Резко обрушиваем график
-                            crashDirection = -1;
-                            crashMultiplier = 0.01;
-                            
-                            // Вибрация при краше
-                            if (tg) {
-                                tg.HapticFeedback.notificationOccurred('error');
-                            }
-                            
-                            // Сразу обрабатываем краш
-                            crashRoundActive = false;
-                            processCrashRound();
-                            
-                            // Начинаем кулдаун 10 секунд
-                            setTimeout(() => {
-                                showCrashCooldown(10, ctx, canvas);
-                            }, 500);
-                        }
-                    }, timeToCrash);
+                    // НЕ используем setTimeout для краша, так как краш определяется достижением crashTarget в анимации
+                    // Это обеспечивает одинаковый результат для всех игроков
                     
                     // Запускаем анимацию роста графика
                     startCrashAnimation(ctx, canvas);
@@ -3278,25 +3257,42 @@
                 cancelAnimationFrame(crashAnimationId);
             }
             
-            let speed = 0.008 + Math.random() * 0.015;
+            // Одинаковая скорость для всех (на основе crashTarget для синхронизации)
+            let speed = 0.012; // Фиксированная скорость роста для всех игроков
             
             const animate = () => {
-                // Не обновляем график если раунд не активен (кулдаун или краш завершен)
+                // Не обновляем график если раунд не активен (кулдаун)
                 if (!crashRoundActive) {
                     return;
                 }
                 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                // Обновляем множитель только если раунд активен
+                // Обновляем множитель только если раунд активен и график растет
                 if (crashRoundActive && crashDirection === 1) {
                     // Движение вверх (рост)
                     crashMultiplier += speed;
                     if (crashMultiplier >= crashTarget) {
-                        crashDirection = -1; // Достигли цели, начинаем краш
+                        // Достигли цели, начинаем краш - резко падаем
+                        crashDirection = -1;
+                        crashMultiplier = 0.01;
+                        
+                        // Вибрация при краше
+                        if (tg) {
+                            tg.HapticFeedback.notificationOccurred('error');
+                        }
+                        
+                        // Сразу обрабатываем краш
+                        crashRoundActive = false;
+                        processCrashRound();
+                        
+                        // Начинаем кулдаун 10 секунд
+                        setTimeout(() => {
+                            showCrashCooldown(10, ctx, canvas);
+                        }, 100);
                     }
                 } else if (crashDirection === -1) {
-                    // Резкое падение - сразу до нуля (обработка уже произошла в setTimeout)
+                    // Резкое падение - сразу до нуля
                     crashMultiplier = 0.01;
                 }
                 
@@ -3579,12 +3575,13 @@
                     return;
                 }
                 
-                // Нельзя ставить во время активного раунда (можно только во время кулдауна)
+                // Нельзя ставить во время активного раунда (график идет)
+                // Можно ставить ТОЛЬКО во время кулдауна (когда crashRoundActive = false)
                 if (crashRoundActive) {
                     if (tg) {
-                        tg.showAlert('Раунд уже идет! Дождитесь следующего кулдауна.');
+                        tg.showAlert('Ставки принимаются только во время кулдауна!');
                     } else {
-                        alert('Раунд уже идет! Дождитесь следующего кулдауна.');
+                        alert('Ставки принимаются только во время кулдауна!');
                     }
                     return;
                 }
