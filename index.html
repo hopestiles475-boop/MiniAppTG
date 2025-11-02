@@ -953,18 +953,118 @@
         let isOpening = false;
         let currentTab = 'cases';
         
+        // API эндпоинт (замените на ваш реальный сервер)
+        const API_BASE_URL = 'https://your-api-server.com/api'; // ЗАМЕНИТЕ НА РЕАЛЬНЫЙ URL
+        
         // Глобальный список выигрышей всех пользователей
-        let globalPrizes = [
-            { icon: 'ItemCase1/_Jne2Jf3nM6erEUU5TEnvU7PWFOiElGs2WJc0zQ250JHxRd6md_v1huDDCpZRSesDCZP53pWDPEnqfojbzsYqjbD.png', name: 'Лоли поп', value: 82.17 },
-            { icon: 'ItemCase1/4dOUEOHs9WSNk5pRBkEnCptGIs16lB5xe4E7mh3sWF6XAkHcwQvINscw7cXwhK5IUXv5eOdct9_vxDZtoaMTm8GJ.png', name: 'Бабочка', value: 75.66 },
-            { icon: 'ItemCase1/GsJZ-oPiqQHoyerbmc-z_L_NTi8cBWgKmS9ueEOwk5_PHeYbWeRwn6Jxic2d1Yhl8IZwt0rBUg5ZfvrkYkYp0UrO.png', name: 'Зелье', value: 69.30 },
-            { icon: 'ItemCase1/qlq8mJd7J1-60XWhd29rLbtjBfzeXSPLMVgzkcBDTNfHL50TBMHG2B0h2jB1bAd-rJWlHO1NtkI0zAsWF4BgcVHn.png', name: 'Шлем', value: 25.27 },
-            { icon: 'ItemCase1/QrKwYOzBzIX1ilzkfuCuiFdyCRU9jBm5pASbp_z2Sb6ATFNaaB1Zr1XfNGehXeHTYhldZNO8x4_l0ueW2t4MZ62W.png', name: 'Сигара', value: 23.50 },
-            { icon: 'ItemCase1/R1v8ymGGn2ZBo6cI96QvcWu5Yh2FsyiAmDW_WTGMfz7CMvELAOFCf7I7Ns2XGdKv1AxHTvrioJ6h-ALjrzjxb7Ra.png', name: 'Кольцо', value: 17.00 },
-            { icon: 'ItemCase1/XQTRb7Jx7OBjYfqnitHsZGV9pmln2Nhr9n5oYkJvZsF_dtkAYxPHS8Npi_qa6Pxcx0o368YwkcY9uRHmabTE5-LS.png', name: 'Бабочка', value: 11.40 },
-            { icon: 'ItemCase1/Y6HIRzDSCdUNCqWtHRsCpePjILr5QyrOnOD0T9PtrYjgu3Ff3XVbLGxLT1snsWyNNMzfDvTlhms0y1_Wwev6tz9-.png', name: 'Зелье', value: 8.64 },
-            { icon: 'ItemCase1/YLHOesDBQxjSVcanvj-iKz2mgFXRfweB38vb951G5LvwfJ8ytmlfe3PFUk3k_AgekpyW9A3uIpzEjM87k6_aUVS1.png', name: 'Цветок', value: 7.90 }
-        ];
+        let globalPrizes = [];
+        
+        // Функция отправки выигрыша на сервер
+        async function sendPrizeToServer(prize) {
+            try {
+                const user = tg?.initDataUnsafe?.user;
+                const userId = user?.id || null;
+                const username = user?.username || user?.first_name || 'Unknown';
+                
+                const response = await fetch(`${API_BASE_URL}/prizes`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        username: username,
+                        icon: prize.icon,
+                        name: prize.name,
+                        value: prize.value,
+                        timestamp: Date.now()
+                    })
+                });
+                
+                if (response.ok) {
+                    console.log('Prize sent to server successfully');
+                    return true;
+                } else {
+                    console.error('Failed to send prize to server');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error sending prize to server:', error);
+                // При ошибке добавляем локально (fallback)
+                addPrizeLocally(prize);
+                return false;
+            }
+        }
+        
+        // Функция получения списка выигрышей с сервера
+        async function fetchGlobalPrizes() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/prizes?limit=50`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.prizes && Array.isArray(data.prizes)) {
+                        globalPrizes = data.prizes;
+                        updateLiveCarousel();
+                        return true;
+                    }
+                } else {
+                    console.error('Failed to fetch prizes from server');
+                    loadPrizesFromLocalStorage();
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error fetching prizes from server:', error);
+                loadPrizesFromLocalStorage();
+                return false;
+            }
+        }
+        
+        // Функция добавления подарка локально (fallback)
+        function addPrizeLocally(prize) {
+            globalPrizes.push({
+                icon: prize.icon,
+                name: prize.name,
+                value: prize.value,
+                timestamp: Date.now()
+            });
+            
+            if (globalPrizes.length > 50) {
+                globalPrizes.shift();
+            }
+            
+            // Сохраняем в localStorage для синхронизации между вкладками
+            try {
+                localStorage.setItem('globalPrizes', JSON.stringify(globalPrizes));
+            } catch (e) {
+                console.error('Failed to save to localStorage:', e);
+            }
+            
+            updateLiveCarousel();
+        }
+        
+        // Загрузка подарков из localStorage
+        function loadPrizesFromLocalStorage() {
+            try {
+                const stored = localStorage.getItem('globalPrizes');
+                if (stored) {
+                    globalPrizes = JSON.parse(stored);
+                    updateLiveCarousel();
+                } else {
+                    // Начальные примеры подарков
+                    globalPrizes = [
+                        { icon: 'ItemCase1/_Jne2Jf3nM6erEUU5TEnvU7PWFOiElGs2WJc0zQ250JHxRd6md_v1huDDCpZRSesDCZP53pWDPEnqfojbzsYqjbD.png', name: 'Лоли поп', value: 82.17 },
+                        { icon: 'ItemCase1/4dOUEOHs9WSNk5pRBkEnCptGIs16lB5xe4E7mh3sWF6XAkHcwQvINscw7cXwhK5IUXv5eOdct9_vxDZtoaMTm8GJ.png', name: 'Бабочка', value: 75.66 },
+                        { icon: 'ItemCase1/GsJZ-oPiqQHoyerbmc-z_L_NTi8cBWgKmS9ueEOwk5_PHeYbWeRwn6Jxic2d1Yhl8IZwt0rBUg5ZfvrkYkYp0UrO.png', name: 'Зелье', value: 69.30 },
+                        { icon: 'ItemCase1/qlq8mJd7J1-60XWhd29rLbtjBfzeXSPLMVgzkcBDTNfHL50TBMHG2B0h2jB1bAd-rJWlHO1NtkI0zAsWF4BgcVHn.png', name: 'Шлем', value: 25.27 },
+                        { icon: 'ItemCase1/QrKwYOzBzIX1ilzkfuCuiFdyCRU9jBm5pASbp_z2Sb6ATFNaaB1Zr1XfNGehXeHTYhldZNO8x4_l0ueW2t4MZ62W.png', name: 'Сигара', value: 23.50 }
+                    ];
+                    updateLiveCarousel();
+                }
+            } catch (e) {
+                console.error('Failed to load from localStorage:', e);
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             const mainPage = document.getElementById('mainPage');
@@ -975,8 +1075,20 @@
             detailPage.style.display = 'none';
             detailPage.classList.remove('active');
             
-            // Инициализируем LIVE секцию
-            updateLiveCarousel();
+            // Загружаем подарки с сервера или из localStorage
+            fetchGlobalPrizes();
+            
+            // Обновляем список подарков каждые 3 секунды
+            setInterval(() => {
+                fetchGlobalPrizes();
+            }, 3000);
+            
+            // Слушаем изменения в localStorage (для синхронизации между вкладками)
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'globalPrizes') {
+                    loadPrizesFromLocalStorage();
+                }
+            });
         });
 
 
@@ -1684,21 +1796,16 @@
             });
         }
 
-        function showPrizeModal(prize) {
-            // Добавляем подарок в глобальный список выигрышей всех пользователей
-            globalPrizes.push({
-                icon: prize.icon,
-                name: prize.name,
-                value: prize.value
-            });
+        async function showPrizeModal(prize) {
+            // Отправляем выигрыш на сервер (или добавляем локально при ошибке)
+            const sent = await sendPrizeToServer(prize);
             
-            // Ограничиваем до последних 50 подарков
-            if (globalPrizes.length > 50) {
-                globalPrizes.shift();
+            // Если успешно отправили на сервер, обновляем список
+            if (sent) {
+                setTimeout(() => {
+                    fetchGlobalPrizes();
+                }, 500);
             }
-            
-            // Обновляем LIVE секцию
-            updateLiveCarousel();
             
             const modalPrizeIcon = document.getElementById('modalPrizeIcon');
             
