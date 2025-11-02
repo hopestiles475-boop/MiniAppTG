@@ -1212,54 +1212,68 @@
                             if (progress < 1) {
                                 requestAnimationFrame(animateRoulette);
                             } else {
-                                // Находим элемент, который действительно находится в центре контейнера
-                                // Используем finalPosition (где остановилась рулетка) для вычисления
-                                let actualCenterIndex = targetIndex;
-                                let minDistance = Infinity;
-                                const centerX = 0; // Центр контейнера в системе координат трека
+                                // Ищем элемент, который был выделен в последний момент анимации
+                                // (тот, у которого класс 'selected' после последнего обновления)
+                                let selectedItem = null;
                                 
-                                giftItems.forEach((item, index) => {
-                                    // Тот же расчет, что используется во время анимации
-                                    const itemOffset = index * itemWidth + itemWidth / 2;
-                                    const totalTrackWidth = giftItems.length * itemWidth;
-                                    const itemCenter = itemOffset - totalTrackWidth / 2 + finalPosition;
-                                    const distance = Math.abs(itemCenter - centerX);
-                                    
-                                    if (distance < minDistance) {
-                                        minDistance = distance;
-                                        actualCenterIndex = index;
+                                // Сначала проверяем, есть ли элемент с классом selected
+                                giftItems.forEach(item => {
+                                    if (item.classList.contains('selected')) {
+                                        selectedItem = item;
                                     }
                                 });
                                 
-                                // Используем элемент, который действительно в центре
+                                // Если не нашли, используем расчет по позиции
+                                if (!selectedItem) {
+                                    let minDistance = Infinity;
+                                    const centerX = 0;
+                                    
+                                    giftItems.forEach((item, index) => {
+                                        const itemOffset = index * itemWidth + itemWidth / 2;
+                                        const totalTrackWidth = giftItems.length * itemWidth;
+                                        const itemCenter = itemOffset - totalTrackWidth / 2 + finalPosition;
+                                        const distance = Math.abs(itemCenter - centerX);
+                                        
+                                        if (distance < minDistance) {
+                                            minDistance = distance;
+                                            selectedItem = item;
+                                        }
+                                    });
+                                }
+                                
+                                // Если все еще не нашли, используем целевой элемент
+                                if (!selectedItem) {
+                                    selectedItem = giftItems[targetIndex];
+                                }
+                                
                                 setTimeout(() => {
                                     giftItems.forEach(item => item.classList.remove('selected'));
-                                    const centerItem = giftItems[actualCenterIndex];
-                                    if (centerItem) {
-                                        centerItem.classList.add('selected');
+                                    
+                                    if (selectedItem) {
+                                        selectedItem.classList.add('selected');
                                         
-                                        // Получаем данные приза из элемента, на котором остановилась рулетка
-                                        // Проверяем наличие всех данных
+                                        // Получаем данные приза непосредственно из элемента
                                         const actualPrize = {
-                                            icon: centerItem.dataset.icon || '',
-                                            name: centerItem.dataset.name || '',
-                                            value: parseFloat(centerItem.dataset.value) || 0
+                                            icon: selectedItem.dataset.icon || '',
+                                            name: selectedItem.dataset.name || '',
+                                            value: parseFloat(selectedItem.dataset.value) || 0
                                         };
                                         
-                                        // Если данные отсутствуют, используем целевой приз
-                                        if (!actualPrize.name || actualPrize.name === '') {
-                                            console.warn('Missing prize data in center item, using target prize');
+                                        // Если данные пустые, берем из randomPrize
+                                        if (!actualPrize.name || !actualPrize.icon) {
                                             actualPrize.icon = randomPrize.icon;
                                             actualPrize.name = randomPrize.name;
                                             actualPrize.value = randomPrize.value;
                                         }
                                         
-                                        console.log('Center index:', actualCenterIndex, 'Prize:', actualPrize.name);
-                                        console.log('Dataset:', {
-                                            icon: centerItem.dataset.icon,
-                                            name: centerItem.dataset.name,
-                                            value: centerItem.dataset.value
+                                        console.log('=== PRIZE SELECTION ===');
+                                        console.log('Selected item dataset:', {
+                                            icon: selectedItem.dataset.icon,
+                                            name: selectedItem.dataset.name,
+                                            value: selectedItem.dataset.value
                                         });
+                                        console.log('Final prize:', actualPrize.name);
+                                        console.log('Target prize:', randomPrize.name);
                                         
                                         setTimeout(() => {
                                             showPrizeModal(actualPrize);
