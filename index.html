@@ -952,7 +952,19 @@
         let currentPrizes = [];
         let isOpening = false;
         let currentTab = 'cases';
-        let recentPrizes = [];
+        
+        // Глобальный список выигрышей всех пользователей
+        let globalPrizes = [
+            { icon: 'ItemCase1/_Jne2Jf3nM6erEUU5TEnvU7PWFOiElGs2WJc0zQ250JHxRd6md_v1huDDCpZRSesDCZP53pWDPEnqfojbzsYqjbD.png', name: 'Лоли поп', value: 82.17 },
+            { icon: 'ItemCase1/4dOUEOHs9WSNk5pRBkEnCptGIs16lB5xe4E7mh3sWF6XAkHcwQvINscw7cXwhK5IUXv5eOdct9_vxDZtoaMTm8GJ.png', name: 'Бабочка', value: 75.66 },
+            { icon: 'ItemCase1/GsJZ-oPiqQHoyerbmc-z_L_NTi8cBWgKmS9ueEOwk5_PHeYbWeRwn6Jxic2d1Yhl8IZwt0rBUg5ZfvrkYkYp0UrO.png', name: 'Зелье', value: 69.30 },
+            { icon: 'ItemCase1/qlq8mJd7J1-60XWhd29rLbtjBfzeXSPLMVgzkcBDTNfHL50TBMHG2B0h2jB1bAd-rJWlHO1NtkI0zAsWF4BgcVHn.png', name: 'Шлем', value: 25.27 },
+            { icon: 'ItemCase1/QrKwYOzBzIX1ilzkfuCuiFdyCRU9jBm5pASbp_z2Sb6ATFNaaB1Zr1XfNGehXeHTYhldZNO8x4_l0ueW2t4MZ62W.png', name: 'Сигара', value: 23.50 },
+            { icon: 'ItemCase1/R1v8ymGGn2ZBo6cI96QvcWu5Yh2FsyiAmDW_WTGMfz7CMvELAOFCf7I7Ns2XGdKv1AxHTvrioJ6h-ALjrzjxb7Ra.png', name: 'Кольцо', value: 17.00 },
+            { icon: 'ItemCase1/XQTRb7Jx7OBjYfqnitHsZGV9pmln2Nhr9n5oYkJvZsF_dtkAYxPHS8Npi_qa6Pxcx0o368YwkcY9uRHmabTE5-LS.png', name: 'Бабочка', value: 11.40 },
+            { icon: 'ItemCase1/Y6HIRzDSCdUNCqWtHRsCpePjILr5QyrOnOD0T9PtrYjgu3Ff3XVbLGxLT1snsWyNNMzfDvTlhms0y1_Wwev6tz9-.png', name: 'Зелье', value: 8.64 },
+            { icon: 'ItemCase1/YLHOesDBQxjSVcanvj-iKz2mgFXRfweB38vb951G5LvwfJ8ytmlfe3PFUk3k_AgekpyW9A3uIpzEjM87k6_aUVS1.png', name: 'Цветок', value: 7.90 }
+        ];
 
         document.addEventListener('DOMContentLoaded', function() {
             const mainPage = document.getElementById('mainPage');
@@ -1640,17 +1652,17 @@
             const liveCarousel = document.getElementById('liveCarousel');
             liveCarousel.innerHTML = '';
             
-            // Показываем последние 5 подарков
-            const displayPrizes = recentPrizes.slice(-5).reverse();
+            // Показываем последние 10 подарков из глобального списка (выигрыши всех пользователей)
+            const displayPrizes = globalPrizes.slice(-10).reverse();
             
             if (displayPrizes.length === 0) {
-                // Если нет подарков, показываем пустую секцию
                 return;
             }
             
             displayPrizes.forEach((prize, index) => {
                 const liveItem = document.createElement('div');
                 liveItem.className = 'live-item';
+                // Последний (самый новый) подарок подсвечиваем
                 if (index === 0) {
                     liveItem.classList.add('active');
                 }
@@ -1673,16 +1685,16 @@
         }
 
         function showPrizeModal(prize) {
-            // Добавляем подарок в список последних выигрышей
-            recentPrizes.push({
+            // Добавляем подарок в глобальный список выигрышей всех пользователей
+            globalPrizes.push({
                 icon: prize.icon,
                 name: prize.name,
                 value: prize.value
             });
             
-            // Ограничиваем до последних 20 подарков
-            if (recentPrizes.length > 20) {
-                recentPrizes.shift();
+            // Ограничиваем до последних 50 подарков
+            if (globalPrizes.length > 50) {
+                globalPrizes.shift();
             }
             
             // Обновляем LIVE секцию
