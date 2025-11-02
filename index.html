@@ -3425,10 +3425,23 @@
                 }
             });
             
-            // Убираем старые обработчики
-            const cells = grid.querySelectorAll('.mines-cell');
+            // Переустанавливаем обработчики для клеток
+            setupMinesCellHandlers();
+        }
+        
+        function setupMinesCellHandlers() {
+            const minesGrid = document.getElementById('minesGrid');
+            if (!minesGrid) return;
+            
+            // Удаляем старые обработчики и добавляем новые
+            const cells = minesGrid.querySelectorAll('.mines-cell');
             cells.forEach(cell => {
-                cell.replaceWith(cell.cloneNode(true));
+                cell.addEventListener('click', function() {
+                    if (minesGameState.gameActive) {
+                        const index = parseInt(this.dataset.index);
+                        openMinesCell(index);
+                    }
+                });
             });
         }
 
@@ -3487,6 +3500,7 @@
             });
             
             updateMinesDisplay();
+            setupMinesCellHandlers();
         }
 
         function openMinesCell(index) {
@@ -3524,8 +3538,19 @@
             }
             minesGameState.currentMultiplier = 1.0 + (openedCount * multiplierIncrease);
             
+            // Принудительно обновляем отображение
             updateMinesDisplay();
-            updateMinesMultiplier();
+            
+            // Принудительно обновляем множитель
+            const multiplierEl = document.getElementById('minesMultiplier');
+            const winningsEl = document.getElementById('minesWinnings');
+            if (multiplierEl) {
+                multiplierEl.textContent = `x${minesGameState.currentMultiplier.toFixed(2)}`;
+            }
+            if (winningsEl) {
+                const winnings = minesGameState.betAmount * minesGameState.currentMultiplier;
+                winningsEl.textContent = winnings.toFixed(2);
+            }
             
             if (tg) {
                 tg.HapticFeedback.impactOccurred('light');
@@ -3628,12 +3653,15 @@
                 minesCashOutBtn.addEventListener('click', cashOutMines);
             }
             
+            // Обработчик кликов по клеткам (делегирование событий)
             if (minesGrid) {
                 minesGrid.addEventListener('click', (e) => {
                     const cell = e.target.closest('.mines-cell');
-                    if (cell && minesGameState.gameActive) {
+                    if (cell && minesGameState.gameActive && !cell.classList.contains('opened')) {
                         const index = parseInt(cell.dataset.index);
-                        openMinesCell(index);
+                        if (!isNaN(index)) {
+                            openMinesCell(index);
+                        }
                     }
                 });
             }
