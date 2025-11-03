@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>NFT Cases</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tonconnect/sdk@2/dist/tonconnect.min.js" onerror="this.src='https://unpkg.com/@tonconnect/sdk@2/dist/tonconnect.min.js'; this.onerror=null;"></script>
+    <script src="https://unpkg.com/@tonconnect/sdk@2/dist/tonconnect.min.js" defer></script>
     <style>
         * {
             margin: 0;
@@ -4307,75 +4307,123 @@
         let tonconnect = null;
         let wallet = null;
         
-        function initTonConnect() {
+        async function initTonConnect() {
             try {
-                // Проверяем загрузку библиотеки несколько раз
+                // Проверяем загрузку библиотеки
                 if (typeof TonConnect === 'undefined') {
-                    console.log('TonConnect не загружен, повторная попытка...');
-                    let attempts = 0;
-                    const checkInterval = setInterval(() => {
-                        attempts++;
-                        if (typeof TonConnect !== 'undefined') {
-                            clearInterval(checkInterval);
-                            initTonConnect();
-                        } else if (attempts >= 10) {
-                            clearInterval(checkInterval);
-                            console.error('TonConnect не удалось загрузить после 10 попыток');
-                        }
-                    }, 500);
-                    return;
+                    console.warn('⚠️ TonConnect класс не найден');
+                    console.log('Проверка глобальных объектов:', {
+                        TonConnect: typeof TonConnect,
+                        windowTonConnect: typeof window.TonConnect
+                    });
+                    return false;
                 }
                 
-                console.log('Инициализация TonConnect...');
+                console.log('✅ TonConnect класс найден, инициализация...');
+                
+                const manifestUrl = 'https://hopestiles475-boop.github.io/MiniAppTG/tonconnect-manifest.json';
+                
+                // Проверяем доступность манифеста
+                try {
+                    const manifestResponse = await fetch(manifestUrl);
+                    if (!manifestResponse.ok) {
+                        throw new Error(`Манифест недоступен: HTTP ${manifestResponse.status}`);
+                    }
+                    const manifest = await manifestResponse.json();
+                    console.log('✅ Манифест загружен:', manifest);
+                } catch (error) {
+                    console.error('❌ Ошибка загрузки манифеста:', error);
+                    console.log('URL манифеста:', manifestUrl);
+                    // Продолжаем инициализацию даже при ошибке манифеста
+                }
+                
+                // Инициализируем TonConnect
                 tonconnect = new TonConnect({
-                    manifestUrl: 'https://hopestiles475-boop.github.io/MiniAppTG/tonconnect-manifest.json'
+                    manifestUrl: manifestUrl
                 });
-                console.log('TonConnect инициализирован');
+                console.log('✅ TonConnect инициализирован');
                 
                 // Проверяем, подключен ли кошелек
-                tonconnect.restoreConnection().then(walletInfo => {
+                try {
+                    const walletInfo = await tonconnect.restoreConnection();
                     if (walletInfo) {
                         wallet = walletInfo;
                         updateTonkeeperButton();
-                        console.log('Кошелек восстановлен:', wallet.account.address);
+                        console.log('✅ Кошелек восстановлен:', wallet.account.address);
                     }
-                }).catch(err => {
-                    console.log('Wallet not connected:', err);
-                });
+                } catch (err) {
+                    console.log('Кошелек не подключен (это нормально):', err.message);
+                }
+                
+                return true;
             } catch (error) {
-                console.error('Ошибка инициализации TonConnect:', error);
+                console.error('❌ Ошибка инициализации TonConnect:', error);
+                console.error('Детали ошибки:', {
+                    message: error.message,
+                    stack: error.stack,
+                    TonConnectAvailable: typeof TonConnect !== 'undefined'
+                });
+                return false;
             }
         }
         
-        // Ждем загрузки скрипта TonConnect
-        window.addEventListener('load', function() {
-            setTimeout(initTonConnect, 1000);
-        });
+        // Глобальная проверка готовности TonConnect
+        window.tonConnectReady = false;
+        window.tonConnectCheckCount = 0;
+        
+        // Проверяем загрузку TonConnect каждые 300мс
+        const checkTonConnectInterval = setInterval(() => {
+            window.tonConnectCheckCount++;
+            
+            if (typeof TonConnect !== 'undefined') {
+                window.tonConnectReady = true;
+                clearInterval(checkTonConnectInterval);
+                console.log(`✅ TonConnect SDK загружен (попытка ${window.tonConnectCheckCount})`);
+                initTonConnect();
+            } else if (window.tonConnectCheckCount >= 50) {
+                // Через 15 секунд (50 попыток * 300мс)
+                clearInterval(checkTonConnectInterval);
+                console.error('❌ TonConnect SDK не загрузился за 15 секунд');
+                console.log('Диагностика:', {
+                    scriptsLoaded: document.querySelectorAll('script[src*="tonconnect"]').length,
+                    networkStatus: navigator.onLine ? 'online' : 'offline'
+                });
+            }
+        }, 300);
 
         // Подключение к Tonkeeper
         async function connectTonkeeper() {
-            // Проверяем еще раз перед подключением
+            // Проверяем загрузку библиотеки
             if (typeof TonConnect === 'undefined') {
+                console.error('TonConnect не загружен');
                 if (tg) {
-                    tg.showAlert('Библиотека TonConnect не загружена. Проверьте интернет и перезагрузите страницу.');
+                    tg.showAlert('TonConnect не загружен. Откройте консоль (F12) для диагностики.');
                 } else {
-                    alert('Библиотека TonConnect не загружена. Проверьте интернет и перезагрузите страницу.');
+                    alert('TonConnect не загружен. Откройте консоль (F12) для диагностики.');
                 }
                 return;
             }
             
+            // Если не инициализирован, инициализируем
             if (!tonconnect) {
-                // Пытаемся инициализировать еще раз
-                initTonConnect();
-                
-                if (!tonconnect) {
-                    if (tg) {
-                        tg.showAlert('TonConnect не инициализирован. Проверьте подключение к интернету.');
-                    } else {
-                        alert('TonConnect не инициализирован. Проверьте подключение к интернету.');
-                    }
-                    return;
+                console.log('Попытка инициализации TonConnect...');
+                try {
+                    initTonConnect();
+                    // Ждем немного для инициализации
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                } catch (error) {
+                    console.error('Ошибка инициализации:', error);
                 }
+            }
+            
+            if (!tonconnect) {
+                console.error('TonConnect не инициализирован после попытки');
+                if (tg) {
+                    tg.showAlert('Ошибка инициализации TonConnect. Проверьте манифест.');
+                } else {
+                    alert('Ошибка инициализации TonConnect. Проверьте манифест.');
+                }
+                return;
             }
 
             try {
