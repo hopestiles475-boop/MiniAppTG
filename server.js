@@ -4293,12 +4293,19 @@
 
         // Функции для модального окна пополнения
         function openTopUpModal() {
+            console.log('openTopUpModal вызвана');
             const modal = document.getElementById('topUpModal');
+            console.log('Модальное окно найдено:', modal);
             if (modal) {
                 modal.classList.add('active');
+                modal.style.display = 'flex';
+                modal.style.zIndex = '10000';
+                console.log('Модальное окно открыто');
                 if (tg) {
                     tg.HapticFeedback.impactOccurred('medium');
                 }
+            } else {
+                console.error('Модальное окно topUpModal не найдено!');
             }
         }
 
@@ -4306,6 +4313,7 @@
             const modal = document.getElementById('topUpModal');
             if (modal) {
                 modal.classList.remove('active');
+                modal.style.display = 'none';
                 if (tg) {
                     tg.HapticFeedback.impactOccurred('light');
                 }
@@ -4317,16 +4325,28 @@
             // Обработчик кнопки "Пополнить" - открывает модальное окно выбора способа
             const topUpBtn = document.getElementById('topUpBtn');
             if (topUpBtn) {
+                console.log('Найдена кнопка topUpBtn, устанавливаю обработчик модального окна');
+                
                 // Удаляем старый обработчик если есть и добавляем новый
                 const newBtn = topUpBtn.cloneNode(true);
                 topUpBtn.parentNode.replaceChild(newBtn, topUpBtn);
                 
-                newBtn.addEventListener('click', (e) => {
+                // Явно устанавливаем обработчик с высоким приоритетом
+                newBtn.onclick = null; // Удаляем все inline обработчики
+                newBtn.removeEventListener('click', () => {}); // Пытаемся удалить если есть
+                
+                newBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('Открываем модальное окно пополнения');
+                    e.stopImmediatePropagation();
+                    console.log('Клик по кнопке Пополнить - открываем модальное окно');
                     openTopUpModal();
-                });
+                    return false;
+                }, true); // Используем capture phase для приоритета
+                
+                console.log('Обработчик модального окна установлен');
+            } else {
+                console.error('Кнопка topUpBtn не найдена');
             }
 
             // Пополнение через Telegram Wallet
@@ -4466,11 +4486,28 @@
             }
         }
         
-        // Инициализируем обработчики при загрузке
+        // Инициализируем обработчики при загрузке - делаем несколько попыток
+        function initTopUpHandlersWithRetry(retries = 3) {
+            const topUpBtn = document.getElementById('topUpBtn');
+            if (!topUpBtn && retries > 0) {
+                setTimeout(() => initTopUpHandlersWithRetry(retries - 1), 100);
+                return;
+            }
+            
+            if (topUpBtn) {
+                initTopUpHandlers();
+                console.log('Обработчики пополнения инициализированы');
+            } else {
+                console.error('Кнопка topUpBtn не найдена после всех попыток');
+            }
+        }
+        
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initTopUpHandlers);
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(initTopUpHandlersWithRetry, 100);
+            });
         } else {
-            initTopUpHandlers();
+            setTimeout(initTopUpHandlersWithRetry, 100);
         }
         
         // Обработчик кнопки "Продать все"
