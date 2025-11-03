@@ -2442,7 +2442,7 @@
     <div class="profile-page" id="profilePage" style="display: none;">
         <div class="profile-header">
             <div class="profile-avatar" id="profileAvatar">
-                <img id="profileAvatarImg" src="" alt="Avatar" onerror="this.style.display='none'; this.parentElement.innerHTML='👤';">
+                <img id="profileAvatarImg" src="" alt="Avatar">
             </div>
             <div class="profile-username" id="profileUsername">User</div>
         </div>
@@ -3831,12 +3831,43 @@
                 if (profileUsername) {
                     profileUsername.textContent = user.first_name || user.username || 'User';
                 }
-                if (profileAvatar && user.photo_url) {
-                    profileAvatar.src = user.photo_url;
-                    profileAvatar.style.display = 'block';
-                } else if (profileAvatarContainer && !user.photo_url) {
-                    // Если фото недоступно, показываем эмодзи
-                    profileAvatarContainer.innerHTML = '👤';
+                
+                if (profileAvatarContainer) {
+                    if (user.photo_url) {
+                        // Если есть фото профиля, создаем или обновляем img элемент
+                        if (!profileAvatar) {
+                            const img = document.createElement('img');
+                            img.id = 'profileAvatarImg';
+                            img.alt = 'Avatar';
+                            img.style.width = '100%';
+                            img.style.height = '100%';
+                            img.style.objectFit = 'cover';
+                            img.style.borderRadius = '50%';
+                            profileAvatarContainer.appendChild(img);
+                        }
+                        const img = profileAvatar || document.getElementById('profileAvatarImg');
+                        if (img) {
+                            img.src = user.photo_url;
+                            img.style.display = 'block';
+                            img.onerror = function() {
+                                // Если фото не загрузилось, показываем эмодзи
+                                this.style.display = 'none';
+                                if (!profileAvatarContainer.querySelector('span')) {
+                                    const fallback = document.createElement('span');
+                                    fallback.textContent = '👤';
+                                    fallback.style.fontSize = '60px';
+                                    profileAvatarContainer.appendChild(fallback);
+                                }
+                            };
+                        }
+                    } else {
+                        // Если фото недоступно, показываем эмодзи
+                        profileAvatarContainer.innerHTML = '';
+                        const fallback = document.createElement('span');
+                        fallback.textContent = '👤';
+                        fallback.style.fontSize = '60px';
+                        profileAvatarContainer.appendChild(fallback);
+                    }
                 }
             }
         }
@@ -4021,6 +4052,9 @@
                     if (header) {
                         header.style.display = 'flex';
                     }
+                    // Обновляем информацию профиля при открытии страницы
+                    updateProfileInfo();
+                    updateInventory();
                     // Скрываем все остальные страницы и элементы
                     mainPage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; position: absolute !important; pointer-events: none !important; z-index: -1 !important;';
                     mainPage.classList.add('hidden');
