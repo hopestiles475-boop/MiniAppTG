@@ -2905,6 +2905,110 @@
     <script>
         console.log('✅ JAVASCRIPT РАБОТАЕТ!');
         
+        // ГЛОБАЛЬНЫЕ ОБРАБОТЧИКИ - ОПРЕДЕЛЯЕМ СРАЗУ В НАЧАЛЕ СКРИПТА
+        // Эти функции будут доступны для inline onclick
+        window.handleCaseClick = function(caseNum) {
+            console.log('🔵 Клик по кейсу:', caseNum);
+            try {
+                // Проверяем что функция определена
+                if (typeof window.showCaseDetail === 'function') {
+                    window.showCaseDetail(caseNum);
+                } else if (typeof showCaseDetail === 'function') {
+                    showCaseDetail(caseNum);
+                } else {
+                    alert('Ошибка: showCaseDetail не найдена. Перезагрузите страницу.');
+                    console.error('showCaseDetail не определена');
+                }
+            } catch(err) {
+                console.error('Ошибка handleCaseClick:', err);
+                alert('Ошибка: ' + err.message);
+            }
+        };
+        
+        window.handleCrashBetClick = function(e) {
+            console.log('🔵 Клик по кнопке краша');
+            try {
+                const btn = document.getElementById('makeBetBtn');
+                if (btn && btn.onclick) {
+                    btn.onclick();
+                } else if (btn) {
+                    btn.click();
+                }
+            } catch(err) {
+                console.error('Ошибка handleCrashBetClick:', err);
+                alert('Ошибка: ' + err.message);
+            }
+        };
+        
+        window.handleMinesStart = function(e) {
+            console.log('🔵 Клик по кнопке мины');
+            try {
+                if (typeof window.startMinesGame === 'function') {
+                    window.startMinesGame();
+                } else if (typeof startMinesGame === 'function') {
+                    startMinesGame();
+                } else {
+                    alert('Ошибка: startMinesGame не найдена. Перезагрузите страницу.');
+                    console.error('startMinesGame не определена');
+                }
+            } catch(err) {
+                console.error('Ошибка handleMinesStart:', err);
+                alert('Ошибка: ' + err.message);
+            }
+        };
+        
+        window.handleDiceStart = function(e) {
+            console.log('🔵 Клик по кнопке dice');
+            try {
+                if (typeof window.startDiceGame === 'function') {
+                    window.startDiceGame();
+                } else if (typeof startDiceGame === 'function') {
+                    startDiceGame();
+                } else {
+                    alert('Ошибка: startDiceGame не найдена. Перезагрузите страницу.');
+                    console.error('startDiceGame не определена');
+                }
+            } catch(err) {
+                console.error('Ошибка handleDiceStart:', err);
+                alert('Ошибка: ' + err.message);
+            }
+        };
+        
+        window.handleTopUp = function(e) {
+            console.log('🔵 Клик по кнопке пополнить');
+            try {
+                if (typeof window.openTopUpModal === 'function') {
+                    window.openTopUpModal();
+                } else if (typeof openTopUpModal === 'function') {
+                    openTopUpModal();
+                } else {
+                    alert('Ошибка: openTopUpModal не найдена. Перезагрузите страницу.');
+                    console.error('openTopUpModal не определена');
+                }
+            } catch(err) {
+                console.error('Ошибка handleTopUp:', err);
+                alert('Ошибка: ' + err.message);
+            }
+        };
+        
+        window.handleWithdraw = function(e) {
+            console.log('🔵 Клик по кнопке вывести');
+            try {
+                if (typeof window.openWithdrawModal === 'function') {
+                    window.openWithdrawModal();
+                } else if (typeof openWithdrawModal === 'function') {
+                    openWithdrawModal();
+                } else {
+                    alert('Ошибка: openWithdrawModal не найдена. Перезагрузите страницу.');
+                    console.error('openWithdrawModal не определена');
+                }
+            } catch(err) {
+                console.error('Ошибка handleWithdraw:', err);
+                alert('Ошибка: ' + err.message);
+            }
+        };
+        
+        
         // Безопасная инициализация Telegram Web App
         let tg = null;
         let isTelegram = false;
@@ -4449,6 +4553,7 @@
         }
 
         function showCaseDetail(caseNum) {
+            window.showCaseDetail = showCaseDetail; // Делаем глобальной
             if (isOpening) return;
             
             currentCase = cases[caseNum];
@@ -4983,6 +5088,7 @@
 
         // Функции для модального окна пополнения
         function openTopUpModal() {
+            window.openTopUpModal = openTopUpModal; // Делаем глобальной
             console.log('openTopUpModal вызвана');
             const modal = document.getElementById('topUpModal');
             console.log('Модальное окно найдено:', modal);
@@ -5011,6 +5117,7 @@
         }
         
         function openWithdrawModal() {
+            window.openWithdrawModal = openWithdrawModal; // Делаем глобальной
             console.log('openWithdrawModal вызвана');
             const modal = document.getElementById('withdrawModal');
             console.log('Модальное окно вывода найдено:', modal);
@@ -5517,6 +5624,7 @@
         }
 
         function startMinesGame() {
+            window.startMinesGame = startMinesGame; // Делаем глобальной
             if (minesGameState.gameActive) return;
             
             minesGameState.betAmount = parseFloat(document.getElementById('minesBetAmount').value) || 0.1;
@@ -5879,6 +5987,7 @@
         }
 
         function startDiceGame() {
+            window.startDiceGame = startDiceGame; // Делаем глобальной
             if (diceGameState.isRolling) return;
             
             diceGameState.betAmount = parseFloat(document.getElementById('diceBetAmount').value) || 0.1;
@@ -6120,148 +6229,6 @@
         let crashTarget = 1.00;
         let crashDirection = 1; // 1 = вверх, -1 = вниз (краш)
 
-        // Глобальные обработчики - простые и прямые, без проверок
-        // Определяем СРАЗУ чтобы были доступны для inline onclick
-        window.handleCaseClick = function(caseNum) {
-            console.log('🔵 Клик по кейсу:', caseNum);
-            try {
-                if (typeof showCaseDetail === 'function') {
-                    showCaseDetail(caseNum);
-                } else {
-                    console.error('showCaseDetail не определена!');
-                    alert('Ошибка: showCaseDetail не найдена. Перезагрузите страницу.');
-                }
-            } catch(err) {
-                console.error('Ошибка в handleCaseClick:', err);
-                alert('Ошибка: ' + err.message);
-            }
-        };
-        
-        window.handleCrashBetClick = function(e) {
-            console.log('🔵 Клик по кнопке краша');
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            // Вызываем обработчик ставки напрямую через существующую логику
-            const btn = document.getElementById('makeBetBtn');
-            if (btn && btn.onclick) {
-                btn.onclick();
-            } else {
-                // Если обработчик не установлен, вызываем напрямую логику ставки
-                const amountInput = document.getElementById('betAmountInput');
-                if (amountInput && amountInput.value) {
-                    const betAmount = parseFloat(amountInput.value);
-                    if (betAmount > 0 && betAmount <= _balance) {
-                        alert('Ставка: ' + betAmount);
-                        // Здесь будет логика ставки
-                    }
-                }
-            }
-        };
-        
-        window.handleMinesStart = function(e) {
-            console.log('🔵 Клик по кнопке мины');
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            try {
-                if (typeof startMinesGame === 'function') {
-                    startMinesGame();
-                } else {
-                    console.error('startMinesGame не определена!');
-                    alert('Ошибка: startMinesGame не найдена. Перезагрузите страницу.');
-                }
-            } catch(err) {
-                console.error('Ошибка в handleMinesStart:', err);
-                alert('Ошибка: ' + err.message);
-            }
-        };
-        
-        window.handleDiceStart = function(e) {
-            console.log('🔵 Клик по кнопке dice');
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            try {
-                if (typeof startDiceGame === 'function') {
-                    startDiceGame();
-                } else {
-                    console.error('startDiceGame не определена!');
-                    alert('Ошибка: startDiceGame не найдена. Перезагрузите страницу.');
-                }
-            } catch(err) {
-                console.error('Ошибка в handleDiceStart:', err);
-                alert('Ошибка: ' + err.message);
-            }
-        };
-        
-        window.handleTopUp = function(e) {
-            console.log('🔵 Клик по кнопке пополнить');
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            try {
-                if (typeof openTopUpModal === 'function') {
-                    openTopUpModal();
-                } else {
-                    console.error('openTopUpModal не определена!');
-                    alert('Ошибка: openTopUpModal не найдена. Перезагрузите страницу.');
-                }
-            } catch(err) {
-                console.error('Ошибка в handleTopUp:', err);
-                alert('Ошибка: ' + err.message);
-            }
-        };
-        
-        window.handleWithdraw = function(e) {
-            console.log('🔵 Клик по кнопке вывести');
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            try {
-                if (typeof openWithdrawModal === 'function') {
-                    openWithdrawModal();
-                } else {
-                    console.error('openWithdrawModal не определена!');
-                    alert('Ошибка: openWithdrawModal не найдена. Перезагрузите страницу.');
-                }
-            } catch(err) {
-                console.error('Ошибка в handleWithdraw:', err);
-                alert('Ошибка: ' + err.message);
-            }
-        };
-        
-        // Вызываем инициализацию сразу после определения функций
-        setTimeout(function() {
-            console.log('🔧 Проверяю доступность функций...');
-            console.log('showCaseDetail:', typeof showCaseDetail);
-            console.log('startMinesGame:', typeof startMinesGame);
-            console.log('startDiceGame:', typeof startDiceGame);
-            console.log('openTopUpModal:', typeof openTopUpModal);
-            console.log('openWithdrawModal:', typeof openWithdrawModal);
-            
-            // Проверяем что функции определены
-            if (typeof showCaseDetail === 'undefined') {
-                console.error('❌ showCaseDetail не определена!');
-            }
-            if (typeof startMinesGame === 'undefined') {
-                console.error('❌ startMinesGame не определена!');
-            }
-            if (typeof startDiceGame === 'undefined') {
-                console.error('❌ startDiceGame не определена!');
-            }
-            if (typeof openTopUpModal === 'undefined') {
-                console.error('❌ openTopUpModal не определена!');
-            }
-            if (typeof openWithdrawModal === 'undefined') {
-                console.error('❌ openWithdrawModal не определена!');
-            }
-        }, 1000);
         
         // Инициализация игры Краш
         function initCrashGame() {
