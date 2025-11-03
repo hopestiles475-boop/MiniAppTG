@@ -4,6 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>NFT Cases</title>
+    <script>
+        // КРИТИЧЕСКАЯ ДИАГНОСТИКА - выполняется ПЕРВЫМ
+        console.log('🚀 СТРАНИЦА НАЧАЛА ЗАГРУЖАТЬСЯ');
+        console.log('Timestamp:', new Date().toISOString());
+        console.log('User Agent:', navigator.userAgent);
+        
+        // Перехват всех ошибок
+        window.addEventListener('error', function(e) {
+            console.error('❌ ГЛОБАЛЬНАЯ ОШИБКА:', e.message, e.filename, e.lineno);
+        });
+        
+        // Перехват неперехваченных промисов
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('❌ ОШИБКА ПРОМИСА:', e.reason);
+        });
+    </script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         // Динамическая загрузка TonConnect SDK с резервными CDN
