@@ -3074,7 +3074,9 @@
             hasBet: false,
             betAmount: 0,
             animationId: null,
-            graphPoints: []
+            graphPoints: [],
+            cooldownRemaining: 0,
+            cooldownInterval: null
         };
 
         // Состояние игры Dice
@@ -6659,9 +6661,9 @@
             crashGameState.isRunning = true;
             crashGameState.hasBet = false;
             
-            // Генерируем случайную цель (от 1.5 до 10.0)
+            // Генерируем случайную цель (от 1.0 до 30.0)
             const seed = Date.now() % 1000000;
-            crashGameState.targetMultiplier = 1.5 + (seed / 1000000) * 8.5;
+            crashGameState.targetMultiplier = 1.0 + (seed / 1000000) * 29.0;
             
             console.log('🚀 Новый раунд! Цель:', crashGameState.targetMultiplier.toFixed(2));
             
@@ -6702,8 +6704,8 @@
                 
                 // Добавляем точку графика
                 const x = 10 + crashGameState.graphPoints.length * 2;
-                const multPercent = ((crashGameState.multiplier - 1.0) / 9.0) * 100;
-                const y = canvasHeight - 30 - (multPercent / 100) * (canvasHeight - 60);
+                const multPercent = ((crashGameState.multiplier - 1.0) / 29.0) * 100;
+                const y = canvasHeight - 30 - Math.min((multPercent / 100) * (canvasHeight - 60), canvasHeight - 60);
                 
                 crashGameState.graphPoints.push({ x, y, mult: crashGameState.multiplier });
                 
@@ -6784,10 +6786,8 @@
                     // Обрабатываем результат
                     processCrashResult();
                     
-                    // Новый раунд через 3 секунды
-                    setTimeout(() => {
-                        startCrashRound(ctx, canvas);
-                    }, 3000);
+                    // Показываем кулдаун 10 секунд
+                    showCrashCooldown(ctx, canvas);
                     
                     crashGameState.animationId = null;
                     return;
@@ -6900,6 +6900,81 @@
             if (balanceEl) {
                 balanceEl.textContent = _balance.toFixed(2);
             }
+        }
+        
+        function showCrashCooldown(ctx, canvas) {
+            crashGameState.cooldownRemaining = 10;
+            
+            // Блокируем кнопку ставки во время кулдауна
+            const betBtn = document.getElementById('crashBetBtn');
+            if (betBtn) {
+                betBtn.disabled = true;
+                betBtn.textContent = 'Ожидание нового раунда...';
+            }
+            
+            const canvasWidth = canvas.width / (window.devicePixelRatio || 1);
+            const canvasHeight = canvas.height / (window.devicePixelRatio || 1);
+            
+            // Очищаем предыдущий интервал
+            if (crashGameState.cooldownInterval) {
+                clearInterval(crashGameState.cooldownInterval);
+            }
+            
+            const drawCooldown = () => {
+                // Очищаем canvas
+                ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+                ctx.fillStyle = 'rgba(20, 20, 30, 1)';
+                ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+                
+                // Рисуем текст кулдауна
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 32px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(`Новый раунд через`, canvasWidth / 2, canvasHeight / 2 - 40);
+                
+                ctx.fillStyle = '#667eea';
+                ctx.font = 'bold 96px Arial';
+                ctx.fillText(`${crashGameState.cooldownRemaining}`, canvasWidth / 2, canvasHeight / 2 + 20);
+                
+                // Обновляем множитель (скрываем)
+                const multEl = document.getElementById('crashMultiplier');
+                if (multEl) {
+                    multEl.style.display = 'none';
+                }
+            };
+            
+            drawCooldown();
+            
+            // Обновляем каждую секунду
+            crashGameState.cooldownInterval = setInterval(() => {
+                crashGameState.cooldownRemaining--;
+                
+                if (crashGameState.cooldownRemaining <= 0) {
+                    clearInterval(crashGameState.cooldownInterval);
+                    crashGameState.cooldownInterval = null;
+                    
+                    // Восстанавливаем отображение множителя
+                    const multEl = document.getElementById('crashMultiplier');
+                    if (multEl) {
+                        multEl.style.display = 'block';
+                        multEl.textContent = 'x1.00';
+                        multEl.style.color = '#00ff00';
+                        multEl.style.borderColor = '#00ff00';
+                    }
+                    
+                    // Разблокируем кнопку
+                    if (betBtn) {
+                        betBtn.disabled = false;
+                        betBtn.textContent = 'Сделать ставку';
+                    }
+                    
+                    // Запускаем новый раунд
+                    startCrashRound(ctx, canvas);
+                } else {
+                    drawCooldown();
+                }
+            }, 1000);
         }
         
         window.makeCrashBet = makeCrashBet;
