@@ -13,11 +13,52 @@ const PORT = process.env.PORT || 3000;
 app.use(cors({
     origin: '*', // В продакшене укажите конкретный домен
     methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-User-ID']
 }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname)); // Отдаем статику из корня проекта
+
+// Защита от XSS и валидация данных
+app.use((req, res, next) => {
+    // Валидация тела запроса на опасные паттерны
+    if (req.body && typeof req.body === 'object') {
+        const bodyStr = JSON.stringify(req.body);
+        if (bodyStr.includes('<script') || bodyStr.includes('javascript:') || bodyStr.includes('onerror=')) {
+            return res.status(400).json({ error: 'Некорректные данные в запросе' });
+        }
+    }
+    next();
+});
+
+// Функция валидации userId
+function validateUserId(userId) {
+    if (!userId || typeof userId !== 'string') return false;
+    // Проверка формата (только цифры)
+    if (!/^\d+$/.test(userId)) return false;
+    // Проверка длины (Telegram ID обычно 8-12 цифр)
+    if (userId.length < 6 || userId.length > 15) return false;
+    return true;
+}
+
+// Middleware для проверки userId в критических эндпоинтах
+function validateUserRequest(req, res, next) {
+    const headerUserId = req.headers['x-user-id'];
+    const urlUserId = req.params.userId;
+    
+    // Проверяем, что userId из URL совпадает с заголовком (если есть)
+    if (headerUserId && urlUserId && headerUserId !== urlUserId) {
+        console.warn(`⚠️ Несоответствие userId: заголовок=${headerUserId}, URL=${urlUserId}`);
+        return res.status(403).json({ error: 'Доступ запрещён' });
+    }
+    
+    // Валидация userId из URL
+    if (urlUserId && !validateUserId(urlUserId)) {
+        return res.status(400).json({ error: 'Некорректный userId' });
+    }
+    
+    next();
+}
 
 // Логирование запросов
 app.use((req, res, next) => {
@@ -134,7 +175,7 @@ function writeDiceGamesData(data) {
 // API Routes
 
 // Получение данных пользователя
-app.get('/api/users/:userId', (req, res) => {
+app.get('/api/users/:userId', validateUserRequest, (req, res) => {
     try {
         const { userId } = req.params;
         if (!userId) {
@@ -159,22 +200,47 @@ app.get('/api/users/:userId', (req, res) => {
 });
 
 // Сохранение данных пользователя
-app.post('/api/users/:userId', (req, res) => {
+app.post('/api/users/:userId', validateUserRequest, (req, res) => {
     try {
         const { userId } = req.params;
         if (!userId) {
             return res.status(400).json({ error: 'User ID is required' });
         }
         
-        const userData = req.body;
-        
-        // Валидация данных
-        if (userData.balance !== undefined && (isNaN(userData.balance) || userData.balance < 0)) {
-            return res.status(400).json({ error: 'Invalid balance value' });
+        // Дополнительная валидация userId из заголовка
+        const headerUserId = req.headers['x-user-id'];
+        if (headerUserId && headerUserId !== userId) {
+            console.warn(`⚠️ Несоответствие userId при сохранении: заголовок=${headerUserId}, URL=${userId}`);
+            return res.status(403).json({ error: 'Доступ запрещён: несоответствие userId' });
         }
         
-        if (userData.inventory && !Array.isArray(userData.inventory)) {
-            return res.status(400).json({ error: 'Inventory must be an array' });
+        const userData = req.body;
+        
+        // Валидация баланса (защита от манипуляций)
+        if (userData.balance !== undefined) {
+            const balance = parseFloat(userData.balance);
+            if (isNaN(balance) || balance < 0 || balance > 1000000) {
+                return res.status(400).json({ error: 'Invalid balance value (must be 0-1000000)' });
+            }
+            // Проверка на подозрительные изменения баланса
+            const usersData = readUsersData();
+            const existingUser = usersData[userId];
+            if (existingUser && existingUser.balance !== undefined) {
+                const balanceChange = Math.abs(balance - existingUser.balance);
+                if (balanceChange > 10000) {
+                    console.warn(`⚠️ Большое изменение баланса для ${userId}: ${existingUser.balance} -> ${balance}`);
+                }
+            }
+        }
+        
+        // Валидация инвентаря
+        if (userData.inventory !== undefined) {
+            if (!Array.isArray(userData.inventory)) {
+                return res.status(400).json({ error: 'Inventory must be an array' });
+            }
+            if (userData.inventory.length > 1000) {
+                return res.status(400).json({ error: 'Inventory too large (max 1000 items)' });
+            }
         }
         
         const usersData = readUsersData();
@@ -182,6 +248,8 @@ app.post('/api/users/:userId', (req, res) => {
             ...usersData[userId],
             ...userData,
             userId: userId,
+            balance: userData.balance !== undefined ? parseFloat(userData.balance) : usersData[userId]?.balance,
+            inventory: userData.inventory || usersData[userId]?.inventory || [],
             updatedAt: Date.now()
         };
         
