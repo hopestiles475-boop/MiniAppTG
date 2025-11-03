@@ -7135,6 +7135,7 @@
                         width: canvas?.width,
                         height: canvas?.height
                     });
+                    crashAnimationId = requestAnimationFrame(animate); // Продолжаем попытки
                     return;
                 }
                 
@@ -7158,6 +7159,13 @@
                         ctx.lineTo(crashGraphPoints[i].x, crashGraphPoints[i].y);
                     }
                     ctx.stroke();
+                } else if (crashGraphPoints.length === 1) {
+                    // Рисуем начальную точку
+                    const point = crashGraphPoints[0];
+                    ctx.fillStyle = '#00ff00';
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
+                    ctx.fill();
                 }
                 
                 // Обновляем множитель только если раунд активен и график растет
@@ -7226,12 +7234,13 @@
                         return;
                     }
                     
-                    // Добавляем точку на график во время роста
+                    // Добавляем точку на график во время роста - добавляем точку КАЖДЫЙ КАДР
                     const x = 10 + (crashGraphPoints.length * 3); // Начинаем с 10px отступа, шаг 3px
                     // Преобразуем множитель в Y координату (1.0 = низ, выше = выше на графике)
                     const multiplierPercent = ((crashMultiplier - 1.0) / 9.0) * 100;
                     const y = canvasHeight - 50 - (multiplierPercent / 100) * (canvasHeight - 100);
                     
+                    // ВАЖНО: Добавляем точку каждый кадр
                     crashGraphPoints.push({ x, y, multiplier: crashMultiplier });
                     
                     // Ограничиваем количество точек чтобы не перегружать график
@@ -7243,13 +7252,17 @@
                         });
                     }
                     
-                    // Рисуем зеленый график роста (обновляем уже нарисованный выше)
-                    if (crashGraphPoints.length > 1) {
-                        // Перерисовываем весь график заново с новыми точками
+                    // ВСЕГДА перерисовываем весь график заново с новыми точками
+                    if (crashGraphPoints.length >= 1) {
+                        // Рисуем зеленый график роста
                         ctx.strokeStyle = '#00ff00';
                         ctx.lineWidth = 3;
                         ctx.beginPath();
+                        
+                        // Начинаем с первой точки
                         ctx.moveTo(crashGraphPoints[0].x, crashGraphPoints[0].y);
+                        
+                        // Соединяем все точки
                         for (let i = 1; i < crashGraphPoints.length; i++) {
                             ctx.lineTo(crashGraphPoints[i].x, crashGraphPoints[i].y);
                         }
@@ -7263,13 +7276,6 @@
                             ctx.arc(lastPoint.x, lastPoint.y, 4, 0, Math.PI * 2);
                             ctx.fill();
                         }
-                    } else if (crashGraphPoints.length === 1) {
-                        // Рисуем начальную точку
-                        const point = crashGraphPoints[0];
-                        ctx.fillStyle = '#00ff00';
-                        ctx.beginPath();
-                        ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
-                        ctx.fill();
                     }
                     
                     // Обновляем отображение множителя
@@ -7291,13 +7297,16 @@
                     checkCrashWins();
                 }
                 
-                // Продолжаем анимацию всегда (для отображения графика даже во время кулдауна)
+                // ВАЖНО: Продолжаем анимацию ВСЕГДА (для отображения графика даже во время кулдауна)
                 // Анимация остановится только если явно отменена через cancelAnimationFrame
                 crashAnimationId = requestAnimationFrame(animate);
             };
             
             // Запускаем анимацию сразу - она будет проверять crashRoundActive внутри
             console.log('🎬 Запускаем функцию animate, crashRoundActive:', crashRoundActive);
+            console.log('🎬 crashGraphPoints при запуске:', crashGraphPoints.length);
+            
+            // Убедимся что анимация запустится даже если crashRoundActive false
             animate();
         }
         
