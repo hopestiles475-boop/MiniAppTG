@@ -1,7 +1,7 @@
 {
-  "url": "https://your-domain.com",
+  "url": "http://localhost:8000",
   "name": "MiniAppTG",
-  "iconUrl": "https://your-domain.com/icon.png",
-  "termsOfUseUrl": "https://your-domain.com/terms",
-  "privacyPolicyUrl": "https://your-domain.com/privacy"
+  "iconUrl": "http://localhost:8000/icon.png",
+  "termsOfUseUrl": "",
+  "privacyPolicyUrl": ""
 }
