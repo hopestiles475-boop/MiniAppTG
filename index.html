@@ -2762,23 +2762,23 @@
     </div>
 
     <div class="bottom-nav" id="bottomNav">
-        <div class="nav-item active" data-page="cases">
+        <div class="nav-item active" data-page="cases" onclick="handleNavClick('cases', this)">
             <div class="nav-icon">🎁</div>
             <div class="nav-label">Кейсы</div>
         </div>
-        <div class="nav-item" data-page="crash">
+        <div class="nav-item" data-page="crash" onclick="handleNavClick('crash', this)">
             <div class="nav-icon">🚀</div>
             <div class="nav-label">Краш</div>
         </div>
-        <div class="nav-item" data-page="mines">
+        <div class="nav-item" data-page="mines" onclick="handleNavClick('mines', this)">
             <div class="nav-icon">💣</div>
             <div class="nav-label">Мины</div>
         </div>
-        <div class="nav-item" data-page="dice">
+        <div class="nav-item" data-page="dice" onclick="handleNavClick('dice', this)">
             <div class="nav-icon">🎲</div>
             <div class="nav-label">Dice</div>
         </div>
-        <div class="nav-item" data-page="profile">
+        <div class="nav-item" data-page="profile" onclick="handleNavClick('profile', this)">
             <div class="nav-icon">👤</div>
             <div class="nav-label">Профиль</div>
         </div>
@@ -3382,100 +3382,33 @@
         // Инициализация при загрузке DOM
         function initializeApp() {
             try {
-                // Сначала проверяем критические элементы
                 safeInit();
-                
-                // Затем инициализируем обработчики событий
-                setTimeout(() => {
+                setTimeout(function() {
                     if (typeof initEventHandlers === 'function') {
                         initEventHandlers();
                     }
                 }, 200);
             } catch (error) {
-                console.error('❌ Критическая ошибка инициализации:', error);
+                console.error('❌ Ошибка инициализации:', error);
             }
         }
         
-        // УСТАНАВЛИВАЕМ ДЕЛЕГИРОВАНИЕ МНОЖЕСТВЕННО - ГАРАНТИЯ РАБОТЫ
-        function initNavigationMultipleTimes() {
-            setupNavigationDelegation();
-            
-            // Повторяем несколько раз для гарантии
-            setTimeout(setupNavigationDelegation, 100);
-            setTimeout(setupNavigationDelegation, 300);
-            setTimeout(setupNavigationDelegation, 500);
-            setTimeout(setupNavigationDelegation, 1000);
-        }
-        
-        if (document.body) {
-            initNavigationMultipleTimes();
-        } else {
-            document.addEventListener('DOMContentLoaded', initNavigationMultipleTimes);
-        }
-        
-        // Также устанавливаем при полной загрузке
-        window.addEventListener('load', initNavigationMultipleTimes);
-        
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeApp);
-        } else {
-            // DOM уже загружен
-            setTimeout(initializeApp, 100);
-        }
-        
-        // ДЕЛЕГИРОВАНИЕ СОБЫТИЙ НА .bottom-nav - РАБОТАЕТ ВСЕГДА
-        function setupNavigationDelegation() {
-            // Пробуем найти bottom-nav разными способами
-            let bottomNav = document.getElementById('bottomNav');
-            if (!bottomNav) {
-                bottomNav = document.querySelector('.bottom-nav');
+        // ДЕЛЕГИРОВАНИЕ НА ВСЕМ DOCUMENT - РАБОТАЕТ ВСЕГДА
+        document.addEventListener('click', function(e) {
+            const navItem = e.target.closest('.nav-item');
+            if (navItem) {
+                const page = navItem.dataset.page || navItem.getAttribute('data-page');
+                if (page && typeof handleNavClick === 'function') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleNavClick(page, navItem);
+                }
             }
-            
-            if (bottomNav) {
-                // Устанавливаем обработчик на родительский элемент - НЕ КЛОНИРУЕМ!
-                bottomNav.addEventListener('click', function navClickHandler(e) {
-                    // Ищем ближайший .nav-item
-                    const navItem = e.target.closest('.nav-item');
-                    if (navItem) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                        
-                        const page = navItem.dataset.page || navItem.getAttribute('data-page');
-                        if (page && typeof handleNavClick === 'function') {
-                            // Визуальный фидбек
-                            navItem.style.opacity = '0.7';
-                            setTimeout(() => {
-                                navItem.style.opacity = '1';
-                            }, 150);
-                            
-                            handleNavClick(page, navItem);
-                        }
-                    }
-                }, { capture: true, passive: false }); // Используем capture для приоритета
-            }
-        }
+        }, true);
         
         // Инициализация обработчиков после загрузки DOM
         function initEventHandlers() {
-            // Устанавливаем делегирование событий
-            setupNavigationDelegation();
-            
-            // Дополнительно устанавливаем onclick на каждый элемент
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach((item) => {
-                const page = item.dataset.page;
-                if (page) {
-                    item.onclick = function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (typeof handleNavClick === 'function') {
-                            handleNavClick(page, this);
-                        }
-                        return false;
-                    };
-                }
-            });
+            // Навигация уже работает через inline onclick и делегирование
             
             // Обработчики табов
             if (typeof initTabs === 'function') {
@@ -3517,180 +3450,203 @@
             }
         }
         
-        // Функция обработки клика по навигации
-        function handleNavClick(page, clickedItem) {
-            try {
-                if (!page) {
-                    return;
+        // Функция обработки клика по навигации - ПРОСТАЯ И НАДЕЖНАЯ
+        window.handleNavClick = function(page, clickedItem) {
+            if (!page) return;
+            
+            // Обновляем активную вкладку
+            const allNavItems = document.querySelectorAll('.nav-item');
+            for (let i = 0; i < allNavItems.length; i++) {
+                allNavItems[i].classList.remove('active');
+            }
+            
+            if (clickedItem) {
+                clickedItem.classList.add('active');
+            } else {
+                const foundItem = document.querySelector('[data-page="' + page + '"]');
+                if (foundItem) {
+                    foundItem.classList.add('active');
+                }
+            }
+                
+            const mainPage = document.getElementById('mainPage');
+            const caseDetailPage = document.getElementById('caseDetailPage');
+            const profilePage = document.getElementById('profilePage');
+            const crashPage = document.getElementById('crashPage');
+            const minesPage = document.getElementById('minesPage');
+            const dicePage = document.getElementById('dicePage');
+            
+            if (!mainPage || !caseDetailPage || !profilePage) return;
+            
+            // Скрываем кнопку "Открыть"
+            const openBtn = document.getElementById('openBtn');
+            if (openBtn) {
+                openBtn.style.display = 'none';
+                openBtn.style.visibility = 'hidden';
+                openBtn.style.opacity = '0';
+                openBtn.classList.remove('show');
+                openBtn.disabled = true;
+                openBtn.style.pointerEvents = 'none';
+            }
+            
+            const header = document.querySelector('.header');
+            
+            // Скрываем все страницы
+            const allPages = [mainPage, caseDetailPage, profilePage];
+            if (crashPage) allPages.push(crashPage);
+            if (minesPage) allPages.push(minesPage);
+            if (dicePage) allPages.push(dicePage);
+            
+            for (let i = 0; i < allPages.length; i++) {
+                const p = allPages[i];
+                if (p) {
+                    p.style.display = 'none';
+                    p.style.visibility = 'hidden';
+                    p.style.opacity = '0';
+                    p.style.pointerEvents = 'none';
+                    p.style.zIndex = '-1';
+                }
+            }
+                
+            // Показываем нужную страницу
+            if (page === 'cases') {
+                if (header) {
+                    header.style.display = 'flex';
+                    header.style.visibility = 'visible';
+                    header.style.pointerEvents = 'auto';
+                }
+                if (mainPage) {
+                    mainPage.style.display = 'block';
+                    mainPage.style.visibility = 'visible';
+                    mainPage.style.opacity = '1';
+                    mainPage.style.position = 'relative';
+                    mainPage.style.pointerEvents = 'auto';
+                    mainPage.style.zIndex = '1';
+                    mainPage.classList.remove('hidden');
+                }
+            } else if (page === 'profile') {
+                if (header) {
+                    header.style.display = 'flex';
+                    header.style.visibility = 'visible';
+                    header.style.pointerEvents = 'auto';
+                }
+                if (profilePage) {
+                    profilePage.style.display = 'block';
+                    profilePage.style.visibility = 'visible';
+                    profilePage.style.opacity = '1';
+                    profilePage.style.position = 'relative';
+                    profilePage.style.pointerEvents = 'auto';
+                    profilePage.style.zIndex = '1';
+                    profilePage.classList.remove('hidden');
                 }
                 
-                // Обновляем активную вкладку
-                const allNavItems = document.querySelectorAll('.nav-item');
-                allNavItems.forEach(i => {
-                    i.classList.remove('active');
-                });
-                
-                if (clickedItem) {
-                    clickedItem.classList.add('active');
-                } else {
-                    const foundItem = document.querySelector(`[data-page="${page}"]`);
-                    if (foundItem) {
-                        foundItem.classList.add('active');
-                    }
+                // Обновляем данные профиля
+                if (typeof updateProfileInfo === 'function') {
+                    updateProfileInfo();
+                }
+                if (typeof updateInventory === 'function') {
+                    updateInventory();
                 }
                 
-                const mainPage = document.getElementById('mainPage');
-                const caseDetailPage = document.getElementById('caseDetailPage');
-                const profilePage = document.getElementById('profilePage');
-                const crashPage = document.getElementById('crashPage');
-                const minesPage = document.getElementById('minesPage');
-                const dicePage = document.getElementById('dicePage');
-                
-                if (!mainPage || !caseDetailPage || !profilePage) {
-                    console.error('❌ Страницы не найдены!');
-                    return;
+                // Переинициализируем обработчики при открытии профиля
+                setTimeout(function() {
+                    if (typeof initProfileHandlers === 'function') {
+                        initProfileHandlers();
+                    }
+                    if (typeof initTopUpHandlers === 'function') {
+                        initTopUpHandlers();
+                    }
+                    if (typeof initWithdrawHandlers === 'function') {
+                        initWithdrawHandlers();
+                    }
+                }, 100);
+            } else if (page === 'crash') {
+                if (header) {
+                    header.style.display = 'none';
+                    header.style.visibility = 'hidden';
                 }
-                
-                // Скрываем кнопку "Открыть"
-                const openBtn = document.getElementById('openBtn');
-                if (openBtn) {
-                    openBtn.style.display = 'none';
-                    openBtn.style.visibility = 'hidden';
-                    openBtn.style.opacity = '0';
-                    openBtn.classList.remove('show');
-                    openBtn.disabled = true;
-                    openBtn.style.pointerEvents = 'none';
-                }
-                
-                const header = document.querySelector('.header');
-                
-                // Скрываем все страницы
-                const allPages = [mainPage, caseDetailPage, profilePage];
-                if (crashPage) allPages.push(crashPage);
-                if (minesPage) allPages.push(minesPage);
-                if (dicePage) allPages.push(dicePage);
-                
-                allPages.forEach(p => {
-                    if (p) {
-                        p.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; z-index: -1 !important;';
-                    }
-                });
-                
-                // Показываем нужную страницу
-                if (page === 'cases') {
-                    if (header) {
-                        header.style.display = 'flex';
-                        header.style.visibility = 'visible';
-                        header.style.pointerEvents = 'auto';
-                    }
-                    if (mainPage) {
-                        mainPage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; pointer-events: auto !important; z-index: 1 !important;';
-                        mainPage.classList.remove('hidden');
-                    }
-                } else if (page === 'profile') {
-                    if (header) {
-                        header.style.display = 'flex';
-                        header.style.visibility = 'visible';
-                        header.style.pointerEvents = 'auto';
-                    }
-                    if (profilePage) {
-                        profilePage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; pointer-events: auto !important; z-index: 1 !important;';
-                        profilePage.classList.remove('hidden');
-                    }
+                if (crashPage) {
+                    crashPage.style.display = 'block';
+                    crashPage.style.visibility = 'visible';
+                    crashPage.style.opacity = '1';
+                    crashPage.style.position = 'fixed';
+                    crashPage.style.top = '0';
+                    crashPage.style.left = '0';
+                    crashPage.style.right = '0';
+                    crashPage.style.bottom = '0';
+                    crashPage.style.width = '100%';
+                    crashPage.style.height = '100%';
+                    crashPage.style.zIndex = '100';
+                    crashPage.style.pointerEvents = 'auto';
+                    crashPage.classList.remove('hidden');
                     
-                    // Обновляем данные профиля
-                    try {
-                        if (typeof updateProfileInfo === 'function') {
-                            updateProfileInfo();
-                        }
-                        if (typeof updateInventory === 'function') {
-                            updateInventory();
-                        }
-                    } catch (err) {
-                        console.error('Ошибка обновления профиля:', err);
+                    if (typeof updateBalanceDisplay === 'function') {
+                        updateBalanceDisplay();
                     }
+                    if (typeof initCrashGame === 'function') {
+                        initCrashGame();
+                    }
+                }
+            } else if (page === 'mines') {
+                if (header) {
+                    header.style.display = 'flex';
+                    header.style.visibility = 'visible';
+                    header.style.pointerEvents = 'auto';
+                }
+                if (minesPage) {
+                    minesPage.style.display = 'block';
+                    minesPage.style.visibility = 'visible';
+                    minesPage.style.opacity = '1';
+                    minesPage.style.position = 'fixed';
+                    minesPage.style.top = '0';
+                    minesPage.style.left = '0';
+                    minesPage.style.right = '0';
+                    minesPage.style.bottom = '0';
+                    minesPage.style.width = '100%';
+                    minesPage.style.height = '100%';
+                    minesPage.style.zIndex = '100';
+                    minesPage.style.pointerEvents = 'auto';
+                    minesPage.classList.remove('hidden');
                     
-                    // Переинициализируем обработчики при открытии профиля
-                    setTimeout(() => {
-                        if (typeof initProfileHandlers === 'function') {
-                            initProfileHandlers();
-                        }
-                        if (typeof initTopUpHandlers === 'function') {
-                            initTopUpHandlers();
-                        }
-                        if (typeof initWithdrawHandlers === 'function') {
-                            initWithdrawHandlers();
-                        }
-                    }, 100);
-                } else if (page === 'crash') {
-                    if (header) {
-                        header.style.display = 'none';
-                        header.style.visibility = 'hidden';
+                    if (typeof updateBalanceDisplay === 'function') {
+                        updateBalanceDisplay();
                     }
-                    if (crashPage) {
-                        crashPage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 100% !important; z-index: 100 !important; pointer-events: auto !important;';
-                        crashPage.classList.remove('hidden');
-                        
-                        try {
-                            if (typeof updateBalanceDisplay === 'function') {
-                                updateBalanceDisplay();
-                            }
-                            if (typeof initCrashGame === 'function') {
-                                initCrashGame();
-                            }
-                        } catch (err) {
-                            console.error('Ошибка инициализации краша:', err);
-                        }
-                    }
-                } else if (page === 'mines') {
-                    if (header) {
-                        header.style.display = 'flex';
-                        header.style.visibility = 'visible';
-                        header.style.pointerEvents = 'auto';
-                    }
-                    if (minesPage) {
-                        minesPage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 100% !important; z-index: 100 !important; pointer-events: auto !important;';
-                        minesPage.classList.remove('hidden');
-                        
-                        try {
-                            if (typeof updateBalanceDisplay === 'function') {
-                                updateBalanceDisplay();
-                            }
-                            if (typeof initMinesGame === 'function') {
-                                initMinesGame();
-                            }
-                        } catch (err) {
-                            console.error('Ошибка инициализации мин:', err);
-                        }
-                    }
-                } else if (page === 'dice') {
-                    if (header) {
-                        header.style.display = 'flex';
-                        header.style.visibility = 'visible';
-                        header.style.pointerEvents = 'auto';
-                    }
-                    if (dicePage) {
-                        dicePage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 100% !important; z-index: 100 !important; pointer-events: auto !important;';
-                        dicePage.classList.remove('hidden');
-                        
-                        try {
-                            if (typeof updateBalanceDisplay === 'function') {
-                                updateBalanceDisplay();
-                            }
-                            if (typeof initDiceGame === 'function') {
-                                initDiceGame();
-                            }
-                        } catch (err) {
-                            console.error('Ошибка инициализации dice:', err);
-                        }
+                    if (typeof initMinesGame === 'function') {
+                        initMinesGame();
                     }
                 }
-                
-                if (tg && tg.HapticFeedback) {
-                    tg.HapticFeedback.impactOccurred('light');
+            } else if (page === 'dice') {
+                if (header) {
+                    header.style.display = 'flex';
+                    header.style.visibility = 'visible';
+                    header.style.pointerEvents = 'auto';
                 }
-            } catch (error) {
-                console.error('❌ Ошибка при переключении страницы:', error);
+                if (dicePage) {
+                    dicePage.style.display = 'block';
+                    dicePage.style.visibility = 'visible';
+                    dicePage.style.opacity = '1';
+                    dicePage.style.position = 'fixed';
+                    dicePage.style.top = '0';
+                    dicePage.style.left = '0';
+                    dicePage.style.right = '0';
+                    dicePage.style.bottom = '0';
+                    dicePage.style.width = '100%';
+                    dicePage.style.height = '100%';
+                    dicePage.style.zIndex = '100';
+                    dicePage.style.pointerEvents = 'auto';
+                    dicePage.classList.remove('hidden');
+                    
+                    if (typeof updateBalanceDisplay === 'function') {
+                        updateBalanceDisplay();
+                    }
+                    if (typeof initDiceGame === 'function') {
+                        initDiceGame();
+                    }
+                }
+            }
+            
+            if (tg && tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('light');
             }
         }
         
@@ -4023,13 +3979,8 @@
             detailPage.classList.remove('active');
             profilePage.style.display = 'none';
             
-            // Устанавливаем делегирование сразу
-            if (typeof setupNavigationDelegation === 'function') {
-                setupNavigationDelegation();
-            }
-            
             // Инициализируем обработчики событий
-            setTimeout(() => {
+            setTimeout(function() {
                 if (typeof initEventHandlers === 'function') {
                     initEventHandlers();
                 }
