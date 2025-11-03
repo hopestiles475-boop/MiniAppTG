@@ -3795,15 +3795,21 @@
             mainBalancePlusBtn.addEventListener('click', () => {
                 const botUsername = 'Znakomstva13_bot';
                 const userId = getUserId();
-                const botUrl = `https://t.me/${botUsername}?start=topup_${userId}`;
+                // Упрощённая ссылка - просто открываем бота
+                const botUrl = `https://t.me/${botUsername}`;
                 
-                if (tg) {
+            if (tg) {
                     if (tg.openTelegramLink) {
                         tg.openTelegramLink(botUrl);
-                    } else {
+            } else {
                         tg.openLink(botUrl);
                     }
                     tg.HapticFeedback.impactOccurred('medium');
+                    setTimeout(() => {
+                        if (tg.showAlert) {
+                            tg.showAlert('Отправьте боту /pay для пополнения');
+                        }
+                    }, 500);
                 } else {
                     window.open(botUrl, '_blank');
                 }
@@ -4229,10 +4235,11 @@
             const botUsername = 'Znakomstva13_bot';
             const userId = getUserId();
             
-            // Открываем бота напрямую с параметром start
-            const botUrl = `https://t.me/${botUsername}?start=topup_${userId}`;
+            // Открываем бота (можно использовать с параметром или без)
+            // Если бот не настроен, можно убрать параметр и просто открыть бота
+            const botUrl = `https://t.me/${botUsername}`;
             
-            console.log('Открываем бота для пополнения:', botUrl);
+            console.log('Открываем бота для пополнения:', botUrl, 'User ID:', userId);
             
             if (tg) {
                 // Используем openTelegramLink для лучшей интеграции
@@ -4242,8 +4249,16 @@
                     tg.openLink(botUrl);
                 }
                 tg.HapticFeedback.impactOccurred('medium');
+                
+                // Показываем инструкцию пользователю
+                setTimeout(() => {
+                    if (tg.showAlert) {
+                        tg.showAlert('Бот открыт. Отправьте боту команду /pay для пополнения баланса.');
+                    }
+                }, 500);
             } else {
                 window.open(botUrl, '_blank');
+                alert('Бот открыт. Отправьте боту команду /pay для пополнения баланса.');
             }
         });
 
@@ -5584,7 +5599,8 @@
             crashBalancePlusBtn.addEventListener('click', () => {
                 const botUsername = 'Znakomstva13_bot';
                 const userId = getUserId();
-                const botUrl = `https://t.me/${botUsername}?start=topup_${userId}`;
+                // Упрощённая ссылка - просто открываем бота
+                const botUrl = `https://t.me/${botUsername}`;
                 
                 if (tg) {
                     if (tg.openTelegramLink) {
@@ -5593,6 +5609,11 @@
                         tg.openLink(botUrl);
                     }
                     tg.HapticFeedback.impactOccurred('medium');
+                    setTimeout(() => {
+                        if (tg.showAlert) {
+                            tg.showAlert('Отправьте боту /pay для пополнения');
+                        }
+                    }, 500);
                 } else {
                     window.open(botUrl, '_blank');
                 }
