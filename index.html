@@ -6,22 +6,69 @@
     <title>NFT Cases</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
-        // Встроенная диагностика загрузки TonConnect - выполняется ДО загрузки библиотеки
-        console.log('🔍 Скрипт начал загружаться...');
+        // Динамическая загрузка TonConnect SDK с резервными CDN
+        console.log('🔍 Начало загрузки TonConnect SDK...');
         window.tonConnectLibLoaded = false;
         window.tonConnectCheckStarted = Date.now();
-    </script>
-    <script src="https://unpkg.com/@tonconnect/sdk@2/dist/tonconnect.min.js" 
-            onload="console.log('✅ TonConnect SDK загружен (onload)'); window.tonConnectLibLoaded = true;" 
-            onerror="console.error('❌ Ошибка загрузки TonConnect SDK (onerror)'); window.tonConnectLibLoaded = false;"></script>
-    <script>
-        // Проверка сразу после загрузки скрипта
-        console.log('📦 Скрипт tonconnect.min.js добавлен в DOM');
-        console.log('Проверка через 100мс...');
-        setTimeout(() => {
-            console.log('🔍 Первая проверка TonConnect:', typeof TonConnect !== 'undefined' ? '✅ Найден!' : '❌ Не найден');
-            console.log('window.tonConnectLibLoaded:', window.tonConnectLibLoaded);
-        }, 100);
+        
+        // Список CDN для TonConnect SDK
+        const tonConnectCDNs = [
+            'https://cdn.jsdelivr.net/npm/@tonconnect/sdk@2/dist/tonconnect.min.js',
+            'https://unpkg.com/@tonconnect/sdk@2/dist/tonconnect.min.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/tonconnect/2.0.0/tonconnect.min.js'
+        ];
+        
+        let currentCDNIndex = 0;
+        
+        function loadTonConnectFromCDN(cdnUrl) {
+            return new Promise((resolve, reject) => {
+                console.log(`📥 Попытка загрузки с: ${cdnUrl}`);
+                
+                const script = document.createElement('script');
+                script.src = cdnUrl;
+                script.async = false; // Важно: загружаем синхронно
+                
+                script.onload = () => {
+                    console.log(`✅ TonConnect SDK загружен с: ${cdnUrl}`);
+                    window.tonConnectLibLoaded = true;
+                    resolve();
+                };
+                
+                script.onerror = () => {
+                    console.error(`❌ Ошибка загрузки с: ${cdnUrl}`);
+                    reject(new Error(`Не удалось загрузить с ${cdnUrl}`));
+                };
+                
+                document.head.appendChild(script);
+            });
+        }
+        
+        // Пробуем загрузить с первого CDN
+        loadTonConnectFromCDN(tonConnectCDNs[0])
+            .catch(() => {
+                console.log('🔄 Пробуем резервный CDN...');
+                return loadTonConnectFromCDN(tonConnectCDNs[1]);
+            })
+            .catch(() => {
+                console.log('🔄 Пробуем третий CDN...');
+                return loadTonConnectFromCDN(tonConnectCDNs[2]);
+            })
+            .catch(() => {
+                console.error('❌ Все CDN недоступны. TonConnect SDK не загружен.');
+                window.tonConnectLibLoaded = false;
+            });
+        
+        // Проверка через 500мс после загрузки страницы
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                console.log('🔍 Проверка TonConnect после загрузки страницы:');
+                console.log('- typeof TonConnect:', typeof TonConnect);
+                console.log('- window.tonConnectLibLoaded:', window.tonConnectLibLoaded);
+                if (typeof TonConnect === 'undefined') {
+                    console.error('❌ TonConnect всё ещё не доступен');
+                }
+            }, 500);
+        });
     </script>
     <style>
         * {
@@ -6102,8 +6149,7 @@
             });
         }
 
-        // Обновление баланса на странице краша
-        // Обработчик кнопки "+" в балансе краша
+
         const crashBalancePlusBtn = document.getElementById('crashBalance')?.parentElement?.querySelector('button');
         if (crashBalancePlusBtn) {
             crashBalancePlusBtn.addEventListener('click', () => {
