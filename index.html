@@ -47,24 +47,114 @@
     </script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
-        // Перехватываем ошибки от Telegram Web App SDK, чтобы они не блокировали приложение
+        // ПЕРЕХВАТЫВАЕМ ОШИБКИ ОТ TELEGRAM SDK
         window.addEventListener('error', function(e) {
-            // Игнорируем ошибки позиционирования от Telegram SDK
             if (e.message && (e.message.includes("reading 'top'") || e.message.includes('calculatePosition'))) {
                 e.preventDefault();
-                console.warn('⚠️ Игнорирую ошибку Telegram SDK:', e.message);
                 return true;
             }
         }, true);
         
-        // Также перехватываем неперехваченные промисы
         window.addEventListener('unhandledrejection', function(e) {
             if (e.reason && e.reason.message && (e.reason.message.includes("reading 'top'") || e.reason.message.includes('calculatePosition'))) {
                 e.preventDefault();
-                console.warn('⚠️ Игнорирую ошибку промиса Telegram SDK:', e.reason.message);
                 return true;
             }
         });
+        
+        // ФУНКЦИЯ НАВИГАЦИИ - ОПРЕДЕЛЯЕМ В HEAD ЧТОБЫ БЫЛА ДОСТУПНА СРАЗУ
+        window.handleNavClick = function(page, clickedItem) {
+            if (!page) return;
+            
+            // Обновляем активную вкладку
+            var items = document.querySelectorAll('.nav-item');
+            for (var i = 0; i < items.length; i++) {
+                items[i].classList.remove('active');
+            }
+            if (clickedItem) clickedItem.classList.add('active');
+            
+            // Получаем страницы
+            var mainPage = document.getElementById('mainPage');
+            var profilePage = document.getElementById('profilePage');
+            var crashPage = document.getElementById('crashPage');
+            var minesPage = document.getElementById('minesPage');
+            var dicePage = document.getElementById('dicePage');
+            var header = document.querySelector('.header');
+            
+            if (!mainPage || !profilePage) return;
+            
+            // Скрываем все страницы
+            var pages = [mainPage, profilePage];
+            if (crashPage) pages.push(crashPage);
+            if (minesPage) pages.push(minesPage);
+            if (dicePage) pages.push(dicePage);
+            
+            for (var i = 0; i < pages.length; i++) {
+                if (pages[i]) {
+                    pages[i].style.display = 'none';
+                    pages[i].style.visibility = 'hidden';
+                    pages[i].style.opacity = '0';
+                    pages[i].style.pointerEvents = 'none';
+                }
+            }
+            
+            // Показываем нужную страницу
+            if (page === 'cases' && mainPage) {
+                if (header) header.style.display = 'flex';
+                mainPage.style.display = 'block';
+                mainPage.style.visibility = 'visible';
+                mainPage.style.opacity = '1';
+                mainPage.style.pointerEvents = 'auto';
+            } else if (page === 'profile' && profilePage) {
+                if (header) header.style.display = 'flex';
+                profilePage.style.display = 'block';
+                profilePage.style.visibility = 'visible';
+                profilePage.style.opacity = '1';
+                profilePage.style.pointerEvents = 'auto';
+            } else if (page === 'crash' && crashPage) {
+                if (header) header.style.display = 'none';
+                crashPage.style.display = 'block';
+                crashPage.style.visibility = 'visible';
+                crashPage.style.opacity = '1';
+                crashPage.style.position = 'fixed';
+                crashPage.style.top = '0';
+                crashPage.style.left = '0';
+                crashPage.style.right = '0';
+                crashPage.style.bottom = '0';
+                crashPage.style.width = '100%';
+                crashPage.style.height = '100%';
+                crashPage.style.zIndex = '100';
+                crashPage.style.pointerEvents = 'auto';
+            } else if (page === 'mines' && minesPage) {
+                if (header) header.style.display = 'flex';
+                minesPage.style.display = 'block';
+                minesPage.style.visibility = 'visible';
+                minesPage.style.opacity = '1';
+                minesPage.style.position = 'fixed';
+                minesPage.style.top = '0';
+                minesPage.style.left = '0';
+                minesPage.style.right = '0';
+                minesPage.style.bottom = '0';
+                minesPage.style.width = '100%';
+                minesPage.style.height = '100%';
+                minesPage.style.zIndex = '100';
+                minesPage.style.pointerEvents = 'auto';
+            } else if (page === 'dice' && dicePage) {
+                if (header) header.style.display = 'flex';
+                dicePage.style.display = 'block';
+                dicePage.style.visibility = 'visible';
+                dicePage.style.opacity = '1';
+                dicePage.style.position = 'fixed';
+                dicePage.style.top = '0';
+                dicePage.style.left = '0';
+                dicePage.style.right = '0';
+                dicePage.style.bottom = '0';
+                dicePage.style.width = '100%';
+                dicePage.style.height = '100%';
+                dicePage.style.zIndex = '100';
+                dicePage.style.pointerEvents = 'auto';
+            }
+        };
     </script>
     <style>
         * {
@@ -3393,18 +3483,6 @@
             }
         }
         
-        // ДЕЛЕГИРОВАНИЕ НА ВСЕМ DOCUMENT - РАБОТАЕТ ВСЕГДА
-        document.addEventListener('click', function(e) {
-            const navItem = e.target.closest('.nav-item');
-            if (navItem) {
-                const page = navItem.dataset.page || navItem.getAttribute('data-page');
-                if (page && typeof handleNavClick === 'function') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleNavClick(page, navItem);
-                }
-            }
-        }, true);
         
         // Инициализация обработчиков после загрузки DOM
         function initEventHandlers() {
@@ -3450,205 +3528,6 @@
             }
         }
         
-        // Функция обработки клика по навигации - ПРОСТАЯ И НАДЕЖНАЯ
-        window.handleNavClick = function(page, clickedItem) {
-            if (!page) return;
-            
-            // Обновляем активную вкладку
-            const allNavItems = document.querySelectorAll('.nav-item');
-            for (let i = 0; i < allNavItems.length; i++) {
-                allNavItems[i].classList.remove('active');
-            }
-            
-            if (clickedItem) {
-                clickedItem.classList.add('active');
-            } else {
-                const foundItem = document.querySelector('[data-page="' + page + '"]');
-                if (foundItem) {
-                    foundItem.classList.add('active');
-                }
-            }
-                
-            const mainPage = document.getElementById('mainPage');
-            const caseDetailPage = document.getElementById('caseDetailPage');
-            const profilePage = document.getElementById('profilePage');
-            const crashPage = document.getElementById('crashPage');
-            const minesPage = document.getElementById('minesPage');
-            const dicePage = document.getElementById('dicePage');
-            
-            if (!mainPage || !caseDetailPage || !profilePage) return;
-            
-            // Скрываем кнопку "Открыть"
-            const openBtn = document.getElementById('openBtn');
-            if (openBtn) {
-                openBtn.style.display = 'none';
-                openBtn.style.visibility = 'hidden';
-                openBtn.style.opacity = '0';
-                openBtn.classList.remove('show');
-                openBtn.disabled = true;
-                openBtn.style.pointerEvents = 'none';
-            }
-            
-            const header = document.querySelector('.header');
-            
-            // Скрываем все страницы
-            const allPages = [mainPage, caseDetailPage, profilePage];
-            if (crashPage) allPages.push(crashPage);
-            if (minesPage) allPages.push(minesPage);
-            if (dicePage) allPages.push(dicePage);
-            
-            for (let i = 0; i < allPages.length; i++) {
-                const p = allPages[i];
-                if (p) {
-                    p.style.display = 'none';
-                    p.style.visibility = 'hidden';
-                    p.style.opacity = '0';
-                    p.style.pointerEvents = 'none';
-                    p.style.zIndex = '-1';
-                }
-            }
-                
-            // Показываем нужную страницу
-            if (page === 'cases') {
-                if (header) {
-                    header.style.display = 'flex';
-                    header.style.visibility = 'visible';
-                    header.style.pointerEvents = 'auto';
-                }
-                if (mainPage) {
-                    mainPage.style.display = 'block';
-                    mainPage.style.visibility = 'visible';
-                    mainPage.style.opacity = '1';
-                    mainPage.style.position = 'relative';
-                    mainPage.style.pointerEvents = 'auto';
-                    mainPage.style.zIndex = '1';
-                    mainPage.classList.remove('hidden');
-                }
-            } else if (page === 'profile') {
-                if (header) {
-                    header.style.display = 'flex';
-                    header.style.visibility = 'visible';
-                    header.style.pointerEvents = 'auto';
-                }
-                if (profilePage) {
-                    profilePage.style.display = 'block';
-                    profilePage.style.visibility = 'visible';
-                    profilePage.style.opacity = '1';
-                    profilePage.style.position = 'relative';
-                    profilePage.style.pointerEvents = 'auto';
-                    profilePage.style.zIndex = '1';
-                    profilePage.classList.remove('hidden');
-                }
-                
-                // Обновляем данные профиля
-                if (typeof updateProfileInfo === 'function') {
-                    updateProfileInfo();
-                }
-                if (typeof updateInventory === 'function') {
-                    updateInventory();
-                }
-                
-                // Переинициализируем обработчики при открытии профиля
-                setTimeout(function() {
-                    if (typeof initProfileHandlers === 'function') {
-                        initProfileHandlers();
-                    }
-                    if (typeof initTopUpHandlers === 'function') {
-                        initTopUpHandlers();
-                    }
-                    if (typeof initWithdrawHandlers === 'function') {
-                        initWithdrawHandlers();
-                    }
-                }, 100);
-            } else if (page === 'crash') {
-                if (header) {
-                    header.style.display = 'none';
-                    header.style.visibility = 'hidden';
-                }
-                if (crashPage) {
-                    crashPage.style.display = 'block';
-                    crashPage.style.visibility = 'visible';
-                    crashPage.style.opacity = '1';
-                    crashPage.style.position = 'fixed';
-                    crashPage.style.top = '0';
-                    crashPage.style.left = '0';
-                    crashPage.style.right = '0';
-                    crashPage.style.bottom = '0';
-                    crashPage.style.width = '100%';
-                    crashPage.style.height = '100%';
-                    crashPage.style.zIndex = '100';
-                    crashPage.style.pointerEvents = 'auto';
-                    crashPage.classList.remove('hidden');
-                    
-                    if (typeof updateBalanceDisplay === 'function') {
-                        updateBalanceDisplay();
-                    }
-                    if (typeof initCrashGame === 'function') {
-                        initCrashGame();
-                    }
-                }
-            } else if (page === 'mines') {
-                if (header) {
-                    header.style.display = 'flex';
-                    header.style.visibility = 'visible';
-                    header.style.pointerEvents = 'auto';
-                }
-                if (minesPage) {
-                    minesPage.style.display = 'block';
-                    minesPage.style.visibility = 'visible';
-                    minesPage.style.opacity = '1';
-                    minesPage.style.position = 'fixed';
-                    minesPage.style.top = '0';
-                    minesPage.style.left = '0';
-                    minesPage.style.right = '0';
-                    minesPage.style.bottom = '0';
-                    minesPage.style.width = '100%';
-                    minesPage.style.height = '100%';
-                    minesPage.style.zIndex = '100';
-                    minesPage.style.pointerEvents = 'auto';
-                    minesPage.classList.remove('hidden');
-                    
-                    if (typeof updateBalanceDisplay === 'function') {
-                        updateBalanceDisplay();
-                    }
-                    if (typeof initMinesGame === 'function') {
-                        initMinesGame();
-                    }
-                }
-            } else if (page === 'dice') {
-                if (header) {
-                    header.style.display = 'flex';
-                    header.style.visibility = 'visible';
-                    header.style.pointerEvents = 'auto';
-                }
-                if (dicePage) {
-                    dicePage.style.display = 'block';
-                    dicePage.style.visibility = 'visible';
-                    dicePage.style.opacity = '1';
-                    dicePage.style.position = 'fixed';
-                    dicePage.style.top = '0';
-                    dicePage.style.left = '0';
-                    dicePage.style.right = '0';
-                    dicePage.style.bottom = '0';
-                    dicePage.style.width = '100%';
-                    dicePage.style.height = '100%';
-                    dicePage.style.zIndex = '100';
-                    dicePage.style.pointerEvents = 'auto';
-                    dicePage.classList.remove('hidden');
-                    
-                    if (typeof updateBalanceDisplay === 'function') {
-                        updateBalanceDisplay();
-                    }
-                    if (typeof initDiceGame === 'function') {
-                        initDiceGame();
-                    }
-                }
-            }
-            
-            if (tg && tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('light');
-            }
-        }
         
         // Инициализация карточек кейсов
         function initCaseCards() {
@@ -6791,4 +6670,3 @@
     </script>
 </body>
 </html>
-
