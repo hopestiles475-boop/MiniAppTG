@@ -3373,46 +3373,24 @@
         // Инициализация обработчиков после загрузки DOM
         function initEventHandlers() {
             try {
-                // Навигация между вкладками
+                // Навигация между вкладками - простая инициализация
                 const navItems = document.querySelectorAll('.nav-item');
                 
-                if (navItems.length > 0) {
-                    navItems.forEach((item) => {
-                        const page = item.dataset.page || item.getAttribute('data-page');
+                navItems.forEach((item) => {
+                    const page = item.dataset.page || item.getAttribute('data-page');
+                    
+                    // Простой обработчик клика
+                    item.onclick = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
                         
-                        // Удаляем старые обработчики через клон
-                        const newItem = item.cloneNode(true);
-                        const parent = item.parentNode;
-                        if (parent) {
-                            parent.replaceChild(newItem, item);
-                            
-                            // Обработчик через onclick
-                            newItem.onclick = function(e) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                e.stopImmediatePropagation();
-                                
-                                const targetPage = newItem.dataset.page || page || newItem.getAttribute('data-page');
-                                if (targetPage && typeof handleNavClick === 'function') {
-                                    handleNavClick(targetPage, newItem);
-                                }
-                                return false;
-                            };
-                            
-                            // Также через addEventListener
-                            newItem.addEventListener('click', function(e) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                e.stopImmediatePropagation();
-                                
-                                const targetPage = newItem.dataset.page || page || newItem.getAttribute('data-page');
-                                if (targetPage && typeof handleNavClick === 'function') {
-                                    handleNavClick(targetPage, newItem);
-                                }
-                            }, { capture: true, passive: false });
+                        const targetPage = this.dataset.page || page || this.getAttribute('data-page');
+                        if (targetPage && typeof handleNavClick === 'function') {
+                            handleNavClick(targetPage, this);
                         }
-                    });
-                }
+                        return false;
+                    };
+                });
                 
                 // Обработчики табов
                 if (typeof initTabs === 'function') {
