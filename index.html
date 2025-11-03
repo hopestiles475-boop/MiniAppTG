@@ -105,6 +105,11 @@
                 mainPage.style.visibility = 'visible';
                 mainPage.style.opacity = '1';
                 mainPage.style.pointerEvents = 'auto';
+                // Инициализируем кейсы
+                setTimeout(function() {
+                    if (typeof initCaseCards === 'function') initCaseCards();
+                    if (typeof initOpenButton === 'function') initOpenButton();
+                }, 50);
             } else if (page === 'profile' && profilePage) {
                 if (header) header.style.display = 'flex';
                 profilePage.style.display = 'block';
@@ -2999,7 +3004,7 @@
         // ========== ЗАЩИТА ФРОНТЕНДА ==========
         
         // Защищённая переменная баланса
-        let _balance = 100.00;
+        let _balance = 0.00;
         let balanceLocked = false;
         let isServerValidated = false;
         
@@ -3558,71 +3563,26 @@
                 const cards = document.querySelectorAll('.case-card');
                 console.log(`✅ Найдено ${cards.length} карточек кейсов`);
                 
+                // Переустанавливаем обработчики для каждой карточки
                 cards.forEach(card => {
                     const newCard = card.cloneNode(true);
                     card.parentNode.replaceChild(newCard, card);
                     
-                    // Устанавливаем обработчик через onclick
+                    // Устанавливаем обработчик через onclick для гарантии
                     newCard.onclick = function(e) {
                         e.preventDefault();
                         e.stopPropagation();
                         e.stopImmediatePropagation();
-                        console.log('✅ Клик по кейсу (onclick)');
                         
                         const caseNum = parseInt(newCard.dataset.case || '1');
                         
                         if (isOpening) {
-                            console.log('⚠️ Кейс уже открывается, пропускаем клик');
                             return false;
                         }
                         
                         try {
                             if (typeof showCaseDetail === 'function') {
                                 showCaseDetail(caseNum);
-                            } else {
-                                // Fallback если функция showCaseDetail не найдена
-                                console.warn('Функция showCaseDetail не найдена, используем fallback');
-                                const mainPage = document.getElementById('mainPage');
-                                const detailPage = document.getElementById('caseDetailPage');
-                                
-                                if (!mainPage || !detailPage) {
-                                    console.error('Страницы не найдены');
-                                    return false;
-                                }
-                                
-                                mainPage.style.display = 'none';
-                                mainPage.classList.add('hidden');
-                                detailPage.style.display = 'block';
-                                detailPage.classList.add('active');
-                                
-                                // Устанавливаем текущий кейс
-                                currentCase = case1Config;
-                                
-                                // Обновляем детали кейса
-                                const detailIcon = document.getElementById('detailIcon');
-                                const detailName = document.getElementById('detailName');
-                                const detailPrice = document.getElementById('detailPrice');
-                                
-                                if (detailIcon) {
-                                    detailIcon.src = currentCase.icon;
-                                }
-                                if (detailName) {
-                                    detailName.textContent = 'Case 1';
-                                }
-                                if (detailPrice) {
-                                    detailPrice.textContent = currentCase.price.toFixed(2);
-                                }
-                                
-                                // Показываем кнопку "Открыть"
-                                const openBtn = document.getElementById('openBtn');
-                                if (openBtn) {
-                                    openBtn.style.display = 'block';
-                                    openBtn.style.visibility = 'visible';
-                                    openBtn.style.opacity = '1';
-                                    openBtn.classList.add('show');
-                                    openBtn.disabled = false;
-                                    openBtn.style.pointerEvents = 'auto';
-                                }
                             }
                             
                             if (tg && tg.HapticFeedback) {
@@ -3640,7 +3600,6 @@
                         e.preventDefault();
                         e.stopPropagation();
                         e.stopImmediatePropagation();
-                        console.log('✅ Клик по кейсу (addEventListener)');
                         
                         const caseNum = parseInt(newCard.dataset.case || '1');
                         if (!isOpening && typeof showCaseDetail === 'function') {
