@@ -4242,18 +4242,44 @@
         // Обработчики карточек кейсов также инициализируются в initCaseCards
 
         window.openCase = function() {
+            console.log('🔵 openCase вызвана');
+            console.log('currentCase:', currentCase);
+            console.log('isOpening:', isOpening);
+            console.log('_balance:', _balance);
+            
+            if (!currentCase) {
+                console.error('❌ currentCase не определена!');
+                if (tg) {
+                    tg.showAlert('Ошибка: Кейс не выбран');
+                } else {
+                    alert('Ошибка: Кейс не выбран');
+                }
+                return;
+            }
+            
+            if (isOpening) {
+                console.warn('⚠️ Кейс уже открывается');
+                return;
+            }
+            
             if (currentCase && !isOpening) {
                 const openCaseFunc = function() {
                     if (isOpening) return;
+                    console.log('✅ Выполняется openCaseFunc');
                     
-                    const price = currentCase.price;
+                    const price = currentCase.price || 0;
+                    console.log('💰 Цена кейса:', price);
+                    console.log('💰 Текущий баланс:', _balance);
+                    
                     if (_balance < price) {
+                        console.error('❌ Недостаточно баланса!');
                         if (tg) {
-                            tg.showAlert('Недостаточно баланса!');
+                            tg.showAlert('Недостаточно баланса! Нужно: ' + price + ', есть: ' + _balance.toFixed(2));
                             tg.HapticFeedback.notificationOccurred('error');
                         } else {
-                            alert('Недостаточно баланса!');
+                            alert('Недостаточно баланса! Нужно: ' + price + ', есть: ' + _balance.toFixed(2));
                         }
+                        isOpening = false;
                         return;
                     }
 
@@ -4661,7 +4687,13 @@
             }
             
             currentCase = caseData;
-            if (!currentCase) return;
+            if (!currentCase) {
+                console.error('❌ currentCase не установлена после получения данных');
+                return;
+            }
+            
+            console.log('✅ currentCase установлена:', currentCase);
+            console.log('✅ Цена кейса:', currentCase.price);
 
             isOpening = false;
             
@@ -4858,20 +4890,49 @@
 
             const openBtn = document.getElementById('openBtn');
             if (openBtn) {
+                console.log('✅ Найдена кнопка openBtn, устанавливаю обработчики');
                 openBtn.disabled = false;
                 openBtn.classList.add('show');
-                openBtn.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; bottom: 100px !important; left: 20px !important; right: 20px !important; z-index: 99999 !important;';
+                openBtn.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; bottom: 100px !important; left: 20px !important; right: 20px !important; z-index: 99999 !important; pointer-events: auto !important; cursor: pointer !important;';
                 openBtn.innerHTML = 'Открыть <span>🚀</span>';
                 
-                openBtn.onclick = function(e) {
+                // Удаляем старые обработчики через клонирование
+                const newBtn = openBtn.cloneNode(true);
+                openBtn.parentNode.replaceChild(newBtn, openBtn);
+                
+                // Устанавливаем новые обработчики
+                newBtn.onclick = function(e) {
                     e.preventDefault();
                     e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    console.log('🔵 Клик по кнопке "Открыть"');
+                    console.log('currentCase:', currentCase);
+                    console.log('isOpening:', isOpening);
+                    if (currentCase && !isOpening) {
+                        window.openCase();
+                    } else {
+                        console.error('❌ Нельзя открыть: currentCase =', currentCase, ', isOpening =', isOpening);
+                        if (tg) {
+                            tg.showAlert('Ошибка: Кейс не выбран или уже открывается');
+                        } else {
+                            alert('Ошибка: Кейс не выбран или уже открывается');
+                        }
+                    }
+                };
+                
+                newBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    console.log('🔵 addEventListener клик по кнопке "Открыть"');
                     if (currentCase && !isOpening) {
                         window.openCase();
                     }
-                };
+                }, true);
+                
+                console.log('✅ Обработчики кнопки "Открыть" установлены');
             } else {
-                console.error('Open button not found!');
+                console.error('❌ Open button not found!');
             }
 
             document.querySelectorAll('.prize-item').forEach(item => {
