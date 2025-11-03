@@ -4312,45 +4312,59 @@
             }
         }
 
-        // Обработчик кнопки "Пополнить" - открывает модальное окно выбора способа
-        document.getElementById('topUpBtn').addEventListener('click', openTopUpModal);
-
-        // Пополнение через Telegram Wallet
-        document.getElementById('telegramWalletBtn').addEventListener('click', async () => {
-            closeTopUpModal();
-            
-            if (!tg || !tg.Invoice) {
-                if (tg && tg.showAlert) {
-                    tg.showAlert('Кошелёк Telegram недоступен. Используйте другой способ пополнения.');
-                } else {
-                    alert('Кошелёк Telegram недоступен. Используйте другой способ пополнения.');
-                }
-                return;
+        // Инициализация обработчиков пополнения после загрузки DOM
+        function initTopUpHandlers() {
+            // Обработчик кнопки "Пополнить" - открывает модальное окно выбора способа
+            const topUpBtn = document.getElementById('topUpBtn');
+            if (topUpBtn) {
+                // Удаляем старый обработчик если есть и добавляем новый
+                const newBtn = topUpBtn.cloneNode(true);
+                topUpBtn.parentNode.replaceChild(newBtn, topUpBtn);
+                
+                newBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Открываем модальное окно пополнения');
+                    openTopUpModal();
+                });
             }
 
-            try {
-                const userId = getUserId();
-                if (!userId) {
-                    throw new Error('Не удалось получить ID пользователя');
-                }
-
-                // Запрашиваем сумму пополнения
-                const amount = prompt('Введите сумму пополнения в TON:');
-                if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-                    if (tg && tg.showAlert) {
-                        tg.showAlert('Неверная сумма');
+            // Пополнение через Telegram Wallet
+            const telegramWalletBtn = document.getElementById('telegramWalletBtn');
+            if (telegramWalletBtn) {
+                telegramWalletBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeTopUpModal();
+                    
+                    if (!tg || !tg.openInvoice) {
+                        if (tg && tg.showAlert) {
+                            tg.showAlert('Кошелёк Telegram недоступен. Используйте другой способ пополнения.');
+                        } else {
+                            alert('Кошелёк Telegram недоступен. Используйте другой способ пополнения.');
+                        }
+                        return;
                     }
-                    return;
-                }
 
-                const tonAmount = parseFloat(amount);
-                const transactionId = `tg_wallet_${userId}_${Date.now()}`;
+                    try {
+                        const userId = getUserId();
+                        if (!userId) {
+                            throw new Error('Не удалось получить ID пользователя');
+                        }
 
-                // Создаём инвойс через Telegram Stars (поддерживается Telegram Wallet)
-                // Telegram Stars работает через Telegram кошелёк
-                try {
-                    // Пробуем использовать Telegram Stars API
-                    if (tg && tg.openInvoice) {
+                        // Запрашиваем сумму пополнения
+                        const amount = prompt('Введите сумму пополнения в TON:');
+                        if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+                            if (tg && tg.showAlert) {
+                                tg.showAlert('Неверная сумма');
+                            }
+                            return;
+                        }
+
+                        const tonAmount = parseFloat(amount);
+                        const transactionId = `tg_wallet_${userId}_${Date.now()}`;
+
+                        // Создаём инвойс через Telegram Stars (поддерживается Telegram Wallet)
                         const invoice = {
                             title: 'Пополнение баланса',
                             description: `Пополнение баланса на ${tonAmount} TON`,
@@ -4364,115 +4378,100 @@
                         };
 
                         tg.openInvoice(invoice, async (status) => {
-                    if (status === 'paid') {
-                        // Платёж успешен - отправляем на сервер
-                        try {
-                            const response = await fetch(`${API_BASE_URL}/api/payments/verify`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    userId: userId,
-                                    amount: tonAmount,
-                                    transactionId: transactionId,
-                                    type: 'telegram_wallet'
-                                })
-                            });
+                            if (status === 'paid') {
+                                // Платёж успешен - отправляем на сервер
+                                try {
+                                    const response = await fetch(`${API_BASE_URL}/api/payments/verify`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            userId: userId,
+                                            amount: tonAmount,
+                                            transactionId: transactionId,
+                                            type: 'telegram_wallet'
+                                        })
+                                    });
 
-                            const result = await response.json();
-                            
-                            if (response.ok && result.success) {
-                                // Обновляем баланс
-                                await loadUserData();
-                                
-                                if (tg && tg.showAlert) {
-                                    tg.showAlert(`Баланс пополнен на ${tonAmount} TON!`);
+                                    const result = await response.json();
+                                    
+                                    if (response.ok && result.success) {
+                                        // Обновляем баланс
+                                        await loadUserData();
+                                        
+                                        if (tg && tg.showAlert) {
+                                            tg.showAlert(`Баланс пополнен на ${tonAmount} TON!`);
+                                        }
+                                        tg.HapticFeedback.notificationOccurred('success');
+                                    } else {
+                                        throw new Error(result.error || 'Ошибка обработки платежа');
+                                    }
+                                } catch (error) {
+                                    console.error('Ошибка обработки платежа:', error);
+                                    if (tg && tg.showAlert) {
+                                        tg.showAlert('Ошибка обработки платежа. Обратитесь в поддержку.');
+                                    }
                                 }
-                                tg.HapticFeedback.notificationOccurred('success');
-                            } else {
-                                throw new Error(result.error || 'Ошибка обработки платежа');
+                            } else if (status === 'failed') {
+                                if (tg && tg.showAlert) {
+                                    tg.showAlert('Ошибка оплаты');
+                                }
+                                tg.HapticFeedback.notificationOccurred('error');
+                            } else if (status === 'cancelled') {
+                                tg.HapticFeedback.notificationOccurred('warning');
                             }
-                        } catch (error) {
-                            console.error('Ошибка обработки платежа:', error);
-                            if (tg && tg.showAlert) {
-                                tg.showAlert('Ошибка обработки платежа. Обратитесь в поддержку.');
-                            }
-                        }
-                    } else if (status === 'failed') {
+                        });
+                    } catch (error) {
+                        console.error('Ошибка создания инвойса:', error);
                         if (tg && tg.showAlert) {
-                            tg.showAlert('Ошибка оплаты');
+                            tg.showAlert('Ошибка: ' + error.message);
                         }
-                        tg.HapticFeedback.notificationOccurred('error');
-                    } else if (status === 'cancelled') {
-                        tg.HapticFeedback.notificationOccurred('warning');
                     }
                 });
-                    } else {
-                        // Если Invoice API недоступен, открываем бота для оплаты
-                        if (tg && tg.showAlert) {
-                            tg.showAlert('Telegram Wallet недоступен. Используйте бота для пополнения.');
-                        }
-                        // Открываем бота как запасной вариант
-                        const botUsername = 'Znakomstva13_bot';
-                        const botUrl = `https://t.me/${botUsername}?start=topup_${userId}`;
-                        if (tg && tg.openTelegramLink) {
-                            tg.openTelegramLink(botUrl);
-                        }
-                    }
-                } catch (invoiceError) {
-                    console.error('Ошибка создания инвойса:', invoiceError);
-                    // Запасной вариант - открываем бота
+            }
+
+            // Пополнение через Telegram бота
+            const telegramBotBtn = document.getElementById('telegramBotBtn');
+            if (telegramBotBtn) {
+                telegramBotBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeTopUpModal();
+                    
                     const botUsername = 'Znakomstva13_bot';
+                    const userId = getUserId();
                     const botUrl = `https://t.me/${botUsername}?start=topup_${userId}`;
+                    
+                    console.log('Открываем бота для пополнения:', botUrl, 'User ID:', userId);
+                    
                     if (tg) {
                         if (tg.openTelegramLink) {
                             tg.openTelegramLink(botUrl);
                         } else {
                             tg.openLink(botUrl);
                         }
-                        if (tg.showAlert) {
-                            tg.showAlert('Используйте бота для пополнения через CryptoBot.');
-                        }
+                        tg.HapticFeedback.impactOccurred('medium');
+                        
+                        setTimeout(() => {
+                            if (tg.showAlert) {
+                                tg.showAlert('Отправьте боту /pay для пополнения');
+                            }
+                        }, 500);
+                    } else {
+                        window.open(botUrl, '_blank');
+                        alert('Бот открыт. Отправьте боту команду /pay для пополнения баланса.');
                     }
-                }
-            } catch (error) {
-                console.error('Ошибка создания инвойса:', error);
-                if (tg && tg.showAlert) {
-                    tg.showAlert('Ошибка: ' + error.message);
-                }
+                });
             }
-        });
-
-        // Пополнение через Telegram бота
-        document.getElementById('telegramBotBtn').addEventListener('click', () => {
-            closeTopUpModal();
-            
-            const botUsername = 'Znakomstva13_bot';
-            const userId = getUserId();
-            const botUrl = `https://t.me/${botUsername}?start=topup_${userId}`;
-            
-            console.log('Открываем бота для пополнения:', botUrl, 'User ID:', userId);
-            
-            if (tg) {
-                if (tg.openTelegramLink) {
-                    tg.openTelegramLink(botUrl);
-                } else {
-                    tg.openLink(botUrl);
-                }
-                tg.HapticFeedback.impactOccurred('medium');
-                
-                setTimeout(() => {
-                    if (tg.showAlert) {
-                        tg.showAlert('Отправьте боту /pay для пополнения');
-                    }
-                }, 500);
-            } else {
-                window.open(botUrl, '_blank');
-                alert('Бот открыт. Отправьте боту команду /pay для пополнения баланса.');
-            }
-        });
-
+        }
+        
+        // Инициализируем обработчики при загрузке
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTopUpHandlers);
+        } else {
+            initTopUpHandlers();
+        }
         
         // Обработчик кнопки "Продать все"
         const sellAllBtn = document.getElementById('sellAllBtn');
