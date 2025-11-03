@@ -1284,6 +1284,64 @@
             font-weight: 700;
         }
 
+        .top-up-modal.active {
+            display: flex !important;
+        }
+
+        .payment-methods {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .payment-method-btn {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            width: 100%;
+        }
+
+        .payment-method-btn:active {
+            transform: scale(0.98);
+            background: rgba(102, 126, 234, 0.2);
+            border-color: #667eea;
+        }
+
+        .payment-method-icon {
+            font-size: 32px;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 12px;
+        }
+
+        .payment-method-info {
+            flex: 1;
+        }
+
+        .payment-method-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .payment-method-desc {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
 
         .payment-status {
             padding: 12px;
@@ -2435,6 +2493,30 @@
                 <span class="btn-icon"><span class="currency-icon" style="width: 18px; height: 18px; display: inline-block;"></span></span>
                 <span>Пополнить</span>
             </button>
+        </div>
+        
+        <!-- Модальное окно выбора способа пополнения -->
+        <div class="top-up-modal" id="topUpModal" onclick="event.target === this && closeTopUpModal()">
+            <div class="top-up-modal-content" onclick="event.stopPropagation()">
+                <h3 class="top-up-modal-title">Выберите способ пополнения</h3>
+                <div class="payment-methods">
+                    <button class="payment-method-btn" id="telegramWalletBtn">
+                        <div class="payment-method-icon">💳</div>
+                        <div class="payment-method-info">
+                            <div class="payment-method-name">Кошелёк Telegram</div>
+                            <div class="payment-method-desc">Пополнить через встроенный кошелёк</div>
+                        </div>
+                    </button>
+                    <button class="payment-method-btn" id="telegramBotBtn">
+                        <div class="payment-method-icon">🤖</div>
+                        <div class="payment-method-info">
+                            <div class="payment-method-name">Бот CryptoBot</div>
+                            <div class="payment-method-desc">Пополнить через бота Telegram</div>
+                        </div>
+                    </button>
+                </div>
+                <button class="modal-close" onclick="closeTopUpModal()">Закрыть</button>
+            </div>
         </div>
 
         <div class="inventory-section">
@@ -3789,32 +3871,7 @@
             }
         });
 
-        // Обработчик кнопки "+" в основном балансе
-        const mainBalancePlusBtn = document.querySelector('.balance-section button');
-        if (mainBalancePlusBtn) {
-            mainBalancePlusBtn.addEventListener('click', () => {
-                const botUsername = 'Znakomstva13_bot';
-                const userId = getUserId();
-                // Упрощённая ссылка - просто открываем бота
-                const botUrl = `https://t.me/${botUsername}`;
-                
-            if (tg) {
-                    if (tg.openTelegramLink) {
-                        tg.openTelegramLink(botUrl);
-            } else {
-                        tg.openLink(botUrl);
-                    }
-                    tg.HapticFeedback.impactOccurred('medium');
-                    setTimeout(() => {
-                        if (tg.showAlert) {
-                            tg.showAlert('Отправьте боту /pay для пополнения');
-                        }
-                    }, 500);
-                } else {
-                    window.open(botUrl, '_blank');
-                }
-            });
-        }
+        // Обработчик кнопки "+" в основном балансе - будет установлен в initTopUpHandlers
 
         // Обновление информации профиля
         function updateProfileInfo() {
@@ -4230,38 +4287,259 @@
         
         // Пополнение теперь только через Telegram бота - открывается напрямую
 
-        // Обработчики событий - Пополнение через Telegram бота
-        document.getElementById('topUpBtn').addEventListener('click', () => {
-            const botUsername = 'Znakomstva13_bot';
-            const userId = getUserId();
-            
-            // Открываем бота (можно использовать с параметром или без)
-            // Если бот не настроен, можно убрать параметр и просто открыть бота
-            const botUrl = `https://t.me/${botUsername}`;
-            
-            console.log('Открываем бота для пополнения:', botUrl, 'User ID:', userId);
-            
-            if (tg) {
-                // Используем openTelegramLink для лучшей интеграции
-                if (tg.openTelegramLink) {
-                    tg.openTelegramLink(botUrl);
-                } else {
-                    tg.openLink(botUrl);
+        // Функции для модального окна пополнения
+        function openTopUpModal() {
+            console.log('openTopUpModal вызвана');
+            const modal = document.getElementById('topUpModal');
+            console.log('Модальное окно найдено:', modal);
+            if (modal) {
+                modal.classList.add('active');
+                modal.style.display = 'flex';
+                modal.style.zIndex = '10000';
+                console.log('Модальное окно открыто');
+                if (tg) {
+                    tg.HapticFeedback.impactOccurred('medium');
                 }
-                tg.HapticFeedback.impactOccurred('medium');
-                
-                // Показываем инструкцию пользователю
-                setTimeout(() => {
-                    if (tg.showAlert) {
-                        tg.showAlert('Бот открыт. Отправьте боту команду /pay для пополнения баланса.');
-                    }
-                }, 500);
             } else {
-                window.open(botUrl, '_blank');
-                alert('Бот открыт. Отправьте боту команду /pay для пополнения баланса.');
+                console.error('Модальное окно topUpModal не найдено!');
             }
-        });
+        }
 
+        function closeTopUpModal() {
+            const modal = document.getElementById('topUpModal');
+            if (modal) {
+                modal.classList.remove('active');
+                modal.style.display = 'none';
+                if (tg) {
+                    tg.HapticFeedback.impactOccurred('light');
+                }
+            }
+        }
+
+        // Инициализация обработчиков пополнения после загрузки DOM
+        function initTopUpHandlers() {
+            // Обработчик кнопки "Пополнить" - открывает модальное окно выбора способа
+            const topUpBtn = document.getElementById('topUpBtn');
+            if (topUpBtn) {
+                console.log('Найдена кнопка topUpBtn, устанавливаю обработчик модального окна');
+                
+                // Удаляем старый обработчик если есть и добавляем новый
+                const newBtn = topUpBtn.cloneNode(true);
+                topUpBtn.parentNode.replaceChild(newBtn, topUpBtn);
+                
+                // Явно устанавливаем обработчик с высоким приоритетом
+                newBtn.onclick = null; // Удаляем все inline обработчики
+                newBtn.removeEventListener('click', () => {}); // Пытаемся удалить если есть
+                
+                newBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    console.log('Клик по кнопке Пополнить - открываем модальное окно');
+                    openTopUpModal();
+                    return false;
+                }, true); // Используем capture phase для приоритета
+                
+                console.log('Обработчик модального окна установлен');
+            } else {
+                console.error('Кнопка topUpBtn не найдена');
+            }
+
+            // Пополнение через Telegram Wallet
+            const telegramWalletBtn = document.getElementById('telegramWalletBtn');
+            if (telegramWalletBtn) {
+                telegramWalletBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeTopUpModal();
+                    
+                    if (!tg || !tg.openInvoice) {
+                        if (tg && tg.showAlert) {
+                            tg.showAlert('Кошелёк Telegram недоступен. Используйте другой способ пополнения.');
+                        } else {
+                            alert('Кошелёк Telegram недоступен. Используйте другой способ пополнения.');
+                        }
+                        return;
+                    }
+
+                    try {
+                        const userId = getUserId();
+                        if (!userId) {
+                            throw new Error('Не удалось получить ID пользователя');
+                        }
+
+                        // Запрашиваем сумму пополнения
+                        const amount = prompt('Введите сумму пополнения в TON:');
+                        if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+                            if (tg && tg.showAlert) {
+                                tg.showAlert('Неверная сумма');
+                            }
+                            return;
+                        }
+
+                        const tonAmount = parseFloat(amount);
+                        const transactionId = `tg_wallet_${userId}_${Date.now()}`;
+
+                        // Создаём инвойс через Telegram Stars (поддерживается Telegram Wallet)
+                        const invoice = {
+                            title: 'Пополнение баланса',
+                            description: `Пополнение баланса на ${tonAmount} TON`,
+                            currency: 'XTR', // Telegram Stars
+                            prices: [{
+                                label: 'Пополнение',
+                                amount: Math.round(tonAmount * 100) // Stars (1 TON ≈ 100 Stars)
+                            }],
+                            payload: transactionId,
+                            provider_token: null
+                        };
+
+                        tg.openInvoice(invoice, async (status) => {
+                            if (status === 'paid') {
+                                // Платёж успешен - отправляем на сервер
+                                try {
+                                    const response = await fetch(`${API_BASE_URL}/api/payments/verify`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            userId: userId,
+                                            amount: tonAmount,
+                                            transactionId: transactionId,
+                                            type: 'telegram_wallet'
+                                        })
+                                    });
+
+                                    const result = await response.json();
+                                    
+                                    if (response.ok && result.success) {
+                                        // Обновляем баланс
+                                        await loadUserData();
+                                        
+                                        if (tg && tg.showAlert) {
+                                            tg.showAlert(`Баланс пополнен на ${tonAmount} TON!`);
+                                        }
+                                        tg.HapticFeedback.notificationOccurred('success');
+                                    } else {
+                                        throw new Error(result.error || 'Ошибка обработки платежа');
+                                    }
+                                } catch (error) {
+                                    console.error('Ошибка обработки платежа:', error);
+                                    if (tg && tg.showAlert) {
+                                        tg.showAlert('Ошибка обработки платежа. Обратитесь в поддержку.');
+                                    }
+                                }
+                            } else if (status === 'failed') {
+                                if (tg && tg.showAlert) {
+                                    tg.showAlert('Ошибка оплаты');
+                                }
+                                tg.HapticFeedback.notificationOccurred('error');
+                            } else if (status === 'cancelled') {
+                                tg.HapticFeedback.notificationOccurred('warning');
+                            }
+                        });
+                    } catch (error) {
+                        console.error('Ошибка создания инвойса:', error);
+                        if (tg && tg.showAlert) {
+                            tg.showAlert('Ошибка: ' + error.message);
+                        }
+                    }
+                });
+            }
+
+            // Пополнение через Telegram бота
+            const telegramBotBtn = document.getElementById('telegramBotBtn');
+            if (telegramBotBtn) {
+                telegramBotBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeTopUpModal();
+                    
+                    const botUsername = 'Znakomstva13_bot';
+                    const userId = getUserId();
+                    const botUrl = `https://t.me/${botUsername}?start=topup_${userId}`;
+                    
+                    console.log('Открываем бота для пополнения:', botUrl, 'User ID:', userId);
+                    
+                    if (tg) {
+                        if (tg.openTelegramLink) {
+                            tg.openTelegramLink(botUrl);
+                        } else {
+                            tg.openLink(botUrl);
+                        }
+                        tg.HapticFeedback.impactOccurred('medium');
+                        
+                        setTimeout(() => {
+                            if (tg.showAlert) {
+                                tg.showAlert('Отправьте боту /pay для пополнения');
+                            }
+                        }, 500);
+                    } else {
+                        window.open(botUrl, '_blank');
+                        alert('Бот открыт. Отправьте боту команду /pay для пополнения баланса.');
+                    }
+                });
+            }
+            
+            // Обработчики кнопок "+" рядом с балансом
+            // Основной баланс в хедере
+            const mainBalancePlusBtn = document.querySelector('.balance-section button');
+            if (mainBalancePlusBtn) {
+                // Удаляем старые обработчики
+                const newMainBtn = mainBalancePlusBtn.cloneNode(true);
+                mainBalancePlusBtn.parentNode.replaceChild(newMainBtn, mainBalancePlusBtn);
+                
+                newMainBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    console.log('Клик по кнопке + в основном балансе');
+                    openTopUpModal();
+                    return false;
+                }, true);
+            }
+            
+            // Баланс на странице краша
+            const crashBalancePlusBtn = document.getElementById('crashBalance')?.parentElement?.querySelector('button');
+            if (crashBalancePlusBtn) {
+                // Удаляем старые обработчики
+                const newCrashBtn = crashBalancePlusBtn.cloneNode(true);
+                crashBalancePlusBtn.parentNode.replaceChild(newCrashBtn, crashBalancePlusBtn);
+                
+                newCrashBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    console.log('Клик по кнопке + в балансе краша');
+                    openTopUpModal();
+                    return false;
+                }, true);
+            }
+        }
+        
+        // Инициализируем обработчики при загрузке - делаем несколько попыток
+        function initTopUpHandlersWithRetry(retries = 3) {
+            const topUpBtn = document.getElementById('topUpBtn');
+            if (!topUpBtn && retries > 0) {
+                setTimeout(() => initTopUpHandlersWithRetry(retries - 1), 100);
+                return;
+            }
+            
+            if (topUpBtn) {
+                initTopUpHandlers();
+                console.log('Обработчики пополнения инициализированы');
+            } else {
+                console.error('Кнопка topUpBtn не найдена после всех попыток');
+            }
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(initTopUpHandlersWithRetry, 100);
+            });
+        } else {
+            setTimeout(initTopUpHandlersWithRetry, 100);
+        }
         
         // Обработчик кнопки "Продать все"
         const sellAllBtn = document.getElementById('sellAllBtn');
@@ -5594,31 +5872,7 @@
         }
 
 
-        const crashBalancePlusBtn = document.getElementById('crashBalance')?.parentElement?.querySelector('button');
-        if (crashBalancePlusBtn) {
-            crashBalancePlusBtn.addEventListener('click', () => {
-                const botUsername = 'Znakomstva13_bot';
-                const userId = getUserId();
-                // Упрощённая ссылка - просто открываем бота
-                const botUrl = `https://t.me/${botUsername}`;
-                
-                if (tg) {
-                    if (tg.openTelegramLink) {
-                        tg.openTelegramLink(botUrl);
-                    } else {
-                        tg.openLink(botUrl);
-                    }
-                    tg.HapticFeedback.impactOccurred('medium');
-                    setTimeout(() => {
-                        if (tg.showAlert) {
-                            tg.showAlert('Отправьте боту /pay для пополнения');
-                        }
-                    }, 500);
-                } else {
-                    window.open(botUrl, '_blank');
-                }
-            });
-        }
+        // Обработчик кнопки "+" на странице краша - будет установлен в initTopUpHandlers
     </script>
 </body>
 </html>
