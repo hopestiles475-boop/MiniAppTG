@@ -2800,7 +2800,7 @@
 
         <div class="crash-controls">
             <div class="multiplier-buttons" id="multiplierButtons">
-                <button class="multiplier-btn" data-mult="auto" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('auto', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=null;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">Вручн</button>
+                <button class="multiplier-btn" data-mult="auto" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('auto', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=null;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">Вруч</button>
                 <button class="multiplier-btn active" data-mult="1.5" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('1.5', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=1.5;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x1.5</button>
                 <button class="multiplier-btn" data-mult="2.0" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('2.0', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=2.0;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x2.0</button>
                 <button class="multiplier-btn" data-mult="3.0" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('3.0', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=3.0;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x3.0</button>
@@ -7142,6 +7142,13 @@
         // Анимация графика краша
         function startCrashAnimation(ctx, canvas) {
             console.log('🎬 startCrashAnimation вызвана');
+            console.log('🎬 ПАРАМЕТРЫ ПРИ ВХОДЕ:', {
+                crashRoundActive,
+                crashDirection,
+                crashMultiplier,
+                crashTarget,
+                точек: crashGraphPoints.length
+            });
             
             // Отменяем предыдущую анимацию если была
             if (crashAnimationId) {
@@ -7158,6 +7165,18 @@
             
             const animate = () => {
                 frameCount++;
+                
+                // КРИТИЧЕСКАЯ ПРОВЕРКА: Если анимация запущена, но раунд не активен - логируем это
+                if (frameCount === 1) {
+                    console.log('🎬 ПЕРВЫЙ КАДР АНИМАЦИИ:', {
+                        crashRoundActive,
+                        crashDirection,
+                        crashMultiplier,
+                        crashTarget,
+                        точек: crashGraphPoints.length,
+                        'должно_работать': crashRoundActive && crashDirection === 1
+                    });
+                }
                 
                 // Всегда рисуем canvas (даже во время кулдауна будет что-то показано)
                 if (!ctx || !canvas || canvas.width === 0 || canvas.height === 0) {
@@ -7181,6 +7200,18 @@
                 ctx.fillStyle = 'rgba(20, 20, 30, 1)';
                 ctx.fillRect(0, 0, canvasWidth, canvasHeight);
                 
+                // КРИТИЧЕСКАЯ ПРОВЕРКА: Логируем состояние КАЖДЫЙ КАДР для первых 50 кадров
+                if (frameCount <= 50) {
+                    console.log(`🔍 Кадр #${frameCount}: Проверка условий:`, {
+                        crashRoundActive,
+                        crashDirection,
+                        crashMultiplier: crashMultiplier.toFixed(3),
+                        crashTarget: crashTarget.toFixed(3),
+                        точек: crashGraphPoints.length,
+                        условие_выполнено: crashRoundActive && crashDirection === 1
+                    });
+                }
+                
                 // Обновляем множитель только если раунд активен и график растет
                 if (crashRoundActive && crashDirection === 1) {
                     // Движение вверх (рост)
@@ -7188,7 +7219,7 @@
                     
                     // Логируем каждые 60 кадров (примерно раз в секунду) или первые 20 кадров
                     if (frameCount <= 20 || frameCount % 60 === 0) {
-                        console.log(`📊 Кадр #${frameCount}:`, {
+                        console.log(`📊 Кадр #${frameCount}: РОСТ ГРАФИКА`, {
                             множитель: crashMultiplier.toFixed(3),
                             точек: crashGraphPoints.length,
                             цель: crashTarget.toFixed(2),
@@ -7270,7 +7301,18 @@
                             crashDirection,
                             crashMultiplier,
                             crashTarget,
-                            точек: crashGraphPoints.length
+                            точек: crashGraphPoints.length,
+                            'условие_выполняется': crashRoundActive && crashDirection === 1
+                        });
+                    }
+                } else {
+                    // Логируем почему график не растет (только первые 10 кадров)
+                    if (frameCount <= 10) {
+                        console.warn(`⚠️ Кадр #${frameCount}: График НЕ растет!`, {
+                            crashRoundActive,
+                            crashDirection,
+                            crashMultiplier,
+                            причина: !crashRoundActive ? 'roundActive=false' : (crashDirection !== 1 ? 'direction!=1' : 'неизвестно')
                         });
                     }
                     
