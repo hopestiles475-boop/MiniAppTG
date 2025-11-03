@@ -49,6 +49,10 @@ function initDataFiles() {
     if (!fs.existsSync(PAYMENTS_FILE)) {
         fs.writeFileSync(PAYMENTS_FILE, JSON.stringify([], null, 2));
     }
+    const CRYPTOBOT_INVOICES_FILE = path.join(__dirname, 'cryptobot_invoices.json');
+    if (!fs.existsSync(CRYPTOBOT_INVOICES_FILE)) {
+        fs.writeFileSync(CRYPTOBOT_INVOICES_FILE, JSON.stringify([], null, 2));
+    }
 }
 
 initDataFiles();
@@ -458,7 +462,7 @@ async function verifyTONTransaction(boc, recipientAddress, amount, maxAgeMinutes
     }
 }
 
-// Проверка платежа TON через Tonkeeper
+// Проверка платежа TON
 app.post('/api/payments/verify', async (req, res) => {
     try {
         const { userId, boc, amount, timestamp, senderAddress } = req.body;
@@ -521,7 +525,7 @@ app.post('/api/payments/verify', async (req, res) => {
                 amount: amount,
                 timestamp: timestamp || Date.now(),
                 verified: true,
-                type: 'tonkeeper'
+                type: 'ton'
             });
             
             // Оставляем только последние 10000 платежей
@@ -629,19 +633,94 @@ app.post('/api/payments/telegram', async (req, res) => {
     }
 });
 
-// Проверка платежа через Tonkeeper (поиск транзакции на блокчейне)
-app.post('/api/payments/check-tonkeeper', async (req, res) => {
+// Сохранение инвойса от CryptoBot
+app.post('/api/payments/cryptobot-invoice', async (req, res) => {
     try {
-        const { userId, amount, address } = req.body;
+        const { userId, amount, transactionId, invoiceId, invoiceUrl, status } = req.body;
         
-        if (!userId || !amount || !address) {
-            return res.status(400).json({ error: 'Missing required fields: userId, amount, address' });
+        if (!userId || !amount || !invoiceId) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const invoicesFile = path.join(__dirname, 'cryptobot_invoices.json');
+        let invoices = [];
+        
+        if (fs.existsSync(invoicesFile)) {
+            try {
+                invoices = JSON.parse(fs.readFileSync(invoicesFile, 'utf8'));
+            } catch (e) {
+                invoices = [];
+            }
         }
         
-        // TODO: Здесь нужно интегрировать проверку транзакций на блокчейне TON
-        // Пока используем упрощённую проверку через payments_data.json
-        // В реальности нужно использовать TON API для проверки транзакций
+        invoices.push({
+            userId: userId,
+            amount: amount,
+            transactionId: transactionId,
+            invoiceId: invoiceId,
+            invoiceUrl: invoiceUrl,
+            status: status || 'pending',
+            timestamp: Date.now()
+        });
         
+        fs.writeFileSync(invoicesFile, JSON.stringify(invoices, null, 2));
+        
+        res.json({ success: true, message: 'Invoice saved' });
+    } catch (error) {
+        console.error('Error in POST /api/payments/cryptobot-invoice:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Обработка оплаченного инвойса от CryptoBot (вебхук)
+app.post('/api/payments/cryptobot-paid', async (req, res) => {
+    try {
+        const { invoiceId, invoice } = req.body;
+        
+        if (!invoiceId || !invoice) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        // Ищем инвойс в базе
+        const invoicesFile = path.join(__dirname, 'cryptobot_invoices.json');
+        let invoices = [];
+        
+        if (fs.existsSync(invoicesFile)) {
+            try {
+                invoices = JSON.parse(fs.readFileSync(invoicesFile, 'utf8'));
+            } catch (e) {
+                invoices = [];
+            }
+        }
+        
+        const invoiceData = invoices.find(inv => inv.invoiceId == invoiceId);
+        if (!invoiceData) {
+            return res.status(404).json({ error: 'Invoice not found' });
+        }
+        
+        // Проверяем, не был ли уже обработан
+        if (invoiceData.status === 'paid') {
+            return res.json({ success: false, message: 'Already processed' });
+        }
+        
+        // Обновляем статус
+        invoiceData.status = 'paid';
+        invoiceData.paidAt = Date.now();
+        
+        // Пополняем баланс пользователя
+        const usersData = readUsersData();
+        const userId = invoiceData.userId;
+        
+        if (!usersData[userId]) {
+            usersData[userId] = { balance: 0, inventory: [] };
+        }
+        
+        const currentBalance = parseFloat(usersData[userId].balance) || 0;
+        usersData[userId].balance = (currentBalance + parseFloat(invoiceData.amount)).toFixed(2);
+        
+        writeUsersData(usersData);
+        
+        // Сохраняем платеж
         const paymentsFile = path.join(__dirname, 'payments_data.json');
         let payments = [];
         
@@ -653,33 +732,112 @@ app.post('/api/payments/check-tonkeeper', async (req, res) => {
             }
         }
         
-        // Ищем недавний платеж для этого пользователя (за последние 10 минут)
-        const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
-        const userPayment = payments.find(p => 
-            p.userId === userId.toString() &&
-            p.type === 'tonkeeper' &&
-            p.verified === true &&
-            p.address === address &&
-            Math.abs(parseFloat(p.amount) - parseFloat(amount)) < 0.01 &&
-            p.timestamp > tenMinutesAgo
-        );
+        payments.push({
+            id: Date.now(),
+            userId: userId,
+            amount: invoiceData.amount,
+            transactionId: invoiceData.transactionId,
+            invoiceId: invoiceId,
+            timestamp: Date.now(),
+            verified: true,
+            type: 'cryptobot'
+        });
         
-        if (userPayment) {
-            res.json({ 
-                verified: true,
-                message: 'Payment verified',
-                transactionId: userPayment.transactionId
-            });
-        } else {
-            // Пока возвращаем false - нужно проверить блокчейн
-            // В реальности здесь должен быть вызов TON API для проверки транзакций
-            res.json({ 
-                verified: false,
-                message: 'Payment not found. Please check the blockchain manually or try again later.'
-            });
+        if (payments.length > 10000) {
+            payments = payments.slice(-10000);
         }
+        
+        fs.writeFileSync(paymentsFile, JSON.stringify(payments, null, 2));
+        fs.writeFileSync(invoicesFile, JSON.stringify(invoices, null, 2));
+        
+        res.json({ 
+            success: true,
+            message: 'Payment processed',
+            newBalance: usersData[userId].balance
+        });
+        
     } catch (error) {
-        console.error('Error in POST /api/payments/check-tonkeeper:', error);
+        console.error('Error in POST /api/payments/cryptobot-paid:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Вебхук от CryptoBot (если настроен)
+app.post('/api/webhooks/cryptobot', async (req, res) => {
+    try {
+        const update = req.body;
+        
+        // CryptoBot отправляет обновления об инвойсах
+        if (update.update_type === 'invoice_paid') {
+            const invoice = update.payload.invoice;
+            
+            // Обрабатываем оплаченный инвойс напрямую
+            const invoicesFile = path.join(__dirname, 'cryptobot_invoices.json');
+            let invoices = [];
+            
+            if (fs.existsSync(invoicesFile)) {
+                try {
+                    invoices = JSON.parse(fs.readFileSync(invoicesFile, 'utf8'));
+                } catch (e) {
+                    invoices = [];
+                }
+            }
+            
+            const invoiceData = invoices.find(inv => inv.invoiceId == invoice.invoice_id);
+            if (invoiceData && invoiceData.status !== 'paid') {
+                // Вызываем тот же обработчик, что и для ручной проверки
+                req.body = { invoiceId: invoice.invoice_id, invoice: invoice };
+                
+                // Дублируем логику из /api/payments/cryptobot-paid
+                invoiceData.status = 'paid';
+                invoiceData.paidAt = Date.now();
+                
+                const usersData = readUsersData();
+                const userId = invoiceData.userId;
+                
+                if (!usersData[userId]) {
+                    usersData[userId] = { balance: 0, inventory: [] };
+                }
+                
+                const currentBalance = parseFloat(usersData[userId].balance) || 0;
+                usersData[userId].balance = (currentBalance + parseFloat(invoiceData.amount)).toFixed(2);
+                
+                writeUsersData(usersData);
+                
+                const paymentsFile = path.join(__dirname, 'payments_data.json');
+                let payments = [];
+                
+                if (fs.existsSync(paymentsFile)) {
+                    try {
+                        payments = JSON.parse(fs.readFileSync(paymentsFile, 'utf8'));
+                    } catch (e) {
+                        payments = [];
+                    }
+                }
+                
+                payments.push({
+                    id: Date.now(),
+                    userId: userId,
+                    amount: invoiceData.amount,
+                    transactionId: invoiceData.transactionId,
+                    invoiceId: invoice.invoice_id,
+                    timestamp: Date.now(),
+                    verified: true,
+                    type: 'cryptobot'
+                });
+                
+                if (payments.length > 10000) {
+                    payments = payments.slice(-10000);
+                }
+                
+                fs.writeFileSync(paymentsFile, JSON.stringify(payments, null, 2));
+                fs.writeFileSync(invoicesFile, JSON.stringify(invoices, null, 2));
+            }
+        }
+        
+        res.json({ ok: true });
+    } catch (error) {
+        console.error('Error in POST /api/webhooks/cryptobot:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
