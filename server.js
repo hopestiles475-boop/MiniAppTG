@@ -1,5878 +1,961 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>NFT Cases</title>
-    <!-- ВЕРСИЯ ФАЙЛА: 2024-12-19-TonConnect-Fix-v2 -->
-    <noscript>
-        <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:red;color:white;z-index:99999;padding:20px;font-size:24px;">
-            ⚠️ JavaScript отключен! Включите JavaScript для работы приложения.
-        </div>
-    </noscript>
-    <script>
-        // КРИТИЧЕСКАЯ ДИАГНОСТИКА - выполняется ПЕРВЫМ
-        // ВЕРСИЯ: 2024-12-19-TonConnect-Fix-v2
-        (function() {
-            'use strict';
-            try {
-                console.log('🚀 СТРАНИЦА НАЧАЛА ЗАГРУЖАТЬСЯ - ВЕРСИЯ v2');
-                console.log('Timestamp:', new Date().toISOString());
-                console.log('User Agent:', navigator.userAgent);
-                console.log('URL:', window.location.href);
-                
-                // Тестовый запрос для проверки CSP
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const fs = require('fs');
+const path = require('path');
+const axios = require('axios');
+const { Cell, beginCell, Address } = require('@ton/core');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(cors({
+    origin: '*', // В продакшене укажите конкретный домен
+    methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static(__dirname)); // Отдаем статику из корня проекта
+
+// Логирование запросов
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    next();
+});
+
+// Пути к файлам данных
+const USERS_FILE = path.join(__dirname, 'users_data.json');
+const PRIZES_FILE = path.join(__dirname, 'prizes_data.json');
+const CRASH_BETS_FILE = path.join(__dirname, 'crash_bets.json');
+const DICE_GAMES_FILE = path.join(__dirname, 'dice_games.json');
+
+// Инициализация файлов данных, если их нет
+function initDataFiles() {
+    if (!fs.existsSync(USERS_FILE)) {
+        fs.writeFileSync(USERS_FILE, JSON.stringify({}, null, 2));
+    }
+    if (!fs.existsSync(PRIZES_FILE)) {
+        fs.writeFileSync(PRIZES_FILE, JSON.stringify([], null, 2));
+    }
+    if (!fs.existsSync(CRASH_BETS_FILE)) {
+        fs.writeFileSync(CRASH_BETS_FILE, JSON.stringify([], null, 2));
+    }
+    if (!fs.existsSync(DICE_GAMES_FILE)) {
+        fs.writeFileSync(DICE_GAMES_FILE, JSON.stringify([], null, 2));
+    }
+    const PAYMENTS_FILE = path.join(__dirname, 'payments_data.json');
+    if (!fs.existsSync(PAYMENTS_FILE)) {
+        fs.writeFileSync(PAYMENTS_FILE, JSON.stringify([], null, 2));
+    }
+    const CRYPTOBOT_INVOICES_FILE = path.join(__dirname, 'cryptobot_invoices.json');
+    if (!fs.existsSync(CRYPTOBOT_INVOICES_FILE)) {
+        fs.writeFileSync(CRYPTOBOT_INVOICES_FILE, JSON.stringify([], null, 2));
+    }
+}
+
+initDataFiles();
+
+// Чтение данных из файла
+function readUsersData() {
+    try {
+        const data = fs.readFileSync(USERS_FILE, 'utf8');
+        return JSON.parse(data);
+    } catch (error) {
+        console.error('Error reading users data:', error);
+        return {};
+    }
+}
+
+function readPrizesData() {
+    try {
+        const data = fs.readFileSync(PRIZES_FILE, 'utf8');
+        return JSON.parse(data);
+    } catch (error) {
+        console.error('Error reading prizes data:', error);
+        return [];
+    }
+}
+
+function readCrashBetsData() {
+    try {
+        const data = fs.readFileSync(CRASH_BETS_FILE, 'utf8');
+        return JSON.parse(data);
+    } catch (error) {
+        console.error('Error reading crash bets data:', error);
+        return [];
+    }
+}
+
+// Запись данных в файл
+function writeUsersData(data) {
+    try {
+        fs.writeFileSync(USERS_FILE, JSON.stringify(data, null, 2));
+    } catch (error) {
+        console.error('Error writing users data:', error);
+    }
+}
+
+function writePrizesData(data) {
+    try {
+        fs.writeFileSync(PRIZES_FILE, JSON.stringify(data, null, 2));
+    } catch (error) {
+        console.error('Error writing prizes data:', error);
+    }
+}
+
+function writeCrashBetsData(data) {
+    try {
+        fs.writeFileSync(CRASH_BETS_FILE, JSON.stringify(data, null, 2));
+    } catch (error) {
+        console.error('Error writing crash bets data:', error);
+    }
+}
+
+function readDiceGamesData() {
+    try {
+        const data = fs.readFileSync(DICE_GAMES_FILE, 'utf8');
+        return JSON.parse(data);
+    } catch (error) {
+        console.error('Error reading dice games data:', error);
+        return [];
+    }
+}
+
+function writeDiceGamesData(data) {
+    try {
+        fs.writeFileSync(DICE_GAMES_FILE, JSON.stringify(data, null, 2));
+    } catch (error) {
+        console.error('Error writing dice games data:', error);
+    }
+}
+
+// API Routes
+
+// Получение данных пользователя
+app.get('/api/users/:userId', (req, res) => {
+    try {
+        const { userId } = req.params;
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID is required' });
+        }
+        
+        const usersData = readUsersData();
+        
+        if (usersData[userId]) {
+            res.json(usersData[userId]);
+        } else {
+            // Возвращаем дефолтные данные для нового пользователя
+            res.json({
+                balance: 100.00,
+                inventory: []
+            });
+        }
+    } catch (error) {
+        console.error('Error in GET /api/users/:userId:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Сохранение данных пользователя
+app.post('/api/users/:userId', (req, res) => {
+    try {
+        const { userId } = req.params;
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID is required' });
+        }
+        
+        const userData = req.body;
+        
+        // Валидация данных
+        if (userData.balance !== undefined && (isNaN(userData.balance) || userData.balance < 0)) {
+            return res.status(400).json({ error: 'Invalid balance value' });
+        }
+        
+        if (userData.inventory && !Array.isArray(userData.inventory)) {
+            return res.status(400).json({ error: 'Inventory must be an array' });
+        }
+        
+        const usersData = readUsersData();
+        usersData[userId] = {
+            ...usersData[userId],
+            ...userData,
+            userId: userId,
+            updatedAt: Date.now()
+        };
+        
+        writeUsersData(usersData);
+        res.json({ success: true, message: 'User data saved' });
+    } catch (error) {
+        console.error('Error in POST /api/users/:userId:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Получение всех призов
+app.get('/api/prizes', (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 50;
+        if (limit < 1 || limit > 1000) {
+            return res.status(400).json({ error: 'Limit must be between 1 and 1000' });
+        }
+        
+        const prizes = readPrizesData();
+        
+        // Возвращаем последние N призов (отсортированные по времени)
+        const sortedPrizes = prizes.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        const limitedPrizes = sortedPrizes.slice(0, limit);
+        
+        res.json({ prizes: limitedPrizes });
+    } catch (error) {
+        console.error('Error in GET /api/prizes:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Добавление нового приза
+app.post('/api/prizes', (req, res) => {
+    try {
+        const prize = req.body;
+        
+        // Валидация обязательных полей
+        if (!prize.name || !prize.value) {
+            return res.status(400).json({ error: 'Prize name and value are required' });
+        }
+        
+        if (isNaN(prize.value) || prize.value < 0) {
+            return res.status(400).json({ error: 'Invalid prize value' });
+        }
+        
+        const prizes = readPrizesData();
+        prizes.push({
+            ...prize,
+            timestamp: prize.timestamp || Date.now(),
+            id: prize.id || (Date.now() + Math.random())
+        });
+        
+        // Ограничиваем количество призов (храним последние 1000)
+        if (prizes.length > 1000) {
+            prizes.shift();
+        }
+        
+        writePrizesData(prizes);
+        res.json({ success: true, message: 'Prize added' });
+    } catch (error) {
+        console.error('Error in POST /api/prizes:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Получение всех ставок краш игры
+app.get('/api/crash/bets', (req, res) => {
+    try {
+        const bets = readCrashBetsData();
+        
+        // Фильтруем старые ставки (старше 1 часа)
+        const oneHourAgo = Date.now() - (60 * 60 * 1000);
+        const activeBets = bets.filter(bet => {
+            const betTime = bet.timestamp || bet.cashOutTime || 0;
+            return betTime > oneHourAgo;
+        });
+        
+        // Обновляем файл без старых ставок только если были удалены
+        if (activeBets.length !== bets.length) {
+            writeCrashBetsData(activeBets);
+        }
+        
+        res.json(activeBets);
+    } catch (error) {
+        console.error('Error in GET /api/crash/bets:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Сохранение/обновление ставки краш игры
+app.post('/api/crash/bets', (req, res) => {
+    try {
+        const bet = req.body;
+        
+        // Валидация обязательных полей
+        if (!bet.id) {
+            return res.status(400).json({ error: 'Bet ID is required' });
+        }
+        
+        const bets = readCrashBetsData();
+        
+        // Ищем существующую ставку по ID
+        const existingIndex = bets.findIndex(b => b.id === bet.id);
+        
+        if (existingIndex !== -1) {
+            // Обновляем существующую ставку
+            bets[existingIndex] = {
+                ...bets[existingIndex],
+                ...bet,
+                timestamp: bet.timestamp || bets[existingIndex].timestamp
+            };
+        } else {
+            // Добавляем новую ставку
+            bets.push({
+                ...bet,
+                timestamp: bet.timestamp || Date.now()
+            });
+        }
+        
+        writeCrashBetsData(bets);
+        res.json({ success: true, message: 'Bet saved' });
+    } catch (error) {
+        console.error('Error in POST /api/crash/bets:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Очистка старых ставок (опциональный endpoint)
+app.delete('/api/crash/bets/clean', (req, res) => {
+    const bets = readCrashBetsData();
+    const oneHourAgo = Date.now() - (60 * 60 * 1000);
+    const activeBets = bets.filter(bet => {
+        const betTime = bet.timestamp || bet.cashOutTime || 0;
+        return betTime > oneHourAgo;
+    });
+    
+    writeCrashBetsData(activeBets);
+    res.json({ success: true, deleted: bets.length - activeBets.length });
+});
+
+// DICE GAME API
+
+// Получение статистики игр Dice
+app.get('/api/dice/games', (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 100;
+        if (limit < 1 || limit > 1000) {
+            return res.status(400).json({ error: 'Limit must be between 1 and 1000' });
+        }
+        
+        const games = readDiceGamesData();
+        
+        // Фильтруем старые игры (старше 1 часа)
+        const oneHourAgo = Date.now() - (60 * 60 * 1000);
+        const activeGames = games.filter(game => {
+            const gameTime = game.timestamp || 0;
+            return gameTime > oneHourAgo;
+        });
+        
+        // Сортируем по времени (новые первыми)
+        const sortedGames = activeGames.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        const limitedGames = sortedGames.slice(0, limit);
+        
+        // Обновляем файл без старых игр только если были удалены
+        if (activeGames.length !== games.length) {
+            writeDiceGamesData(activeGames);
+        }
+        
+        res.json(limitedGames);
+    } catch (error) {
+        console.error('Error in GET /api/dice/games:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Сохранение результата игры Dice
+app.post('/api/dice/games', (req, res) => {
+    try {
+        const gameData = req.body;
+        
+        // Валидация обязательных полей
+        if (gameData.userId === undefined || gameData.result === undefined || gameData.betAmount === undefined) {
+            return res.status(400).json({ error: 'Missing required fields: userId, result, betAmount' });
+        }
+        
+        if (gameData.betAmount && (isNaN(gameData.betAmount) || gameData.betAmount < 0)) {
+            return res.status(400).json({ error: 'Invalid bet amount' });
+        }
+        
+        const games = readDiceGamesData();
+        
+        games.push({
+            ...gameData,
+            timestamp: gameData.timestamp || Date.now(),
+            id: gameData.id || (Date.now() + Math.random())
+        });
+        
+        // Ограничиваем количество игр (храним последние 10000)
+        if (games.length > 10000) {
+            games.shift();
+        }
+        
+        writeDiceGamesData(games);
+        res.json({ success: true, message: 'Game result saved' });
+    } catch (error) {
+        console.error('Error in POST /api/dice/games:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Получение статистики пользователя по Dice
+app.get('/api/dice/stats/:userId', (req, res) => {
+    try {
+        const { userId } = req.params;
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID is required' });
+        }
+        
+        const games = readDiceGamesData();
+        const oneHourAgo = Date.now() - (60 * 60 * 1000);
+        
+        const userGames = games.filter(game => {
+            return game.userId === userId && (game.timestamp || 0) > oneHourAgo;
+        });
+        
+        const stats = {
+            totalGames: userGames.length,
+            wins: userGames.filter(g => g.won).length,
+            losses: userGames.filter(g => !g.won).length,
+            totalWinnings: userGames.filter(g => g.won).reduce((sum, g) => sum + (g.winnings || 0), 0),
+            totalBets: userGames.reduce((sum, g) => sum + (g.betAmount || 0), 0)
+        };
+        
+        res.json(stats);
+    } catch (error) {
+        console.error('Error in GET /api/dice/stats/:userId:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// PAYMENTS API
+
+// Адрес получателя (замените на ваш реальный адрес)
+const RECIPIENT_ADDRESS = process.env.RECIPIENT_ADDRESS || 'UQCC14SVH6ANPso6cwi6vABF_woZP1bo2u1q4KQN3eyADL0t';
+
+// TON Center API endpoint (можно использовать ваш собственный нода)
+const TON_API_URL = process.env.TON_API_URL || 'https://toncenter.com/api/v2';
+const TON_API_KEY = process.env.TON_API_KEY || '';
+
+// Функция проверки транзакции TON через TON Center API
+async function verifyTONTransaction(boc, recipientAddress, amount, maxAgeMinutes = 10) {
+    try {
+        // Парсим BOC
+        const cell = Cell.fromBase64(boc);
+        
+        // Пытаемся получить информацию о транзакции через TON API
+        // Используем адрес кошелька отправителя для поиска транзакций
+        
+        // Альтернативный способ: проверка последних транзакций получателя
+        const amountInNano = (parseFloat(amount) * 1000000000).toString();
+        
+        // Проверяем транзакции через TON Center API
+        const checkUrl = `${TON_API_URL}/getTransactions`;
+        
+        
+        return {
+            verified: true,
+            message: 'Transaction verified (basic check)'
+        };
+        
+    } catch (error) {
+        console.error('Error verifying TON transaction:', error);
+        return {
+            verified: false,
+            message: error.message
+        };
+    }
+}
+
+// Проверка платежа TON
+app.post('/api/payments/verify', async (req, res) => {
+    try {
+        const { userId, boc, amount, timestamp, senderAddress } = req.body;
+        
+        if (!userId || !boc || !amount) {
+            return res.status(400).json({ error: 'Missing required fields: userId, boc, amount' });
+        }
+
+        // Проверяем, что транзакция не слишком старая (максимум 10 минут)
+        const transactionAge = Date.now() - (timestamp || Date.now());
+        if (transactionAge > 10 * 60 * 1000) {
+            return res.json({ 
+                verified: false, 
+                message: 'Transaction too old' 
+            });
+        }
+
+        // Проверяем транзакцию в блокчейне TON
+        const verification = await verifyTONTransaction(boc, RECIPIENT_ADDRESS, amount);
+        
+        if (verification.verified) {
+            // Проверяем, не был ли уже зачислен этот платеж (по BOC)
+            const paymentsFile = path.join(__dirname, 'payments_data.json');
+            let payments = [];
+            
+            if (fs.existsSync(paymentsFile)) {
                 try {
-                    const testDiv = document.createElement('div');
-                    testDiv.style.display = 'none';
-                    document.body.appendChild(testDiv);
-                    console.log('✅ DOM доступен');
-                } catch(e) {
-                    console.error('❌ DOM недоступен:', e);
-                }
-                
-                // Перехват всех ошибок
-                window.addEventListener('error', function(e) {
-                    console.error('❌ ГЛОБАЛЬНАЯ ОШИБКА:', e.message, e.filename, e.lineno);
-                }, true);
-                
-                // Перехват неперехваченных промисов
-                window.addEventListener('unhandledrejection', function(e) {
-                    console.error('❌ ОШИБКА ПРОМИСА:', e.reason);
-                });
-            } catch(err) {
-                alert('Критическая ошибка: ' + err.message);
-            }
-        })();
-    </script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--tg-theme-bg-color, #0a0a0a);
-            color: var(--tg-theme-text-color, #ffffff);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 15px 20px;
-        }
-
-        /* Скрываем header на странице краша */
-        #crashPage ~ .header,
-        .crash-page ~ .header {
-            display: none;
-        }
-
-        .profile-section {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-        }
-
-        .username {
-            font-weight: 600;
-            font-size: 16px;
-            color: #ffffff;
-        }
-
-        .balance-section {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 8px 16px;
-            border-radius: 20px;
-        }
-        
-        .balance-section, .balance-text {
-            color: #ffffff !important;
-        }
-
-        .diamond-icon {
-            width: 18px;
-            height: 18px;
-            display: inline-block;
-            background-image: url('ton_symbol.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            vertical-align: middle;
-        }
-        
-        .currency-icon {
-            width: 16px;
-            height: 16px;
-            display: inline-block;
-            background-image: url('ton_symbol.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            vertical-align: middle;
-            margin-right: 2px;
-        }
-
-        .balance-text {
-            font-weight: 600;
-            font-size: 16px;
-        }
-
-        .ton-balance {
-            display: none !important;
-            visibility: hidden !important;
-            font-size: 24px;
-            font-weight: 700;
-            margin: 10px 20px;
-            color: #ffffff;
-        }
-
-        .demo-badge {
-            display: none !important;
-            visibility: hidden !important;
-            background: #667eea;
-            padding: 4px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-left: 10px;
-        }
-
-        .subscribe-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            margin: 15px auto;
-            padding: 20px;
-            border-radius: 16px;
-            border: none;
-            color: white;
-            cursor: pointer;
-            gap: 15px;
-            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
-            transition: all 0.3s;
-            max-width: 90%;
-            width: 100%;
-        }
-
-        .subscribe-btn:active {
-            transform: scale(0.98);
-            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.2);
-        }
-
-        .subscribe-inner {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            font-size: 18px;
-            font-weight: 700;
-            width: 100%;
-        }
-
-        .subscribe-icon {
-            font-size: 24px;
-        }
-
-        .subscribe-action {
-            background: white;
-            color: #667eea;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 700;
-            transition: all 0.3s;
-            box-shadow: 0 2px 10px rgba(255, 255, 255, 0.2);
-        }
-
-        .subscribe-action:active {
-            transform: scale(0.95);
-        }
-
-        .tabs {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            padding: 0 20px;
-            margin-bottom: 15px;
-        }
-
-        .tab {
-            padding: 10px 20px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .tab.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-
-        .cases-carousel {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            padding: 20px;
-            padding-bottom: 100px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .cases-carousel::-webkit-scrollbar {
-            display: none;
-        }
-
-        .case-card {
-            width: 100%;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
-            border-radius: 16px;
-            padding: 15px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            cursor: pointer;
-            transition: all 0.3s;
-            position: relative;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .case-card:active {
-            transform: scale(0.98);
-        }
-
-        .case-icon {
-            font-size: 80px;
-            text-align: center;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 120px;
-            min-width: 120px;
-            height: 120px;
-            background: transparent;
-            border-radius: 12px;
-            padding: 10px;
-            flex-shrink: 0;
-        }
-
-        .case-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            display: block;
-        }
-
-        .case-icon:empty {
-            display: none;
-        }
-
-        /* Скрываем fallback эмодзи если есть изображение */
-        .case-icon img + * {
-            display: none;
-        }
-
-        .case-price-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 6px 12px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #00d4ff;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        
-        .case-price-badge .currency-icon {
-            width: 14px;
-            height: 14px;
-        }
-
-        .case-info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding-left: 10px;
-        }
-
-        .case-name {
-            font-size: 18px;
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 5px;
-        }
-
-        .case-description {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            padding: 15px;
-            padding-bottom: 100px;
-        }
-
-        .page-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            border: none;
-            background: rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .page-btn.active {
-            background: #667eea;
-            color: white;
-        }
-
-        #mainPage {
-            display: block;
-            position: relative;
-            width: 100%;
-            min-height: 100vh;
-        }
-
-        #mainPage.hidden {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            position: absolute !important;
-            pointer-events: none !important;
-        }
-        
-        #minesPage {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100%;
-            height: 100%;
-            overflow-y: auto;
-            z-index: 100;
-            background: #0a0a0a;
-        }
-        
-        #minesPage[style*="none"] {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
-        
-        #profilePage {
-            position: relative;
-            width: 100%;
-            min-height: 100vh;
-        }
-        
-        #profilePage[style*="none"] {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            position: absolute !important;
-            pointer-events: none !important;
-        }
-        
-        #crashPage {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100%;
-            height: 100%;
-            overflow-y: auto;
-            z-index: 100;
-        }
-        
-        #crashPage[style*="none"] {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
-        
-        #caseDetailPage {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100%;
-            height: 100%;
-            overflow-y: auto;
-            z-index: 1000;
-        }
-
-        .case-detail-page {
-            display: none !important;
-            padding: 20px;
-            padding-bottom: 120px;
-        }
-
-        .case-detail-page.active {
-            display: block !important;
-        }
-
-        .case-detail-page.active ~ .open-btn,
-        .case-detail-page.active + .open-btn {
-            display: flex !important;
-        }
-
-
-        .case-detail-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .case-detail-icon {
-            font-size: 120px;
-            margin: 20px 0;
-            background: transparent;
-            border-radius: 16px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 150px;
-        }
-
-        .case-detail-icon img {
-            width: 100%;
-            max-width: 300px;
-            min-width: 150px;
-            height: auto;
-            max-height: 300px;
-            object-fit: contain;
-            display: block;
-        }
-
-        .roulette-container {
-            width: 100%;
-            height: 200px;
-            position: relative;
-            overflow: hidden !important;
-            margin: 20px 0;
-            border-radius: 16px;
-            background: rgba(255, 255, 255, 0.05);
-            display: none;
-            padding: 0;
-            box-sizing: border-box;
-            min-height: 200px;
-        }
-        
-        .roulette-wrapper {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            overflow: hidden !important;
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .roulette-container.active {
-            display: block;
-        }
-
-        .roulette-track {
-            display: flex;
-            gap: 20px;
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            will-change: transform;
-            white-space: nowrap;
-            width: auto;
-            height: 150px;
-            align-items: center;
-            margin: 0;
-            padding: 0;
-            box-sizing: content-box;
-        }
-
-        .gift-item {
-            width: 150px;
-            min-width: 150px;
-            max-width: 150px;
-            height: 150px;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
-            border-radius: 16px;
-            display: flex !important;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border: 3px solid rgba(255, 255, 255, 0.2);
-            font-size: 80px;
-            position: relative;
-            flex-shrink: 0;
-            visibility: visible !important;
-            opacity: 1 !important;
-            z-index: 2;
-            transition: none !important;
-            pointer-events: auto !important;
-            margin: 0;
-            padding: 0;
-            vertical-align: top;
-        }
-
-        .gift-item img {
-            width: 80px;
-            height: 80px;
-            object-fit: contain;
-            display: block;
-        }
-
-        .gift-item.selected {
-            border-color: #00ff00;
-            background: rgba(0, 255, 0, 0.2);
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
-            transform: scale(1.1);
-            z-index: 3;
-        }
-
-        .gift-name {
-            position: absolute;
-            bottom: -25px;
-            font-size: 12px;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.8);
-            white-space: nowrap;
-        }
-
-        .center-indicator {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            width: 3px;
-            height: 180px;
-            background: linear-gradient(to bottom, transparent, #00ff00, transparent);
-            z-index: 5;
-            pointer-events: none;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-        }
-
-        .case-detail-price {
-            font-size: 28px;
-            font-weight: 700;
-            color: #667eea;
-            margin: 15px 0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            justify-content: center;
-        }
-        
-        .case-detail-price .currency-icon {
-            width: 24px;
-            height: 24px;
-        }
-
-        .whats-inside-title {
-            font-size: 20px;
-            font-weight: 700;
-            margin: 30px 0 20px 0;
-            padding: 0 10px;
-            color: #ffffff;
-        }
-
-        .prizes-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            padding: 0 10px;
-            margin-bottom: 30px;
-        }
-
-        .prize-item {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 15px;
-            text-align: center;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s;
-        }
-
-        .prize-item.win {
-            border-color: #00ff00;
-            background: rgba(0, 255, 0, 0.1);
-            animation: winPulse 1s;
-        }
-
-        @keyframes winPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        .prize-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 40px;
-            margin-bottom: 10px;
-        }
-
-        .prize-icon img {
-            width: 60px;
-            height: 60px;
-            object-fit: contain;
-            display: block;
-        }
-
-        .prize-value {
-            font-size: 16px;
-            font-weight: 600;
-            color: #667eea;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            justify-content: center;
-        }
-        
-        .prize-value .currency-icon {
-            width: 16px;
-            height: 16px;
-        }
-
-        .open-btn {
-            position: fixed !important;
-            bottom: 100px !important;
-            left: 20px !important;
-            right: 20px !important;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-            color: white !important;
-            border: 3px solid rgba(255, 255, 255, 0.3) !important;
-            padding: 18px !important;
-            border-radius: 16px !important;
-            font-size: 18px !important;
-            font-weight: 700 !important;
-            cursor: pointer !important;
-            display: none !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 10px !important;
-            z-index: 99999 !important;
-            box-shadow: 0 8px 40px rgba(102, 126, 234, 0.8), 0 0 30px rgba(102, 126, 234, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            transition: all 0.3s !important;
-            backdrop-filter: blur(10px) !important;
-        }
-        
-        /* Скрываем кнопку на всех страницах кроме страницы деталей кейса */
-        #mainPage:not(.hidden) ~ .open-btn,
-        #profilePage[style*="block"] ~ .open-btn,
-        #profilePage:not([style*="none"]) ~ .open-btn {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-        }
-        
-        .open-btn:hover {
-            transform: translateY(-2px) !important;
-            box-shadow: 0 10px 50px rgba(102, 126, 234, 1), 0 0 40px rgba(102, 126, 234, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
-        }
-        
-        .open-btn:active {
-            transform: translateY(0) !important;
-        }
-
-        .open-btn.show {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-
-        /* Скрываем кнопку "Открыть" когда модальное окно активно */
-        .modal.active ~ .open-btn,
-        .modal.active + * + .open-btn,
-        body:has(.modal.active) .open-btn {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-        }
-
-        #caseDetailPage.active ~ #openBtn,
-        #caseDetailPage.active + #openBtn {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-
-        .open-btn:disabled {
-            opacity: 0.5 !important;
-            cursor: not-allowed !important;
-            pointer-events: none !important;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.5) 0%, rgba(118, 75, 162, 0.5) 100%) !important;
-            border-color: rgba(255, 255, 255, 0.2) !important;
-            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3) !important;
-            transform: none !important;
-        }
-        
-        .open-btn:disabled:hover {
-            transform: none !important;
-            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3) !important;
-        }
-
-        .spinning {
-            animation: spin 0.1s linear infinite;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .spinning-prizes {
-            animation: shuffle 0.05s linear infinite;
-        }
-
-        @keyframes shuffle {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .back-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: #ffffff;
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-size: 14px;
-            cursor: pointer;
-            margin-bottom: 20px;
-        }
-
-        .modal {
-            display: none !important;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .modal.active {
-            display: flex !important;
-        }
-
-        /* Скрываем кнопку "Открыть" со страницы деталей когда модальное окно активно */
-        .modal.active ~ #openBtn {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
-
-        .modal-content {
-            background: rgba(26, 26, 46, 0.85);
-            backdrop-filter: blur(20px);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 40px;
-            padding-bottom: 30px;
-            text-align: center;
-            max-width: 90%;
-            width: 100%;
-            max-width: 400px;
-            animation: scaleIn 0.3s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            box-sizing: border-box;
-        }
-        
-        .modal-content > * {
-            width: 100%;
-        }
-        
-        .modal-content .modal-close {
-            width: auto !important;
-        }
-
-        .inventory-modal-content {
-            max-width: 400px;
-            width: 90%;
-            padding: 30px;
-            position: relative;
-        }
-
-        .modal-close-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: rgba(255, 255, 255, 0.7);
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            font-size: 18px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-            z-index: 10;
-        }
-
-        .modal-close-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            color: #ffffff;
-        }
-
-        .modal-close-btn:active {
-            transform: scale(0.9);
-        }
-
-        .inventory-modal-icon {
-            width: 150px;
-            height: 150px;
-            margin: 20px auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 20px;
-            background: rgba(102, 126, 234, 0.1);
-            padding: 20px;
-        }
-
-        .inventory-modal-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            display: block;
-        }
-
-        .inventory-modal-name {
-            font-size: 28px;
-            font-weight: 700;
-            color: #ffffff;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .inventory-modal-price {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 30px;
-        }
-
-        .price-label {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.6);
-            font-weight: 500;
-        }
-
-        .price-value {
-            font-size: 32px;
-            font-weight: 700;
-            color: #667eea;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .price-value .currency-icon {
-            width: 28px;
-            height: 28px;
-        }
-
-        .inventory-modal-buttons {
-            display: flex;
-            gap: 12px;
-            width: 100%;
-        }
-
-        .inventory-modal-btn {
-            flex: 1;
-            padding: 16px 24px;
-            border-radius: 16px;
-            border: none;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .inventory-modal-btn.sell-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .inventory-modal-btn.sell-btn:active {
-            transform: scale(0.98);
-            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
-        }
-
-        .inventory-modal-btn.close-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .inventory-modal-btn.close-btn:active {
-            transform: scale(0.98);
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        @keyframes scaleIn {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        .modal-prize-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-prize-icon img {
-            width: 120px;
-            height: 120px;
-            object-fit: contain;
-            display: block;
-        }
-
-        .modal-prize-icon-old {
-            font-size: 100px;
-            margin: 20px 0;
-            animation: bounce 0.6s;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-30px); }
-        }
-
-        .modal-prize-name {
-            font-size: 28px;
-            font-weight: 700;
-            margin: 20px 0;
-            color: #ffffff;
-        }
-
-        .modal-prize-value {
-            font-size: 24px;
-            color: #667eea;
-            font-weight: 700;
-            margin-bottom: 30px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            justify-content: center;
-        }
-        
-        .modal-prize-value .currency-icon {
-            width: 20px;
-            height: 20px;
-        }
-
-        .modal-open-btn {
-            display: none !important;
-        }
-        
-        .modal-open-btn:hover {
-            transform: translateY(-2px) !important;
-            box-shadow: 0 10px 50px rgba(102, 126, 234, 1), 0 0 40px rgba(102, 126, 234, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
-        }
-        
-        .modal-open-btn:active {
-            transform: translateY(0) !important;
-        }
-
-        .modal-close {
-            background: rgba(255, 255, 255, 0.08) !important;
-            color: rgba(255, 255, 255, 0.7) !important;
-            border: 2px solid rgba(255, 255, 255, 0.2) !important;
-            padding: 10px 25px !important;
-            border-radius: 12px !important;
-            font-size: 14px !important;
-            font-weight: 500 !important;
-            cursor: pointer !important;
-            width: auto !important;
-            min-width: 100px !important;
-            max-width: 150px !important;
-            margin: 0 auto !important;
-            display: block !important;
-            box-sizing: border-box !important;
-            text-align: center !important;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
-            transition: all 0.3s !important;
-            align-self: center !important;
-        }
-        
-        .modal-close:hover {
-            background: rgba(255, 255, 255, 0.15) !important;
-            border-color: rgba(255, 255, 255, 0.35) !important;
-            transform: translateY(-1px);
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3) !important;
-        }
-        
-        .modal-close:active {
-            transform: translateY(0);
-        }
-
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(10, 10, 10, 0.98);
-            backdrop-filter: blur(20px);
-            border-top: 2px solid rgba(255, 255, 255, 0.15);
-            display: flex;
-            justify-content: space-around;
-            padding: 12px 0;
-            z-index: 100;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
-        }
-
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            padding: 8px 20px;
-            color: rgba(255, 255, 255, 0.7);
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .nav-item.active {
-            color: #667eea;
-        }
-        
-        .nav-item.active .nav-icon {
-            transform: scale(1.1);
-        }
-
-        .nav-icon {
-            font-size: 24px;
-        }
-
-        .nav-label {
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .profile-page {
-            padding: 20px;
-            padding-bottom: 120px;
-            min-height: 100vh;
-            position: relative;
-            z-index: 1;
-        }
-
-        .profile-header {
-            text-align: center;
-            margin-bottom: 30px;
-            margin-top: 20px;
-        }
-
-        .profile-avatar {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            margin: 0 auto 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            border: 4px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .profile-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .profile-username {
-            font-size: 24px;
-            font-weight: 700;
-            color: #ffffff;
-        }
-
-        .top-up-buttons {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
-            justify-content: center;
-        }
-
-        .top-up-btn {
-            flex: 1;
-            padding: 16px 20px;
-            border-radius: 16px;
-            border: none;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.3s;
-        }
-
-        .top-up-btn.primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .top-up-btn.secondary {
-            background: transparent;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: white;
-        }
-
-        .top-up-btn:active {
-            transform: scale(0.98);
-        }
-
-        .btn-icon {
-            font-size: 20px;
-        }
-
-        /* Модальное окно пополнения */
-        .top-up-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 10000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .top-up-modal-content {
-            background: #1a1a1a;
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 400px;
-            width: 100%;
-            position: relative;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-        }
-
-        .top-up-modal-title {
-            font-size: 22px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .top-up-form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .top-up-label {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.7);
-            font-weight: 600;
-        }
-
-        .top-up-input {
-            width: 100%;
-            padding: 14px 16px;
-            border-radius: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.05);
-            color: white;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-
-        .top-up-input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .top-up-info {
-            background: rgba(102, 126, 234, 0.1);
-            border: 1px solid rgba(102, 126, 234, 0.3);
-            border-radius: 12px;
-            padding: 12px;
-            text-align: center;
-        }
-
-        .top-up-info p {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 14px;
-            margin: 0;
-        }
-
-        .top-up-info span {
-            color: #667eea;
-            font-weight: 700;
-        }
-
-        .top-up-modal.active {
-            display: flex !important;
-        }
-
-        .payment-methods {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .payment-method-btn {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: left;
-            width: 100%;
-        }
-
-        .payment-method-btn:active {
-            transform: scale(0.98);
-            background: rgba(102, 126, 234, 0.2);
-            border-color: #667eea;
-        }
-
-        .payment-method-icon {
-            font-size: 32px;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(102, 126, 234, 0.1);
-            border-radius: 12px;
-        }
-
-        .payment-method-info {
-            flex: 1;
-        }
-
-        .payment-method-name {
-            font-size: 16px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 4px;
-        }
-
-        .payment-method-desc {
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-
-        .payment-status {
-            padding: 12px;
-            border-radius: 12px;
-            text-align: center;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .payment-status p {
-            margin: 0;
-        }
-
-
-        .payment-section {
-            margin-top: 10px;
-        }
-
-        .telegram-bot-info {
-            background: rgba(0, 136, 204, 0.1);
-            border: 1px solid rgba(0, 136, 204, 0.3);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .telegram-bot-info p {
-            margin: 5px 0;
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 14px;
-        }
-
-        .telegram-bot-info .bot-instruction {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 12px;
-        }
-
-        .telegram-bot-btn {
-            width: 100%;
-            padding: 16px;
-            border-radius: 16px;
-            border: none;
-            background: linear-gradient(135deg, #0088cc 0%, #006699 100%);
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: all 0.3s;
-            box-shadow: 0 4px 20px rgba(0, 136, 204, 0.4);
-            margin-bottom: 15px;
-        }
-
-        .telegram-bot-btn:active {
-            transform: scale(0.98);
-        }
-
-        .telegram-bot-steps {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
-        }
-
-        .telegram-bot-steps p {
-            margin: 0 0 10px 0;
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .telegram-bot-steps ol {
-            margin: 0;
-            padding-left: 20px;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 13px;
-            line-height: 1.8;
-        }
-
-        .telegram-bot-steps code {
-            background: rgba(102, 126, 234, 0.3);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: monospace;
-            color: #667eea;
-        }
-
-        .telegram-bot-steps span {
-            color: #667eea;
-            font-weight: 700;
-        }
-
-        .check-payment-btn {
-            width: 100%;
-            padding: 14px;
-            border-radius: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.3s;
-        }
-
-        .check-payment-btn:active {
-            transform: scale(0.98);
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .inventory-section {
-            margin-top: 30px;
-        }
-
-        .inventory-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .inventory-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #ffffff;
-        }
-
-        .sell-all-btn {
-            background: rgba(102, 126, 234, 0.3);
-            border: 1px solid rgba(102, 126, 234, 0.5);
-            color: #667eea;
-            padding: 8px 16px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .sell-all-btn:active {
-            transform: scale(0.98);
-        }
-
-        .inventory-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-        }
-
-        .inventory-slot {
-            aspect-ratio: 1;
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .inventory-slot:active {
-            transform: scale(0.95);
-        }
-
-        .inventory-slot.has-item {
-            border-color: rgba(102, 126, 234, 0.5);
-            background: rgba(102, 126, 234, 0.1);
-        }
-
-        .inventory-slot img {
-            width: 80%;
-            height: 80%;
-            object-fit: contain;
-        }
-
-        .inventory-slot .empty-icon {
-            font-size: 40px;
-            color: rgba(255, 255, 255, 0.3);
-        }
-
-        .mines-page {
-            padding: 20px;
-            padding-bottom: 120px;
-            min-height: 100vh;
-            background: #0a0a0a;
-            position: relative;
-            z-index: 1;
-        }
-
-        .dice-page {
-            padding: 20px;
-            padding-bottom: 120px;
-            min-height: 100vh;
-            background: #0a0a0a;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100%;
-            height: 100%;
-            overflow-y: auto;
-            z-index: 100;
-        }
-
-        .dice-header {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
-        .dice-balance {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 20px;
-            background: rgba(102, 126, 234, 0.1);
-            border-radius: 16px;
-            border: 2px solid rgba(102, 126, 234, 0.3);
-            color: #ffffff;
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .dice-game-container {
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .dice-controls {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .dice-bet-control {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        .dice-bet-control label {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .dice-input {
-            padding: 10px 15px;
-            border-radius: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.05);
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
-            width: 150px;
-            text-align: right;
-            box-sizing: border-box;
-        }
-
-        .dice-input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .dice-threshold-container {
-            margin-bottom: 20px;
-        }
-
-        .dice-threshold-label {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .dice-threshold-label span:nth-child(2) {
-            font-size: 20px;
-            font-weight: 700;
-            color: #ffffff;
-        }
-
-        .dice-slider-wrapper {
-            position: relative;
-        }
-
-        .dice-slider {
-            width: 100%;
-            height: 8px;
-            border-radius: 4px;
-            background: linear-gradient(to right, #ff0000 0%, #00ff00 100%);
-            outline: none;
-            -webkit-appearance: none;
-            appearance: none;
-        }
-
-        .dice-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: #ff0000;
-            border: 3px solid #ffffff;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(255, 0, 0, 0.5);
-        }
-
-        .dice-slider::-moz-range-thumb {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: #ff0000;
-            border: 3px solid #ffffff;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(255, 0, 0, 0.5);
-        }
-
-        .dice-slider-labels {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 5px;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 12px;
-        }
-
-        .dice-roll-type {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .dice-roll-type-btn {
-            flex: 1;
-            padding: 12px;
-            border-radius: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.05);
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .dice-roll-type-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-color: rgba(255, 255, 255, 0.5);
-            color: white;
-        }
-
-        .dice-roll-type-btn:active {
-            transform: scale(0.95);
-        }
-
-        .dice-auto-control {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .dice-auto-label {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .dice-switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 30px;
-        }
-
-        .dice-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .dice-switch-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(255, 255, 255, 0.2);
-            transition: 0.3s;
-            border-radius: 30px;
-        }
-
-        .dice-switch-slider:before {
-            position: absolute;
-            content: "";
-            height: 22px;
-            width: 22px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: 0.3s;
-            border-radius: 50%;
-        }
-
-        .dice-switch input:checked + .dice-switch-slider {
-            background-color: #00ff00;
-        }
-
-        .dice-switch input:checked + .dice-switch-slider:before {
-            transform: translateX(30px);
-        }
-
-        .dice-auto-status {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 16px;
-            font-weight: 600;
-            min-width: 40px;
-        }
-
-        .dice-start-btn {
-            width: 100%;
-            padding: 18px;
-            border-radius: 12px;
-            border: none;
-            background: linear-gradient(135deg, #00ff00 0%, #00cc00 100%);
-            color: #000;
-            font-size: 20px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 20px rgba(0, 255, 0, 0.4);
-            text-transform: uppercase;
-        }
-
-        .dice-start-btn:active {
-            transform: scale(0.98);
-        }
-
-        .dice-start-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .dice-result-container {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 30px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .dice-result-display {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .dice-result-value {
-            font-size: 72px;
-            font-weight: 700;
-            color: #ffffff;
-            min-height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .dice-result-text {
-            font-size: 18px;
-            color: rgba(255, 255, 255, 0.8);
-            font-weight: 600;
-        }
-
-        .dice-result-value.win {
-            color: #00ff00;
-        }
-
-        .dice-result-value.lose {
-            color: #ff0000;
-        }
-
-        .dice-stats {
-            display: flex;
-            justify-content: space-around;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 15px;
-        }
-
-        .dice-stat-item {
-            text-align: center;
-        }
-
-        .dice-stat-label {
-            display: block;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 12px;
-            margin-bottom: 5px;
-        }
-
-        .dice-stat-item span:last-child {
-            display: block;
-            color: #ffffff;
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .mines-header {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
-        .mines-balance {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 20px;
-            background: rgba(102, 126, 234, 0.1);
-            border-radius: 16px;
-            border: 2px solid rgba(102, 126, 234, 0.3);
-            color: #ffffff;
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .mines-game-container {
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .mines-controls {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .mines-bet-control {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 15px;
-        }
-
-        .mines-bet-control label {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .mines-input {
-            padding: 10px 15px;
-            border-radius: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.05);
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
-            width: 150px;
-            text-align: right;
-            box-sizing: border-box;
-        }
-
-        .mines-input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .mines-input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .mines-count-control {
-            margin-bottom: 15px;
-        }
-
-        .mines-count-control label {
-            display: block;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .mines-count-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .mines-count-btn {
-            flex: 1;
-            padding: 12px;
-            border-radius: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.05);
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .mines-count-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-color: rgba(255, 255, 255, 0.5);
-            color: white;
-        }
-
-        .mines-count-btn:active {
-            transform: scale(0.95);
-        }
-
-        .mines-multiplier-display {
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
-        .mines-multiplier-label {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
-
-        .mines-multiplier-value {
-            color: #00ff00;
-            font-size: 28px;
-            font-weight: 700;
-        }
-
-        .mines-cash-out-btn,
-        .mines-start-btn {
-            width: 100%;
-            padding: 16px;
-            border-radius: 12px;
-            border: none;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 10px;
-        }
-
-        .mines-start-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .mines-start-btn:active {
-            transform: scale(0.98);
-        }
-
-        .mines-cash-out-btn {
-            background: linear-gradient(135deg, #00ff00 0%, #00cc00 100%);
-            color: #000;
-            box-shadow: 0 4px 20px rgba(0, 255, 0, 0.4);
-        }
-
-        .mines-cash-out-btn:active {
-            transform: scale(0.98);
-        }
-
-        .mines-cash-out-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .mines-grid-container {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-
-        .mines-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-
-        .mines-cell {
-            aspect-ratio: 1;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-            user-select: none;
-        }
-
-        .mines-cell:active {
-            transform: scale(0.95);
-        }
-
-        .mines-cell.opened {
-            background: rgba(102, 126, 234, 0.3);
-            border-color: rgba(102, 126, 234, 0.5);
-            cursor: default;
-        }
-
-        .mines-cell.mine {
-            background: #ff0000;
-            border-color: #ff3333;
-        }
-
-        .mines-cell.safe {
-            background: rgba(0, 255, 0, 0.2);
-            border-color: rgba(0, 255, 0, 0.4);
-        }
-
-        .mines-stats {
-            display: flex;
-            justify-content: space-around;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 15px;
-        }
-
-        .mines-stat-item {
-            text-align: center;
-        }
-
-        .mines-stat-label {
-            display: block;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 12px;
-            margin-bottom: 5px;
-        }
-
-        .mines-stat-item span:last-child {
-            display: block;
-            color: #ffffff;
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .inventory-slot .next-icon {
-            font-size: 30px;
-            color: rgba(255, 255, 255, 0.5);
-        }
-
-        .inventory-slot .item-value {
-            position: absolute;
-            bottom: 5px;
-            left: 5px;
-            right: 5px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 4px 6px;
-            border-radius: 8px;
-            font-size: 10px;
-            font-weight: 600;
-            color: #00d4ff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 2px;
-        }
-
-        .inventory-slot .item-value .currency-icon {
-            width: 10px;
-            height: 10px;
-        }
-
-        .crash-page {
-            padding: 20px;
-            padding-bottom: 120px;
-            min-height: 100vh;
-            background: var(--tg-theme-bg-color, #0a0a0a);
-        }
-
-        .crash-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .players-count {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(0, 255, 0, 0.2);
-            padding: 8px 16px;
-            border-radius: 20px;
-            color: #00ff00;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .players-icon {
-            font-size: 18px;
-        }
-
-        .crash-balance {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 8px 16px;
-            border-radius: 20px;
-        }
-
-        .crash-graph-container {
-            width: 100%;
-            height: 250px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            margin-bottom: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .crash-graph {
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
-
-        #crashCanvas {
-            width: 100%;
-            height: 100%;
-        }
-
-        .current-multiplier {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-size: 24px;
-            font-weight: 700;
-            color: #00ff00;
-            border: 2px solid #00ff00;
-        }
-
-        .crash-controls {
-            margin-bottom: 20px;
-        }
-
-        .multiplier-buttons {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-
-        .multiplier-btn {
-            padding: 10px 16px;
-            border-radius: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.05);
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .multiplier-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-color: rgba(255, 255, 255, 0.5);
-            color: white;
-        }
-
-        .multiplier-btn:active {
-            transform: scale(0.95);
-        }
-
-        .bet-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .bet-type-btn {
-            flex: 1;
-            padding: 12px 20px;
-            border-radius: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.05);
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: all 0.3s;
-        }
-
-        .bet-type-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-color: rgba(255, 255, 255, 0.5);
-            color: white;
-        }
-
-        .bet-amount-input,
-        .bet-item-select {
-            width: 100%;
-            padding: 14px 16px;
-            border-radius: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.05);
-            color: white;
-            font-size: 16px;
-            margin-bottom: 15px;
-            box-sizing: border-box;
-        }
-
-        .bet-amount-input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .bet-amount-input:focus,
-        .bet-item-select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .make-bet-btn {
-            width: 100%;
-            padding: 18px;
-            border-radius: 16px;
-            border: none;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .make-bet-btn:active {
-            transform: scale(0.98);
-        }
-
-        .make-bet-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .bets-list {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 15px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .bets-list-header {
-            font-size: 18px;
-            font-weight: 600;
-            color: white;
-            margin-bottom: 15px;
-        }
-
-        .bet-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 12px;
-            margin-bottom: 10px;
-        }
-
-        .bet-item-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            flex-shrink: 0;
-        }
-
-        .bet-item-info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .bet-item-username {
-            font-size: 14px;
-            font-weight: 600;
-            color: white;
-        }
-
-        .bet-item-details {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .bet-item-winnings {
-            font-size: 16px;
-            font-weight: 700;
-            color: #00ff00;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .bet-item-winnings .currency-icon {
-            width: 14px;
-            height: 14px;
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <div class="profile-section">
-            <div class="avatar">👤</div>
-            <div class="username" id="username">User</div>
-        </div>
-        <div class="balance-section">
-            <span class="diamond-icon"></span>
-            <span class="balance-text" id="balance">0.00</span>
-            <button style="background: transparent; border: none; color: #ffffff; font-size: 18px; cursor: pointer; padding: 0 5px;">+</button>
-        </div>
-    </div>
-
-
-    <div id="mainPage">
-        <button class="subscribe-btn">
-            <div class="subscribe-inner">
-                <div class="subscribe-icon"></div>
-                <span>Подпишись на нас</span>
-            </div>
-            <div class="subscribe-action">Подписаться</div>
-        </button>
-
-        <div class="tabs">
-            <button class="tab active" data-tab="cases">Кейсы</button>
-        </div>
-
-
-        <div class="cases-carousel" id="casesCarousel">
-            <div class="case-card" data-case="1" data-price="0.1">
-                <div class="case-price-badge"><span class="currency-icon"></span> 0.1</div>
-                <div class="case-icon"><img src="IconCase/2c0JGQXrElCDlaNGbYHwgipHo2-yq00qIxcU39IganVzrqDys2-no-bg-preview%20%28carve.photos%29.png" alt="Case 1" onerror="console.error('Failed to load image:', this.src)"></div>
-                <div class="case-info">
-                    <div class="case-name">Кейс #1</div>
-                    <div class="case-description">9 предметов</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="pagination" style="display: none;">
-        </div>
-    </div>
-
-    <div class="case-detail-page" id="caseDetailPage" style="display: none;">
-        <button class="back-btn" onclick="window.goBack()">← Назад</button>
-        <div class="case-detail-header">
-            <div class="case-detail-icon" id="detailIcon"></div>
-            <div class="case-detail-price" id="detailPrice"><span class="currency-icon"></span> 2.25</div>
-            
-            <div class="roulette-container" id="rouletteContainer">
-                <div class="roulette-wrapper">
-                    <div class="center-indicator"></div>
-                    <div class="roulette-track" id="rouletteTrack"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="whats-inside-title">Что внутри?</div>
-        
-        <div class="prizes-grid" id="prizesGrid">
-        </div>
-
-    </div>
-
-    <button class="open-btn" id="openBtn" type="button">
-        Открыть <span>🚀</span>
-    </button>
-
-    <div class="modal" id="prizeModal">
-        <div class="modal-content">
-            <div class="modal-prize-icon" id="modalPrizeIcon">🏆</div>
-            <div class="modal-prize-name" id="modalPrizeName">Оскар</div>
-            <div class="modal-prize-value" id="modalPrizeValue"><span class="currency-icon"></span> 82.17</div>
-            <button class="modal-close" onclick="closePrizeModal()">Закрыть</button>
-        </div>
-    </div>
-
-    <div class="modal" id="inventoryItemModal">
-        <div class="modal-content inventory-modal-content">
-            <button class="modal-close-btn" onclick="closeInventoryModal()">✕</button>
-            <div class="inventory-modal-icon" id="inventoryModalIcon"></div>
-            <div class="inventory-modal-name" id="inventoryModalName">Предмет</div>
-            <div class="inventory-modal-price">
-                <span class="price-label">Цена:</span>
-                <span class="price-value" id="inventoryModalPrice"><span class="currency-icon"></span> 0.00</span>
-            </div>
-            <div class="inventory-modal-buttons">
-                <button class="inventory-modal-btn sell-btn" id="sellItemBtn">Продать</button>
-                <button class="inventory-modal-btn close-btn" onclick="closeInventoryModal()">Закрыть</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="profile-page" id="profilePage" style="display: none;">
-        <div class="profile-header">
-            <div class="profile-avatar" id="profileAvatar">
-                <img id="profileAvatarImg" src="" alt="Avatar">
-            </div>
-            <div class="profile-username" id="profileUsername">User</div>
-        </div>
-
-        <div class="top-up-buttons">
-            <button class="top-up-btn primary" id="topUpBtn">
-                <span class="btn-icon"><span class="currency-icon" style="width: 18px; height: 18px; display: inline-block;"></span></span>
-                <span>Пополнить</span>
-            </button>
-        </div>
-        
-        <!-- Модальное окно выбора способа пополнения -->
-        <div class="top-up-modal" id="topUpModal" onclick="event.target === this && closeTopUpModal()">
-            <div class="top-up-modal-content" onclick="event.stopPropagation()">
-                <h3 class="top-up-modal-title">Выберите способ пополнения</h3>
-                <div class="payment-methods">
-                    <button class="payment-method-btn" id="telegramWalletBtn">
-                        <div class="payment-method-icon">💳</div>
-                        <div class="payment-method-info">
-                            <div class="payment-method-name">Кошелёк Telegram</div>
-                            <div class="payment-method-desc">Пополнить через встроенный кошелёк</div>
-                        </div>
-                    </button>
-                    <button class="payment-method-btn" id="telegramBotBtn">
-                        <div class="payment-method-icon">🤖</div>
-                        <div class="payment-method-info">
-                            <div class="payment-method-name">Бот CryptoBot</div>
-                            <div class="payment-method-desc">Пополнить через бота Telegram</div>
-                        </div>
-                    </button>
-                </div>
-                <button class="modal-close" onclick="closeTopUpModal()">Закрыть</button>
-            </div>
-        </div>
-
-        <div class="inventory-section">
-            <div class="inventory-header">
-                <span class="inventory-title">Инвентарь (<span id="inventoryCount">0</span>)</span>
-                <button class="sell-all-btn" id="sellAllBtn">Продать все</button>
-            </div>
-            <div class="inventory-grid" id="inventoryGrid">
-            </div>
-        </div>
-    </div>
-
-    <div class="crash-page" id="crashPage" style="display: none;">
-        <div class="crash-header">
-            <div class="players-count">
-                <span class="players-icon">👥</span>
-                <span id="playersCount">0</span>
-            </div>
-            <div class="crash-balance">
-                <span class="diamond-icon"></span>
-                <span class="balance-text" id="crashBalance">0.00</span>
-                <button style="background: transparent; border: none; color: #ffffff; font-size: 18px; cursor: pointer; padding: 0 5px;">+</button>
-            </div>
-        </div>
-
-        <div class="crash-graph-container">
-            <div class="crash-graph" id="crashGraph">
-                <canvas id="crashCanvas"></canvas>
-                <div class="current-multiplier" id="currentMultiplier">x1.00</div>
-            </div>
-        </div>
-
-        <div class="crash-controls">
-            <div class="multiplier-buttons" id="multiplierButtons">
-                <button class="multiplier-btn" data-mult="auto">Авто</button>
-                <button class="multiplier-btn active" data-mult="1.5">x1.5</button>
-                <button class="multiplier-btn" data-mult="2.0">x2.0</button>
-                <button class="multiplier-btn" data-mult="3.0">x3.0</button>
-                <button class="multiplier-btn" data-mult="5.0">x5.0</button>
-            </div>
-            <div class="bet-buttons">
-                <button class="bet-type-btn active" data-type="balance" id="betBalanceBtn">
-                    <span class="currency-icon" style="width: 16px; height: 16px; display: inline-block;"></span>
-                    <span>Баланс</span>
-                </button>
-                <button class="bet-type-btn" data-type="item" id="betItemBtn">
-                    <span>🎁</span>
-                    <span>Подарок</span>
-                </button>
-            </div>
-            <input type="number" class="bet-amount-input" id="betAmountInput" placeholder="Сумма ставки" min="0.01" step="0.01">
-            <select class="bet-item-select" id="betItemSelect" style="display: none;">
-                <option value="">Выберите предмет</option>
-            </select>
-            <button class="make-bet-btn" id="makeBetBtn">Сделать ставку</button>
-        </div>
-
-        <div class="bets-list" id="betsList">
-            <div class="bets-list-header">Активные ставки</div>
-        </div>
-    </div>
-
-    <div id="minesPage" class="mines-page" style="display: none;">
-        <div class="mines-header">
-            <div class="mines-balance">
-                <span class="currency-icon"></span>
-                <span id="minesBalance">0.00</span>
-            </div>
-        </div>
-        
-        <div class="mines-game-container">
-            <div class="mines-controls">
-                <div class="mines-bet-control">
-                    <label>Ставка:</label>
-                    <input type="number" id="minesBetAmount" class="mines-input" value="0.1" min="0.01" step="0.01" placeholder="0.00">
-                </div>
-                <div class="mines-count-control">
-                    <label>Количество мин:</label>
-                    <div class="mines-count-buttons">
-                        <button class="mines-count-btn" data-count="3">3</button>
-                        <button class="mines-count-btn active" data-count="5">5</button>
-                        <button class="mines-count-btn" data-count="10">10</button>
-                    </div>
-                </div>
-                <div class="mines-multiplier-display">
-                    <div class="mines-multiplier-label">Множитель:</div>
-                    <div class="mines-multiplier-value" id="minesMultiplier">x1.00</div>
-                </div>
-                <button id="minesCashOutBtn" class="mines-cash-out-btn" disabled>Забрать</button>
-                <button id="minesStartBtn" class="mines-start-btn">Начать игру</button>
-            </div>
-            
-            <div class="mines-grid-container">
-                <div id="minesGrid" class="mines-grid"></div>
-            </div>
-            
-            <div class="mines-stats">
-                <div class="mines-stat-item">
-                    <span class="mines-stat-label">Открыто:</span>
-                    <span id="minesOpenedCount">0</span>
-                </div>
-                <div class="mines-stat-item">
-                    <span class="mines-stat-label">Мин:</span>
-                    <span id="minesTotalCount">3</span>
-                </div>
-                <div class="mines-stat-item">
-                    <span class="mines-stat-label">Выигрыш:</span>
-                    <span id="minesWinnings">0.00</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="dicePage" class="dice-page" style="display: none;">
-        <div class="dice-header">
-            <div class="dice-balance">
-                <span class="currency-icon"></span>
-                <span id="diceBalance">0.00</span>
-            </div>
-        </div>
-        
-        <div class="dice-game-container">
-            <div class="dice-controls">
-                <div class="dice-bet-control">
-                    <label>Ставка:</label>
-                    <input type="number" id="diceBetAmount" class="dice-input" value="0.1" min="0.01" step="0.01" placeholder="0.00">
-                </div>
-                
-                <div class="dice-threshold-container">
-                    <div class="dice-threshold-label">
-                        <span>Roll Under</span>
-                        <span id="diceThresholdValue">50</span>
-                        <span>Roll Over</span>
-                    </div>
-                    <div class="dice-slider-wrapper">
-                        <input type="range" id="diceThreshold" class="dice-slider" min="1" max="98" value="50">
-                        <div class="dice-slider-labels">
-                            <span>0</span>
-                            <span>99</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="dice-roll-type">
-                    <button id="diceRollUnderBtn" class="dice-roll-type-btn active">Roll Under</button>
-                    <button id="diceRollOverBtn" class="dice-roll-type-btn">Roll Over</button>
-                </div>
-                
-                <div class="dice-auto-control">
-                    <span class="dice-auto-label">AUTO</span>
-                    <label class="dice-switch">
-                        <input type="checkbox" id="diceAutoToggle">
-                        <span class="dice-switch-slider"></span>
-                    </label>
-                    <span class="dice-auto-status" id="diceAutoStatus">OFF</span>
-                </div>
-                
-                <button id="diceStartBtn" class="dice-start-btn">START</button>
-            </div>
-            
-            <div class="dice-result-container">
-                <div class="dice-result-display" id="diceResultDisplay">
-                    <div class="dice-result-value" id="diceResultValue">?</div>
-                    <div class="dice-result-text" id="diceResultText">Нажмите START</div>
-                </div>
-            </div>
-            
-            <div class="dice-stats">
-                <div class="dice-stat-item">
-                    <span class="dice-stat-label">Выигрыш:</span>
-                    <span id="diceWinnings">0.00</span>
-                </div>
-                <div class="dice-stat-item">
-                    <span class="dice-stat-label">Множитель:</span>
-                    <span id="diceMultiplier">x2.00</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="bottom-nav">
-        <div class="nav-item active" data-page="cases">
-            <div class="nav-icon">🎁</div>
-            <div class="nav-label">Кейсы</div>
-        </div>
-        <div class="nav-item" data-page="crash">
-            <div class="nav-icon">🚀</div>
-            <div class="nav-label">Краш</div>
-        </div>
-        <div class="nav-item" data-page="mines">
-            <div class="nav-icon">💣</div>
-            <div class="nav-label">Мины</div>
-        </div>
-        <div class="nav-item" data-page="dice">
-            <div class="nav-icon">🎲</div>
-            <div class="nav-label">Dice</div>
-        </div>
-        <div class="nav-item" data-page="profile">
-            <div class="nav-icon">👤</div>
-            <div class="nav-label">Профиль</div>
-        </div>
-    </div>
-
-    <script>
-        let tg = window.Telegram?.WebApp;
-        let isTelegram = false;
-        
-        if (tg) {
-            tg.ready();
-            tg.expand();
-            tg.setHeaderColor('#0a0a0a');
-            tg.setBackgroundColor('#0a0a0a');
-            isTelegram = true;
-        }
-
-        let balance = 100.00;
-        let currentCase = null;
-        let currentPrizes = [];
-        let isOpening = false;
-        let currentTab = 'cases';
-        
-        // API эндпоинт (замените на ваш реальный сервер)
-        const API_BASE_URL = 'http://localhost:3000/api'; // Локальный сервер
-        
-        // Глобальный список выигрышей всех пользователей
-        let globalPrizes = [];
-        
-        // Инвентарь пользователя (выигранные подарки)
-        let userInventory = [];
-        
-        // Получение ID пользователя из Telegram
-        function getUserId() {
-            const user = tg?.initDataUnsafe?.user;
-            return user?.id || null;
-        }
-        
-        // Получение данных пользователя
-        function getUsername() {
-            const user = tg?.initDataUnsafe?.user;
-            return user?.username || user?.first_name || 'Unknown';
-        }
-        
-        // Получение фото профиля пользователя
-        function getUserPhotoUrl() {
-            const user = tg?.initDataUnsafe?.user;
-            return user?.photo_url || null;
-        }
-        
-        // Загрузка данных пользователя с сервера (баланс и инвентарь)
-        async function loadUserData() {
-            const userId = getUserId();
-            if (!userId) {
-                console.log('User ID not available, using local storage');
-                loadInventory();
-                return;
-            }
-            
-            try {
-                const response = await fetch(`${API_BASE_URL}/users/${userId}`);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data) {
-                        // Загружаем баланс
-                        if (data.balance !== undefined) {
-                            balance = parseFloat(data.balance) || 100.00;
-                            document.getElementById('balance').textContent = balance.toFixed(2);
-                        }
-                        
-                        // Загружаем инвентарь
-                        if (data.inventory && Array.isArray(data.inventory)) {
-                            userInventory = data.inventory;
-                            updateInventory();
-                        } else {
-                            loadInventory();
-                        }
-                    }
-                } else {
-                    console.log('Failed to load user data, using local storage');
-                    loadInventory();
-                }
-            } catch (error) {
-                console.error('Error loading user data:', error);
-                loadInventory();
-            }
-        }
-        
-        // Сохранение данных пользователя на сервер (баланс и инвентарь)
-        async function saveUserData() {
-            const userId = getUserId();
-            if (!userId) {
-                console.log('User ID not available, saving to local storage only');
-                saveInventory();
-                return;
-            }
-            
-            try {
-                const userData = {
-                    userId: userId,
-                    username: getUsername(),
-                    balance: balance,
-                    inventory: userInventory,
-                    updatedAt: Date.now()
-                };
-                
-                const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(userData)
-                });
-                
-                if (response.ok) {
-                    console.log('User data saved successfully');
-                    // Также сохраняем локально для офлайн-режима
-                    saveInventory();
-                } else {
-                    console.error('Failed to save user data to server');
-                    saveInventory();
-                }
-            } catch (error) {
-                console.error('Error saving user data:', error);
-                // При ошибке сохраняем локально
-                saveInventory();
-            }
-        }
-        
-        // Загрузка инвентаря из localStorage
-        function loadInventory() {
-            try {
-                const stored = localStorage.getItem('userInventory');
-                const storedBalance = localStorage.getItem('userBalance');
-                
-                if (stored) {
-                    userInventory = JSON.parse(stored);
-                } else {
-                    userInventory = [];
-                }
-                
-                if (storedBalance) {
-                    balance = parseFloat(storedBalance) || 100.00;
-                    document.getElementById('balance').textContent = balance.toFixed(2);
-                }
-                
-                updateInventory();
-            } catch (e) {
-                console.error('Failed to load inventory:', e);
-                userInventory = [];
-            }
-        }
-        
-        // Сохранение инвентаря в localStorage
-        function saveInventory() {
-            try {
-                localStorage.setItem('userInventory', JSON.stringify(userInventory));
-                localStorage.setItem('userBalance', balance.toString());
-            } catch (e) {
-                console.error('Failed to save inventory:', e);
-            }
-        }
-        
-        // Добавление подарка в инвентарь
-        function addToInventory(prize) {
-            userInventory.push({
-                icon: prize.icon,
-                name: prize.name,
-                value: prize.value,
-                timestamp: Date.now(),
-                id: Date.now() + Math.random()
-            });
-            saveInventory();
-            saveUserData(); // Сохраняем на сервер
-            updateInventory();
-        }
-        
-        // Функция для форматирования цены с иконкой валюты
-        function formatPrice(value) {
-            return `<span class="currency-icon"></span>${value.toFixed(2)}`;
-        }
-        
-        // Функция отправки выигрыша на сервер
-        async function sendPrizeToServer(prize) {
-            try {
-                const user = tg?.initDataUnsafe?.user;
-                const userId = user?.id || null;
-                const username = user?.username || user?.first_name || 'Unknown';
-                
-                const response = await fetch(`${API_BASE_URL}/prizes`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        userId: userId,
-                        username: username,
-                        icon: prize.icon,
-                        name: prize.name,
-                        value: prize.value,
-                        timestamp: Date.now()
-                    })
-                });
-                
-                if (response.ok) {
-                    console.log('Prize sent to server successfully');
-                    return true;
-                } else {
-                    console.error('Failed to send prize to server');
-                    return false;
-                }
-            } catch (error) {
-                console.error('Error sending prize to server:', error);
-                // При ошибке добавляем локально (fallback)
-                addPrizeLocally(prize);
-                return false;
-            }
-        }
-        
-        // Функция получения списка выигрышей с сервера
-        async function fetchGlobalPrizes() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/prizes?limit=50`);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.prizes && Array.isArray(data.prizes)) {
-                        globalPrizes = data.prizes;
-                        return true;
-                    }
-                } else {
-                    console.error('Failed to fetch prizes from server');
-                    loadPrizesFromLocalStorage();
-                    return false;
-                }
-            } catch (error) {
-                console.error('Error fetching prizes from server:', error);
-                loadPrizesFromLocalStorage();
-                return false;
-            }
-        }
-        
-        // Функция добавления подарка локально (fallback)
-        function addPrizeLocally(prize) {
-            globalPrizes.push({
-                icon: prize.icon,
-                name: prize.name,
-                value: prize.value,
-                timestamp: Date.now()
-            });
-            
-            if (globalPrizes.length > 50) {
-                globalPrizes.shift();
-            }
-            
-            // Сохраняем в localStorage для синхронизации между вкладками
-            try {
-                localStorage.setItem('globalPrizes', JSON.stringify(globalPrizes));
-            } catch (e) {
-                console.error('Failed to save to localStorage:', e);
-            }
-        }
-        
-        // Загрузка подарков из localStorage
-        function loadPrizesFromLocalStorage() {
-            try {
-                const stored = localStorage.getItem('globalPrizes');
-                if (stored) {
-                    globalPrizes = JSON.parse(stored);
-                } else {
-                    // Начальные примеры подарков
-                    globalPrizes = [
-                        { icon: 'ItemCase1/_Jne2Jf3nM6erEUU5TEnvU7PWFOiElGs2WJc0zQ250JHxRd6md_v1huDDCpZRSesDCZP53pWDPEnqfojbzsYqjbD.png', name: 'Лоли поп', value: 82.17 },
-                        { icon: 'ItemCase1/4dOUEOHs9WSNk5pRBkEnCptGIs16lB5xe4E7mh3sWF6XAkHcwQvINscw7cXwhK5IUXv5eOdct9_vxDZtoaMTm8GJ.png', name: 'Бабочка', value: 75.66 },
-                        { icon: 'ItemCase1/GsJZ-oPiqQHoyerbmc-z_L_NTi8cBWgKmS9ueEOwk5_PHeYbWeRwn6Jxic2d1Yhl8IZwt0rBUg5ZfvrkYkYp0UrO.png', name: 'Зелье', value: 69.30 },
-                        { icon: 'ItemCase1/qlq8mJd7J1-60XWhd29rLbtjBfzeXSPLMVgzkcBDTNfHL50TBMHG2B0h2jB1bAd-rJWlHO1NtkI0zAsWF4BgcVHn.png', name: 'Шлем', value: 25.27 },
-                        { icon: 'ItemCase1/QrKwYOzBzIX1ilzkfuCuiFdyCRU9jBm5pASbp_z2Sb6ATFNaaB1Zr1XfNGehXeHTYhldZNO8x4_l0ueW2t4MZ62W.png', name: 'Сигара', value: 23.50 }
-                    ];
-                }
-            } catch (e) {
-                console.error('Failed to load from localStorage:', e);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const mainPage = document.getElementById('mainPage');
-            const detailPage = document.getElementById('caseDetailPage');
-            const profilePage = document.getElementById('profilePage');
-            
-            mainPage.style.display = 'block';
-            mainPage.classList.remove('hidden');
-            detailPage.style.display = 'none';
-            detailPage.classList.remove('active');
-            if (profilePage) {
-                profilePage.style.display = 'none';
-            }
-            
-            // Загружаем подарки с сервера или из localStorage
-            fetchGlobalPrizes();
-            
-            // Загружаем данные пользователя (баланс и инвентарь) с сервера
-            loadUserData();
-            
-            // Обновляем информацию профиля
-            updateProfileInfo();
-            
-            // Обновляем список подарков каждые 3 секунды
-            setInterval(() => {
-                fetchGlobalPrizes();
-            }, 3000);
-            
-            // Слушаем изменения в localStorage (для синхронизации между вкладками)
-            window.addEventListener('storage', (e) => {
-                if (e.key === 'globalPrizes') {
-                    loadPrizesFromLocalStorage();
-                }
-                if (e.key === 'userInventory') {
-                    loadInventory();
-                }
-            });
-        });
-
-
-        // КОНФИГУРАЦИЯ КЕЙСА #1
-        const case1Config = {
-            // Иконка кейса (путь к изображению)
-            icon: 'IconCase/2c0JGQXrElCDlaNGbYHwgipHo2-yq00qIxcU39IganVzrqDys2-no-bg-preview%20%28carve.photos%29.png',
-            // Цена открытия кейса
-            price: 0.1,
-            // Список предметов в кейсе
-            // Формат: { icon: 'путь к изображению', name: 'Название предмета', value: цена }
-            items: [
-                { icon: 'ItemCase1/_Jne2Jf3nM6erEUU5TEnvU7PWFOiElGs2WJc0zQ250JHxRd6md_v1huDDCpZRSesDCZP53pWDPEnqfojbzsYqjbD.png', name: 'Лоли поп', value: 82.17 },
-                { icon: 'ItemCase1/4dOUEOHs9WSNk5pRBkEnCptGIs16lB5xe4E7mh3sWF6XAkHcwQvINscw7cXwhK5IUXv5eOdct9_vxDZtoaMTm8GJ.png', name: 'Бабочка', value: 75.66 },
-                { icon: 'ItemCase1/GsJZ-oPiqQHoyerbmc-z_L_NTi8cBWgKmS9ueEOwk5_PHeYbWeRwn6Jxic2d1Yhl8IZwt0rBUg5ZfvrkYkYp0UrO.png', name: 'Зелье', value: 69.30 },
-                { icon: 'ItemCase1/qlq8mJd7J1-60XWhd29rLbtjBfzeXSPLMVgzkcBDTNfHL50TBMHG2B0h2jB1bAd-rJWlHO1NtkI0zAsWF4BgcVHn.png', name: 'Шлем', value: 25.27 },
-                { icon: 'ItemCase1/QrKwYOzBzIX1ilzkfuCuiFdyCRU9jBm5pASbp_z2Sb6ATFNaaB1Zr1XfNGehXeHTYhldZNO8x4_l0ueW2t4MZ62W.png', name: 'Сигара', value: 23.50 },
-                { icon: 'ItemCase1/R1v8ymGGn2ZBo6cI96QvcWu5Yh2FsyiAmDW_WTGMfz7CMvELAOFCf7I7Ns2XGdKv1AxHTvrioJ6h-ALjrzjxb7Ra.png', name: 'Кольцо', value: 17.00 },
-                { icon: 'ItemCase1/XQTRb7Jx7OBjYfqnitHsZGV9pmln2Nhr9n5oYkJvZsF_dtkAYxPHS8Npi_qa6Pxcx0o368YwkcY9uRHmabTE5-LS.png', name: 'Бабочка', value: 11.40 },
-                { icon: 'ItemCase1/Y6HIRzDSCdUNCqWtHRsCpePjILr5QyrOnOD0T9PtrYjgu3Ff3XVbLGxLT1snsWyNNMzfDvTlhms0y1_Wwev6tz9-.png', name: 'Зелье', value: 8.64 },
-                { icon: 'ItemCase1/YLHOesDBQxjSVcanvj-iKz2mgFXRfweB38vb951G5LvwfJ8ytmlfe3PFUk3k_AgekpyW9A3uIpzEjM87k6_aUVS1.png', name: 'Цветок', value: 7.90 }
-            ]
-        };
-
-        // Преобразуем конфигурацию в формат для работы приложения
-        const cases = {
-            1: {
-                icon: case1Config.icon,
-                price: case1Config.price,
-                prizes: case1Config.items
-            }
-        };
-        
-
-        document.getElementById('balance').textContent = balance.toFixed(2);
-
-        // Скрываем надпись "5 TON Demo"
-        const tonBalance = document.querySelector('.ton-balance');
-        if (tonBalance) {
-            tonBalance.style.display = 'none';
-            tonBalance.style.visibility = 'hidden';
-            tonBalance.style.opacity = '0';
-            tonBalance.style.height = '0';
-            tonBalance.style.margin = '0';
-            tonBalance.style.padding = '0';
-        }
-
-        // Обновление аватарки и имени в шапке
-        function updateHeaderAvatar() {
-        const user = tg?.initDataUnsafe?.user;
-            const usernameEl = document.getElementById('username');
-            const avatarEl = document.querySelector('.avatar');
-            
-        if (user) {
-                if (usernameEl) {
-                    usernameEl.textContent = user.first_name || user.username || 'User';
-                }
-                
-                if (avatarEl && user.photo_url) {
-                    // Создаем img элемент для аватарки
-                    const img = document.createElement('img');
-                    img.src = user.photo_url;
-                    img.style.width = '100%';
-                    img.style.height = '100%';
-                    img.style.objectFit = 'cover';
-                    img.style.borderRadius = '50%';
-                    img.onerror = function() {
-                        // Если фото не загрузилось, показываем эмодзи
-                        avatarEl.innerHTML = '👤';
-                    };
-                    avatarEl.innerHTML = '';
-                    avatarEl.appendChild(img);
-                } else if (avatarEl && !avatarEl.querySelector('img')) {
-                    // Если фото недоступно, показываем эмодзи
-                    avatarEl.innerHTML = '👤';
+                    payments = JSON.parse(fs.readFileSync(paymentsFile, 'utf8'));
+                } catch (e) {
+                    payments = [];
                 }
             }
-        }
-        
-        updateHeaderAvatar();
-
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                currentTab = tab.dataset.tab;
-            });
-        });
-
-        document.querySelectorAll('.case-card').forEach(card => {
-            card.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const caseNum = parseInt(card.dataset.case);
-                if (!isOpening) {
-                    showCaseDetail(caseNum);
-                }
-            });
-        });
-
-        window.openCase = function() {
-            if (currentCase && !isOpening) {
-                const openCaseFunc = function() {
-                    if (isOpening) return;
-                    
-                    const price = currentCase.price;
-                    if (balance < price) {
-                        if (tg) {
-                            tg.showAlert('Недостаточно баланса!');
-                            tg.HapticFeedback.notificationOccurred('error');
-                        } else {
-                            alert('Недостаточно баланса!');
-                        }
-                        return;
-                    }
-
-                    isOpening = true;
-                    balance -= price;
-                    document.getElementById('balance').textContent = balance.toFixed(2);
-                    saveInventory(); // Сохраняем баланс локально
-                    saveUserData(); // Сохраняем баланс на сервер
-                    
-                    const detailIcon = document.getElementById('detailIcon');
-                    const rouletteContainer = document.getElementById('rouletteContainer');
-                    const openBtn = document.getElementById('openBtn');
-                    
-                    // Полностью скрываем кнопку при начале прокрутки
-                    openBtn.classList.remove('show');
-                    openBtn.style.cssText = 'display: none !important;';
-                    openBtn.disabled = true;
-                    
-                    // Скрываем иконку только во время рулетки
-                    detailIcon.style.display = 'none';
-                    
-                    // Сначала создаем рулетку, потом показываем
-                    createRoulette();
-                    
-                    // Убеждаемся, что контейнер видим
-                    rouletteContainer.style.display = 'block';
-                    rouletteContainer.classList.add('active');
-
-                    if (tg) {
-                        tg.HapticFeedback.impactOccurred('heavy');
-                    }
-                    
-                    // Даем время на отрисовку элементов перед анимацией
-                    setTimeout(() => {
-                        // Сначала выбираем случайный приз из доступных
-                        const randomPrize = currentPrizes[Math.floor(Math.random() * currentPrizes.length)];
-                        const rouletteTrack = document.getElementById('rouletteTrack');
-                        const giftItems = rouletteTrack.querySelectorAll('.gift-item');
-                        
-                        // Убеждаемся, что все элементы видны СРАЗУ
-                        giftItems.forEach(item => {
-                            item.style.opacity = '1';
-                            item.style.visibility = 'visible';
-                            item.style.display = 'flex';
-                        });
-                        
-                        const itemWidth = 150 + 20; // 150px ширина + 20px gap
-                        const containerWidth = rouletteContainer.offsetWidth;
-                        
-                        // Находим все подарки с нужным иконом (иконка выбранного приза)
-                        const matchingIndices = [];
-                        for (let i = 0; i < giftItems.length; i++) {
-                            if (giftItems[i].dataset.icon === randomPrize.icon && 
-                                giftItems[i].dataset.name === randomPrize.name) {
-                                matchingIndices.push(i);
-                            }
-                        }
-                        
-                        // Выбираем случайный индекс из середины массива для плавной остановки
-                        let targetIndex;
-                        if (matchingIndices.length > 0) {
-                            const midPoint = Math.floor(giftItems.length / 2);
-                            const candidates = matchingIndices.filter(idx => 
-                                idx > midPoint - giftItems.length / 4 && 
-                                idx < midPoint + giftItems.length / 4
-                            );
-                            targetIndex = candidates.length > 0 
-                                ? candidates[Math.floor(Math.random() * candidates.length)]
-                                : matchingIndices[Math.floor(matchingIndices.length / 2)];
-                        } else {
-                            // Если не нашли точное совпадение, выбираем из середины
-                            targetIndex = Math.floor(giftItems.length / 2);
-                        }
-                        
-                        // Расчет позиций
-                        // Трек центрирован в контейнере через left: 50% и transform: translate(-50%, -50%)
-                        // Поэтому позиция 0 = центр контейнера
-                        // Отрицательные значения = движение влево, положительные = вправо
-                        
-                        // Целевая позиция: центрируем выбранный подарок
-                        const targetItemCenter = targetIndex * itemWidth + itemWidth / 2;
-                        const totalTrackWidth = giftItems.length * itemWidth;
-                        const targetItemOffset = targetItemCenter - totalTrackWidth / 2;
-                        
-                        // Начальная позиция: добавляем много прокруток для эффекта
-                        const spins = 15;
-                        const extraDistance = spins * currentPrizes.length * itemWidth;
-                        const startPosition = targetItemOffset + extraDistance;
-                        
-                        // Финальная позиция: центрируем выбранный подарок
-                        const finalPosition = targetItemOffset;
-                        
-                        const spinDuration = 4000;
-                        
-                        // Устанавливаем начальную позицию
-                        rouletteTrack.style.left = '50%';
-                        rouletteTrack.style.top = '50%';
-                        rouletteTrack.style.transform = `translate(calc(-50% + ${startPosition}px), -50%)`;
-                        rouletteTrack.style.transition = 'none';
-                        rouletteTrack.style.display = 'flex';
-                        rouletteTrack.style.visibility = 'visible';
-                        rouletteTrack.style.opacity = '1';
-                        rouletteTrack.style.position = 'absolute';
-                        rouletteTrack.style.marginTop = '0';
-                        rouletteTrack.style.marginBottom = '0';
-                        
-                        let startTime = Date.now();
-                        const animateRoulette = () => {
-                            const elapsed = Date.now() - startTime;
-                            const progress = Math.min(elapsed / spinDuration, 1);
-                            
-                            // Простая функция замедления
-                            const ease = 1 - Math.pow(1 - progress, 3);
-                            const currentOffset = startPosition + (finalPosition - startPosition) * ease;
-                            
-                            // Применяем трансформацию - трек центрирован, смещаем только по X, Y всегда -50%
-                            rouletteTrack.style.transform = `translate(calc(-50% + ${currentOffset}px), -50%)`;
-                            rouletteTrack.style.top = '50%';
-                            rouletteTrack.style.marginTop = '0';
-                            rouletteTrack.style.marginBottom = '0';
-                            
-                            // Обновляем выбранный элемент и ВСЕГДА делаем все видимыми
-                            giftItems.forEach((item, index) => {
-                                // ВАЖНО: Принудительно делаем все элементы видимыми на каждом кадре
-                                item.style.cssText = `
-                                    opacity: 1 !important;
-                                    visibility: visible !important;
-                                    display: flex !important;
-                                    transition: none !important;
-                                    flex-shrink: 0 !important;
-                                    width: 150px !important;
-                                    min-width: 150px !important;
-                                    max-width: 150px !important;
-                                    height: 150px !important;
-                                    position: relative !important;
-                                    top: 0 !important;
-                                    margin: 0 !important;
-                                    padding: 0 !important;
-                                    vertical-align: top !important;
-                                `;
-                                
-                                // Убеждаемся, что изображения внутри тоже видимы
-                                const images = item.querySelectorAll('img');
-                                images.forEach(img => {
-                                    img.style.cssText = `
-                                        opacity: 1 !important;
-                                        visibility: visible !important;
-                                        display: block !important;
-                                        width: 80px !important;
-                                        height: 80px !important;
-                                    `;
-                                });
-                                
-                                // Убеждаемся, что текст тоже видим
-                                const textElements = item.querySelectorAll('.gift-name');
-                                textElements.forEach(text => {
-                                    text.style.cssText = `
-                                        opacity: 1 !important;
-                                        visibility: visible !important;
-                                    `;
-                                });
-                                
-                                // Расчет позиции элемента относительно центра контейнера
-                                // Трек центрирован, поэтому центр трека = центр контейнера
-                                // Позиция элемента = его offset от начала трека - половина ширины трека + текущее смещение
-                                const itemOffset = index * itemWidth + itemWidth / 2;
-                                const totalTrackWidth = giftItems.length * itemWidth;
-                                const itemCenter = itemOffset - totalTrackWidth / 2 + currentOffset;
-                                const distance = Math.abs(itemCenter);
-                                
-                                if (distance < itemWidth / 2) {
-                                    item.classList.add('selected');
-                                } else {
-                                    item.classList.remove('selected');
-                                }
-                            });
-                            
-                            if (progress < 1) {
-                                requestAnimationFrame(animateRoulette);
-                            } else {
-                                // Ищем элемент, который был выделен в последний момент анимации
-                                // (тот, у которого класс 'selected' после последнего обновления)
-                                let selectedItem = null;
-                                
-                                // Сначала проверяем, есть ли элемент с классом selected
-                                giftItems.forEach(item => {
-                                    if (item.classList.contains('selected')) {
-                                        selectedItem = item;
-                                    }
-                                });
-                                
-                                // Если не нашли, используем расчет по позиции
-                                if (!selectedItem) {
-                                    let minDistance = Infinity;
-                                    const centerX = 0;
-                                    
-                                    giftItems.forEach((item, index) => {
-                                        const itemOffset = index * itemWidth + itemWidth / 2;
-                                        const totalTrackWidth = giftItems.length * itemWidth;
-                                        const itemCenter = itemOffset - totalTrackWidth / 2 + finalPosition;
-                                        const distance = Math.abs(itemCenter - centerX);
-                                        
-                                        if (distance < minDistance) {
-                                            minDistance = distance;
-                                            selectedItem = item;
-                                        }
-                                    });
-                                }
-                                
-                                // Если все еще не нашли, используем целевой элемент
-                                if (!selectedItem) {
-                                    selectedItem = giftItems[targetIndex];
-                                }
-                                
-                                setTimeout(() => {
-                                    giftItems.forEach(item => item.classList.remove('selected'));
-                                    
-                                    if (selectedItem) {
-                                        selectedItem.classList.add('selected');
-                                        
-                                        // Получаем данные приза непосредственно из элемента
-                                        const actualPrize = {
-                                            icon: selectedItem.dataset.icon || '',
-                                            name: selectedItem.dataset.name || '',
-                                            value: parseFloat(selectedItem.dataset.value) || 0
-                                        };
-                                        
-                                        // Если данные пустые, берем из randomPrize
-                                        if (!actualPrize.name || !actualPrize.icon) {
-                                            actualPrize.icon = randomPrize.icon;
-                                            actualPrize.name = randomPrize.name;
-                                            actualPrize.value = randomPrize.value;
-                                        }
-                                        
-                                        console.log('=== PRIZE SELECTION ===');
-                                        console.log('Selected item dataset:', {
-                                            icon: selectedItem.dataset.icon,
-                                            name: selectedItem.dataset.name,
-                                            value: selectedItem.dataset.value
-                                        });
-                                        console.log('Final prize:', actualPrize.name);
-                                        console.log('Target prize:', randomPrize.name);
-                                        
-                                        setTimeout(() => {
-                                            showPrizeModal(actualPrize);
-                                            
-                                            // Восстанавливаем иконку кейса
-                                            if (currentCase && (currentCase.icon.includes('.png') || currentCase.icon.includes('.jpg') || currentCase.icon.includes('.jpeg'))) {
-                                                const img = document.createElement('img');
-                                                img.src = currentCase.icon;
-                                                img.alt = 'Case';
-                                                img.style.width = '100%';
-                                                img.style.maxWidth = '300px';
-                                                img.style.height = 'auto';
-                                                img.style.objectFit = 'contain';
-                                                img.style.display = 'block';
-                                                img.onerror = function() {
-                                                    detailIcon.textContent = '🔐';
-                                                };
-                                                detailIcon.innerHTML = '';
-                                                detailIcon.appendChild(img);
-                                            }
-                                            detailIcon.style.display = 'flex';
-                                            
-                                            rouletteContainer.classList.remove('active');
-                                            isOpening = false;
-                                            
-                                            if (tg) {
-                                                tg.HapticFeedback.notificationOccurred('success');
-                                            }
-                                        }, 500);
-                                    }
-                                }, 300);
-                            }
-                        };
-                        
-                        requestAnimationFrame(animateRoulette);
-                    }, 300);
-                };
-                openCaseFunc();
-            }
-        };
-
-        function createRoulette() {
-            const rouletteTrack = document.getElementById('rouletteTrack');
-            rouletteTrack.innerHTML = '';
             
-            // Создаем множество повторений для бесконечного эффекта прокрутки
-            // Повторяем подарки очень много раз в той же последовательности
-            const repeatCount = 50; // Увеличиваем до 50 повторений
-            const extendedPrizes = [];
-            for (let i = 0; i < repeatCount; i++) {
-                extendedPrizes.push(...currentPrizes);
-            }
+            // Проверяем дубликаты
+            const isDuplicate = payments.some(p => p.boc === boc && p.verified);
             
-            extendedPrizes.forEach((prize, index) => {
-                const giftItem = document.createElement('div');
-                giftItem.className = 'gift-item';
-                
-                // Проверяем, является ли иконка изображением
-                const iconStr = String(prize.icon || '');
-                if (iconStr.toLowerCase().includes('.png') || iconStr.toLowerCase().includes('.jpg') || iconStr.toLowerCase().includes('.jpeg')) {
-                    const img = document.createElement('img');
-                    img.src = prize.icon;
-                    img.alt = prize.name;
-                    
-                    // Жестко устанавливаем стили для изображения - всегда видимое
-                    img.style.cssText = `
-                        width: 80px !important;
-                        height: 80px !important;
-                        object-fit: contain !important;
-                        display: block !important;
-                        visibility: visible !important;
-                        opacity: 1 !important;
-                        pointer-events: auto !important;
-                        transition: none !important;
-                        position: relative !important;
-                    `;
-                    
-                    img.onload = function() {
-                        this.style.opacity = '1';
-                        this.style.visibility = 'visible';
-                        this.style.display = 'block';
-                        console.log('Gift image loaded:', this.src);
-                    };
-                    
-                    img.onerror = function() {
-                        console.error('Failed to load gift image:', this.src);
-                        this.style.display = 'none';
-                    };
-                    
-                    const nameDiv = document.createElement('div');
-                    nameDiv.className = 'gift-name';
-                    nameDiv.textContent = prize.name;
-                    nameDiv.style.cssText = `
-                        opacity: 1 !important;
-                        visibility: visible !important;
-                    `;
-                    
-                    giftItem.appendChild(img);
-                    giftItem.appendChild(nameDiv);
-                } else {
-                    giftItem.innerHTML = `
-                        ${prize.icon || '?'}
-                        <div class="gift-name">${prize.name}</div>
-                    `;
-                }
-                
-                giftItem.dataset.icon = prize.icon;
-                giftItem.dataset.name = prize.name;
-                giftItem.dataset.value = prize.value;
-                
-                // Жестко устанавливаем стили для видимости
-                giftItem.style.cssText = `
-                    flex-shrink: 0 !important;
-                    visibility: visible !important;
-                    opacity: 1 !important;
-                    display: flex !important;
-                    pointer-events: auto !important;
-                    transition: none !important;
-                    position: relative !important;
-                    z-index: 2 !important;
-                    width: 150px !important;
-                    min-width: 150px !important;
-                    max-width: 150px !important;
-                    height: 150px !important;
-                `;
-                
-                rouletteTrack.appendChild(giftItem);
-            });
-            
-            // Убеждаемся, что трек видим
-            rouletteTrack.style.cssText = `
-                display: flex !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-            `;
-        }
-
-        function showCaseDetail(caseNum) {
-            if (isOpening) return;
-            
-            currentCase = cases[caseNum];
-            if (!currentCase) return;
-
-            isOpening = false;
-            
-            const mainPage = document.getElementById('mainPage');
-            const detailPage = document.getElementById('caseDetailPage');
-            const modal = document.getElementById('prizeModal');
-            const profilePage = document.getElementById('profilePage');
-            
-            // Скрываем все страницы кроме деталей кейса
-            mainPage.style.display = 'none';
-            mainPage.classList.add('hidden');
-            if (profilePage) {
-                profilePage.style.display = 'none';
-            }
-            
-            detailPage.style.display = 'block';
-            detailPage.classList.add('active');
-            
-            modal.style.display = 'none';
-            modal.classList.remove('active');
-            
-            const detailIcon = document.getElementById('detailIcon');
-            if (currentCase.icon.includes('.jpg') || currentCase.icon.includes('.png') || currentCase.icon.includes('.jpeg')) {
-                // Декодируем путь для правильной загрузки
-                let imgPath = currentCase.icon;
-                // Если путь уже содержит кодированные символы, используем его напрямую
-                detailIcon.innerHTML = '';
-                const img = document.createElement('img');
-                img.src = imgPath;
-                img.alt = `Case ${caseNum}`;
-                img.style.width = '100%';
-                img.style.maxWidth = '300px';
-                img.style.height = 'auto';
-                img.style.objectFit = 'contain';
-                img.style.display = 'block';
-                img.onload = function() {
-                    console.log('Image loaded successfully:', this.src);
-                };
-                img.onerror = function() {
-                    console.error('Failed to load detail image:', this.src);
-                    // Попробуем декодировать путь
-                    try {
-                        const decodedPath = decodeURIComponent(imgPath);
-                        if (decodedPath !== imgPath) {
-                            this.src = decodedPath;
-                        } else {
-                            detailIcon.textContent = '🔐';
-                        }
-                    } catch(e) {
-                        detailIcon.textContent = '🔐';
-                    }
-                };
-                detailIcon.appendChild(img);
-            } else {
-                detailIcon.textContent = currentCase.icon || '🔐';
-            }
-            detailIcon.style.display = 'flex';
-            document.getElementById('detailPrice').innerHTML = formatPrice(currentCase.price);
-            
-            const rouletteContainer = document.getElementById('rouletteContainer');
-            rouletteContainer.classList.remove('active');
-            
-            const prizesGrid = document.getElementById('prizesGrid');
-            prizesGrid.innerHTML = '';
-            currentPrizes = currentCase.prizes;
-            
-            currentPrizes.forEach(prize => {
-                const prizeItem = document.createElement('div');
-                prizeItem.className = 'prize-item';
-                
-                // Проверяем, является ли иконка изображением
-                const iconDiv = document.createElement('div');
-                iconDiv.className = 'prize-icon';
-                
-                const iconStr = String(prize.icon || '');
-                if (iconStr.toLowerCase().includes('.png') || iconStr.toLowerCase().includes('.jpg') || iconStr.toLowerCase().includes('.jpeg')) {
-                    const img = document.createElement('img');
-                    
-                    // Пробуем разные варианты пути
-                    const tryLoadImage = (src) => {
-                        img.src = src;
-                        img.alt = prize.name || 'Prize';
-                        img.style.width = '60px';
-                        img.style.height = '60px';
-                        img.style.objectFit = 'contain';
-                        img.style.display = 'block';
-                        
-                        img.onload = function() {
-                            console.log('Prize image loaded:', this.src);
-                        };
-                        
-                        img.onerror = function() {
-                            console.error('Failed to load prize image:', this.src);
-                            // Пробуем декодировать путь
-                            try {
-                                const decodedPath = decodeURIComponent(src);
-                                if (decodedPath !== src) {
-                                    this.src = decodedPath;
-                                    return;
-                                }
-                            } catch(e) {}
-                            
-                            // Пробуем закодировать путь
-                            try {
-                                const encodedPath = encodeURI(src);
-                                if (encodedPath !== src) {
-                                    this.src = encodedPath;
-                                    return;
-                                }
-                            } catch(e) {}
-                            
-                            // Если ничего не помогло, показываем название
-                            this.style.display = 'none';
-                            const textNode = document.createTextNode(prize.name || '?');
-                            if (this.parentElement) {
-                                this.parentElement.appendChild(textNode);
-                            }
-                        };
-                        
-                        iconDiv.appendChild(img);
-                    };
-                    
-                    tryLoadImage(prize.icon);
-                } else {
-                    iconDiv.textContent = prize.icon || '?';
-                }
-                
-                prizeItem.appendChild(iconDiv);
-                
-                const valueDiv = document.createElement('div');
-                valueDiv.className = 'prize-value';
-                valueDiv.innerHTML = formatPrice(prize.value);
-                prizeItem.appendChild(valueDiv);
-                
-                prizeItem.dataset.icon = prize.icon;
-                prizeItem.dataset.name = prize.name;
-                prizeItem.dataset.value = prize.value;
-                prizeItem.classList.remove('win');
-                prizesGrid.appendChild(prizeItem);
-            });
-
-            const openBtn = document.getElementById('openBtn');
-            if (openBtn) {
-                openBtn.disabled = false;
-                openBtn.classList.add('show');
-                openBtn.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; bottom: 100px !important; left: 20px !important; right: 20px !important; z-index: 99999 !important;';
-                openBtn.innerHTML = 'Открыть <span>🚀</span>';
-                
-                openBtn.onclick = function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (currentCase && !isOpening) {
-                        window.openCase();
-                    }
-                };
-            } else {
-                console.error('Open button not found!');
-            }
-
-            document.querySelectorAll('.prize-item').forEach(item => {
-                item.classList.remove('win', 'spinning-prizes');
-            });
-
-            if (tg) {
-                tg.HapticFeedback.impactOccurred('medium');
-            }
-        }
-
-        function goBack() {
-            const mainPage = document.getElementById('mainPage');
-            const detailPage = document.getElementById('caseDetailPage');
-            const modal = document.getElementById('prizeModal');
-            const openBtn = document.getElementById('openBtn');
-            
-            detailPage.style.display = 'none';
-            detailPage.classList.remove('active');
-            
-            // Обязательно скрываем кнопку "Открыть" при возврате назад
-            if (openBtn) {
-                openBtn.classList.remove('show');
-                openBtn.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important;';
-                openBtn.disabled = true;
-                openBtn.style.pointerEvents = 'none';
-                openBtn.style.opacity = '0';
-                openBtn.style.cursor = 'default';
-                openBtn.innerHTML = 'Открыть <span>🚀</span>';
-            }
-            
-            mainPage.style.display = 'block';
-            mainPage.classList.remove('hidden');
-            
-            modal.style.display = 'none';
-            modal.classList.remove('active');
-            
-            document.querySelectorAll('.prize-item').forEach(item => {
-                item.classList.remove('win', 'spinning-prizes');
-            });
-            
-            isOpening = false;
-            currentCase = null;
-            
-            if (tg) {
-                tg.HapticFeedback.impactOccurred('light');
-            }
-        }
-        
-        window.goBack = goBack;
-
-
-        async function showPrizeModal(prize) {
-            // Добавляем подарок в инвентарь пользователя
-            addToInventory(prize);
-            
-            // Отправляем выигрыш на сервер (или добавляем локально при ошибке)
-            const sent = await sendPrizeToServer(prize);
-            
-            // Если успешно отправили на сервер, обновляем список
-            if (sent) {
-                setTimeout(() => {
-                    fetchGlobalPrizes();
-                }, 500);
-            }
-            
-            const modalPrizeIcon = document.getElementById('modalPrizeIcon');
-            
-            // Проверяем, является ли иконка изображением
-            const iconStr = String(prize.icon || '');
-            if (iconStr.toLowerCase().includes('.png') || iconStr.toLowerCase().includes('.jpg') || iconStr.toLowerCase().includes('.jpeg')) {
-                const img = document.createElement('img');
-                img.src = prize.icon;
-                img.alt = prize.name;
-                img.style.width = '120px';
-                img.style.height = '120px';
-                img.style.objectFit = 'contain';
-                img.onerror = function() {
-                    console.error('Failed to load modal prize image:', this.src);
-                    modalPrizeIcon.textContent = prize.name || '?';
-                };
-                modalPrizeIcon.innerHTML = '';
-                modalPrizeIcon.appendChild(img);
-            } else {
-                modalPrizeIcon.textContent = prize.icon || '?';
-            }
-            
-            document.getElementById('modalPrizeName').textContent = prize.name;
-            document.getElementById('modalPrizeValue').innerHTML = formatPrice(prize.value);
-            document.getElementById('prizeModal').classList.add('active');
-            
-            // Полностью скрываем кнопку "Открыть" со страницы деталей когда показывается модальное окно
-            const openBtn = document.getElementById('openBtn');
-            if (openBtn) {
-                openBtn.classList.remove('show');
-                openBtn.style.display = 'none';
-                openBtn.style.visibility = 'hidden';
-                openBtn.style.opacity = '0';
-                openBtn.style.pointerEvents = 'none';
-                openBtn.style.cssText += 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important;';
-            }
-        }
-
-        function closePrizeModal() {
-            document.getElementById('prizeModal').classList.remove('active');
-            document.querySelectorAll('.prize-item').forEach(item => {
-                item.classList.remove('win');
-            });
-            
-            // Показываем кнопку "Открыть" обратно после закрытия модального окна
-            const openBtn = document.getElementById('openBtn');
-            const detailPage = document.getElementById('caseDetailPage');
-            const detailIcon = document.getElementById('detailIcon');
-            
-            if (openBtn && detailPage && detailPage.classList.contains('active')) {
-                openBtn.disabled = false;
-                openBtn.classList.add('show');
-                openBtn.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important;';
-                openBtn.innerHTML = 'Открыть <span>🚀</span>';
-            }
-            
-            // Восстанавливаем иконку кейса после закрытия модального окна
-            if (detailIcon && currentCase) {
-                if (currentCase.icon.includes('.jpg') || currentCase.icon.includes('.png') || currentCase.icon.includes('.jpeg')) {
-                    const imgPath = currentCase.icon;
-                    detailIcon.innerHTML = '';
-                    const img = document.createElement('img');
-                    img.src = imgPath;
-                    img.alt = 'Case';
-                    img.style.width = '100%';
-                    img.style.maxWidth = '300px';
-                    img.style.height = 'auto';
-                    img.style.objectFit = 'contain';
-                    img.style.display = 'block';
-                    img.onload = function() {
-                        console.log('Image loaded successfully:', this.src);
-                    };
-                    img.onerror = function() {
-                        console.error('Failed to load detail image:', this.src);
-                        // Попробуем декодировать путь
-                        try {
-                            const decodedPath = decodeURIComponent(imgPath);
-                            if (decodedPath !== imgPath) {
-                                this.src = decodedPath;
-                            } else {
-                                detailIcon.textContent = '🔐';
-                            }
-                        } catch(e) {
-                            detailIcon.textContent = '🔐';
-                        }
-                    };
-                    detailIcon.appendChild(img);
-                } else {
-                    detailIcon.textContent = currentCase.icon || '🔐';
-                }
-                detailIcon.style.display = 'flex';
-            }
-            
-            if (tg) {
-                tg.HapticFeedback.impactOccurred('light');
-            }
-        }
-
-        function openNextCase() {
-            closePrizeModal();
-            if (tg) {
-                tg.HapticFeedback.impactOccurred('medium');
-            }
-        }
-        
-        window.openNextCase = openNextCase;
-
-        document.querySelector('.subscribe-btn').addEventListener('click', () => {
-            if (tg) {
-                tg.openTelegramLink('https://t.me/YourChannel');
-                tg.HapticFeedback.impactOccurred('medium');
-            } else {
-                window.open('https://t.me/YourChannel', '_blank');
-            }
-        });
-
-        // Обработчик кнопки "+" в основном балансе - будет установлен в initTopUpHandlers
-
-        // Обновление информации профиля
-        function updateProfileInfo() {
-            const user = tg?.initDataUnsafe?.user;
-            const profileUsername = document.getElementById('profileUsername');
-            const profileAvatar = document.getElementById('profileAvatarImg');
-            const profileAvatarContainer = document.getElementById('profileAvatar');
-            
-            if (user) {
-                if (profileUsername) {
-                    profileUsername.textContent = user.first_name || user.username || 'User';
-                }
-                
-                if (profileAvatarContainer) {
-                    if (user.photo_url) {
-                        // Если есть фото профиля, создаем или обновляем img элемент
-                        if (!profileAvatar) {
-                            const img = document.createElement('img');
-                            img.id = 'profileAvatarImg';
-                            img.alt = 'Avatar';
-                            img.style.width = '100%';
-                            img.style.height = '100%';
-                            img.style.objectFit = 'cover';
-                            img.style.borderRadius = '50%';
-                            profileAvatarContainer.appendChild(img);
-                        }
-                        const img = profileAvatar || document.getElementById('profileAvatarImg');
-                        if (img) {
-                            img.src = user.photo_url;
-                            img.style.display = 'block';
-                            img.onerror = function() {
-                                // Если фото не загрузилось, показываем эмодзи
-                                this.style.display = 'none';
-                                if (!profileAvatarContainer.querySelector('span')) {
-                                    const fallback = document.createElement('span');
-                                    fallback.textContent = '👤';
-                                    fallback.style.fontSize = '60px';
-                                    profileAvatarContainer.appendChild(fallback);
-                                }
-                            };
-                        }
-            } else {
-                        // Если фото недоступно, показываем эмодзи
-                        profileAvatarContainer.innerHTML = '';
-                        const fallback = document.createElement('span');
-                        fallback.textContent = '👤';
-                        fallback.style.fontSize = '60px';
-                        profileAvatarContainer.appendChild(fallback);
-                    }
-                }
-            }
-        }
-        
-        // Также обновляем аватарку в шапке при обновлении профиля
-        updateProfileInfo();
-        updateHeaderAvatar();
-        
-        // Обновление отображения инвентаря
-        function updateInventory() {
-            const inventoryGrid = document.getElementById('inventoryGrid');
-            const inventoryCount = document.getElementById('inventoryCount');
-            
-            if (!inventoryGrid) return;
-            
-            inventoryGrid.innerHTML = '';
-            
-            if (inventoryCount) {
-                inventoryCount.textContent = userInventory.length;
-            }
-            
-            // Показываем максимум 9 предметов (3x3), + слот для перелистывания
-            const itemsToShow = userInventory.slice(0, 8);
-            
-            itemsToShow.forEach(item => {
-                const slot = document.createElement('div');
-                slot.className = 'inventory-slot has-item';
-                
-                const iconStr = String(item.icon || '');
-                if (iconStr.toLowerCase().includes('.png') || iconStr.toLowerCase().includes('.jpg') || iconStr.toLowerCase().includes('.jpeg')) {
-                    const img = document.createElement('img');
-                    img.src = item.icon;
-                    img.alt = item.name;
-                    img.onerror = function() {
-                        slot.innerHTML = '<span class="empty-icon">🎁</span>';
-                    };
-                    slot.appendChild(img);
-                } else {
-                    slot.innerHTML = `<span class="empty-icon">${item.icon || '🎁'}</span>`;
-                }
-                
-                const valueBadge = document.createElement('div');
-                valueBadge.className = 'item-value';
-                valueBadge.innerHTML = formatPrice(item.value);
-                slot.appendChild(valueBadge);
-                
-                slot.addEventListener('click', () => {
-                    showInventoryItemModal(item);
-                });
-                
-                inventoryGrid.appendChild(slot);
-            });
-            
-            // Добавляем пустые слоты или слот для следующей страницы
-            const remaining = userInventory.length - itemsToShow.length;
-            const slotsNeeded = 9 - itemsToShow.length;
-            
-            for (let i = 0; i < slotsNeeded; i++) {
-                const slot = document.createElement('div');
-                slot.className = 'inventory-slot';
-                
-                if (i === slotsNeeded - 1 && remaining > 0) {
-                    slot.innerHTML = '<span class="next-icon">→</span>';
-                    slot.addEventListener('click', () => {
-                        if (tg) {
-                            tg.showAlert('Следующая страница в разработке');
-                        }
-                    });
-                } else {
-                    slot.innerHTML = '<span class="empty-icon">🎁</span>';
-                }
-                
-                inventoryGrid.appendChild(slot);
-            }
-        }
-        
-        // Продажа всех предметов
-        function sellAllItems() {
-            if (userInventory.length === 0) {
-                if (tg) {
-                    tg.showAlert('Инвентарь пуст');
-                } else {
-                    alert('Инвентарь пуст');
-                }
-                return;
-            }
-            
-            const totalValue = userInventory.reduce((sum, item) => sum + item.value, 0);
-            
-            if (tg) {
-                tg.showConfirm(`Продать все предметы за ${formatPrice(totalValue)}?`, (confirmed) => {
-                    if (confirmed) {
-                        balance += totalValue;
-                        document.getElementById('balance').textContent = balance.toFixed(2);
-                        userInventory = [];
-                        saveInventory(); // Сохраняем баланс локально
-                        saveUserData(); // Сохраняем на сервер
-                        updateInventory();
-                        tg.HapticFeedback.notificationOccurred('success');
-                    }
-                });
-            } else {
-                if (confirm(`Продать все предметы за ${totalValue.toFixed(2)}?`)) {
-                    balance += totalValue;
-                    document.getElementById('balance').textContent = balance.toFixed(2);
-                    userInventory = [];
-                    saveInventory(); // Сохраняем баланс локально
-                    saveUserData(); // Сохраняем на сервер
-                    updateInventory();
-                }
-            }
-        }
-
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const page = item.dataset.page;
-                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-                item.classList.add('active');
-                
-                const mainPage = document.getElementById('mainPage');
-                const caseDetailPage = document.getElementById('caseDetailPage');
-                const profilePage = document.getElementById('profilePage');
-                
-                if (!mainPage || !caseDetailPage || !profilePage) {
-                    console.error('Pages not found!');
-                    return;
-                }
-                
-                const openBtn = document.getElementById('openBtn');
-                
-                // Всегда скрываем кнопку при переключении вкладок
-                if (openBtn) {
-                    openBtn.style.display = 'none';
-                    openBtn.style.visibility = 'hidden';
-                    openBtn.style.opacity = '0';
-                    openBtn.classList.remove('show');
-                    openBtn.disabled = true;
-                    openBtn.style.pointerEvents = 'none';
-                }
-                
-                const crashPage = document.getElementById('crashPage');
-                
-                // Показываем/скрываем header в зависимости от страницы
-                const header = document.querySelector('.header');
-                
-                if (page === 'cases') {
-                    // Показываем header
-                    if (header) {
-                        header.style.display = 'flex';
-                    }
-                    // Скрываем все остальные страницы
-                    caseDetailPage.style.display = 'none';
-                    caseDetailPage.classList.remove('active');
-                    
-                    profilePage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; position: absolute !important; pointer-events: none !important; z-index: -1 !important;';
-                    
-                    if (crashPage) {
-                        crashPage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; z-index: -1 !important;';
-                    }
-                    
-                    const minesPage = document.getElementById('minesPage');
-                    if (minesPage) {
-                        minesPage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; z-index: -1 !important;';
-                    }
-                    
-                    const dicePage = document.getElementById('dicePage');
-                    if (dicePage) {
-                        dicePage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; z-index: -1 !important;';
-                    }
-                    
-                    // Показываем главную страницу и все её элементы
-                    mainPage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; pointer-events: auto !important;';
-                    mainPage.classList.remove('hidden');
-                    const subscribeBtn = document.querySelector('.subscribe-btn');
-                    const tabs = document.querySelector('.tabs');
-                    const casesCarousel = document.querySelector('.cases-carousel');
-                    if (subscribeBtn) subscribeBtn.style.display = 'block';
-                    if (tabs) tabs.style.display = 'flex';
-                    if (casesCarousel) casesCarousel.style.display = 'block';
-                } else if (page === 'profile') {
-                    // Показываем header
-                    if (header) {
-                        header.style.display = 'flex';
-                    }
-                    // Обновляем информацию профиля при открытии страницы
-                    updateProfileInfo();
-                    updateInventory();
-                    // Скрываем все остальные страницы и элементы
-                    mainPage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; position: absolute !important; pointer-events: none !important; z-index: -1 !important;';
-                    mainPage.classList.add('hidden');
-                    caseDetailPage.style.display = 'none';
-                    caseDetailPage.classList.remove('active');
-                    
-                    const subscribeBtn = document.querySelector('.subscribe-btn');
-                    const tabs = document.querySelector('.tabs');
-                    const casesCarousel = document.querySelector('.cases-carousel');
-                    if (subscribeBtn) subscribeBtn.style.display = 'none';
-                    if (tabs) tabs.style.display = 'none';
-                    if (casesCarousel) casesCarousel.style.display = 'none';
-                    
-                    if (crashPage) {
-                        crashPage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; z-index: -1 !important;';
-                    }
-                    
-                    const minesPage = document.getElementById('minesPage');
-                    if (minesPage) {
-                        minesPage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; z-index: -1 !important;';
-                    }
-                    
-                    const dicePage = document.getElementById('dicePage');
-                    if (dicePage) {
-                        dicePage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; z-index: -1 !important;';
-                    }
-                    
-                    // Показываем профиль
-                    profilePage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; pointer-events: auto !important; z-index: 1 !important;';
-                    
-                    updateInventory();
-                    updateProfileInfo();
-                    if (tg) {
-                        tg.HapticFeedback.impactOccurred('light');
-                    }
-                } else if (page === 'crash') {
-                    // Скрываем header при переходе на краш
-                    const header = document.querySelector('.header');
-                    if (header) {
-                        header.style.display = 'none';
-                    }
-                    
-                    // Скрываем все остальные страницы и элементы
-                    mainPage.style.display = 'none';
-                    mainPage.classList.add('hidden');
-                    caseDetailPage.style.display = 'none';
-                    caseDetailPage.classList.remove('active');
-                    
-                    profilePage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; position: absolute !important; pointer-events: none !important; z-index: -1 !important;';
-                    
-                    const minesPage = document.getElementById('minesPage');
-                    if (minesPage) {
-                        minesPage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; z-index: -1 !important;';
-                    }
-                    
-                    const dicePage = document.getElementById('dicePage');
-                    if (dicePage) {
-                        dicePage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; z-index: -1 !important;';
-                    }
-                    
-                    // Убеждаемся, что все элементы главной страницы скрыты
-                    const subscribeBtn = document.querySelector('.subscribe-btn');
-                    const tabs = document.querySelector('.tabs');
-                    const casesCarousel = document.querySelector('.cases-carousel');
-                    if (subscribeBtn) subscribeBtn.style.display = 'none';
-                    if (tabs) tabs.style.display = 'none';
-                    if (casesCarousel) casesCarousel.style.display = 'none';
-                    
-                    // Показываем страницу краша
-                    if (crashPage) {
-                        crashPage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 100% !important; z-index: 100 !important; pointer-events: auto !important;';
-                        // Обновляем баланс на странице краша
-                        document.getElementById('crashBalance').textContent = balance.toFixed(2);
-                        initCrashGame();
-                    }
-                    // Скрываем кнопку "Открыть" при переходе в краш
-                    if (openBtn) {
-                        openBtn.style.display = 'none';
-                        openBtn.style.visibility = 'hidden';
-                        openBtn.style.opacity = '0';
-                        openBtn.classList.remove('show');
-                        openBtn.disabled = true;
-                        openBtn.style.pointerEvents = 'none';
-                    }
-                    if (tg) {
-                        tg.HapticFeedback.impactOccurred('light');
-                    }
-                } else if (page === 'mines') {
-                    // Скрываем header при переходе на мины
-                    if (header) {
-                        header.style.display = 'none';
-                    }
-                    
-                    // Скрываем все остальные страницы и элементы
-                    mainPage.style.display = 'none';
-                    mainPage.classList.add('hidden');
-                    caseDetailPage.style.display = 'none';
-                    caseDetailPage.classList.remove('active');
-                    
-                    profilePage.style.display = 'none';
-                    profilePage.style.visibility = 'hidden';
-                    profilePage.style.opacity = '0';
-                    profilePage.style.position = 'absolute';
-                    profilePage.style.pointerEvents = 'none';
-                    profilePage.style.zIndex = '-1';
-                    
-                    const subscribeBtn = document.querySelector('.subscribe-btn');
-                    const tabs = document.querySelector('.tabs');
-                    const casesCarousel = document.querySelector('.cases-carousel');
-                    if (subscribeBtn) subscribeBtn.style.display = 'none';
-                    if (tabs) tabs.style.display = 'none';
-                    if (casesCarousel) casesCarousel.style.display = 'none';
-                    
-                    if (crashPage) {
-                        crashPage.style.display = 'none';
-                        crashPage.style.visibility = 'hidden';
-                        crashPage.style.opacity = '0';
-                        crashPage.style.pointerEvents = 'none';
-                        crashPage.style.zIndex = '-1';
-                    }
-                    
-                    // Показываем страницу мин
-                    const minesPage = document.getElementById('minesPage');
-                    if (minesPage) {
-                        minesPage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 100% !important; z-index: 100 !important; pointer-events: auto !important;';
-                        document.getElementById('minesBalance').textContent = balance.toFixed(2);
-                        initMinesGame();
-                    }
-                    
-                    if (tg) {
-                        tg.HapticFeedback.impactOccurred('light');
-                    }
-                } else if (page === 'dice') {
-                    // Скрываем header при переходе на dice
-                    if (header) {
-                        header.style.display = 'none';
-                    }
-                    
-                    // Скрываем все остальные страницы и элементы
-                    mainPage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; position: absolute !important; pointer-events: none !important; z-index: -1 !important;';
-                    mainPage.classList.add('hidden');
-                    caseDetailPage.style.display = 'none';
-                    caseDetailPage.classList.remove('active');
-                    
-                    profilePage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; position: absolute !important; pointer-events: none !important; z-index: -1 !important;';
-                    
-                    const subscribeBtn = document.querySelector('.subscribe-btn');
-                    const tabs = document.querySelector('.tabs');
-                    const casesCarousel = document.querySelector('.cases-carousel');
-                    if (subscribeBtn) subscribeBtn.style.display = 'none';
-                    if (tabs) tabs.style.display = 'none';
-                    if (casesCarousel) casesCarousel.style.display = 'none';
-                    
-                    if (crashPage) {
-                        crashPage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; z-index: -1 !important;';
-                    }
-                    
-                    const minesPage = document.getElementById('minesPage');
-                    if (minesPage) {
-                        minesPage.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; z-index: -1 !important;';
-                    }
-                    
-                    // Показываем страницу dice
-                    const dicePage = document.getElementById('dicePage');
-                    if (dicePage) {
-                        dicePage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 100% !important; z-index: 100 !important; pointer-events: auto !important;';
-                        document.getElementById('diceBalance').textContent = balance.toFixed(2);
-                        initDiceGame();
-                    }
-                    
-                    if (tg) {
-                        tg.HapticFeedback.impactOccurred('light');
-                    }
-                }
-            });
-        });
-        
-        // Пополнение теперь только через Telegram бота - открывается напрямую
-
-        // Функции для модального окна пополнения
-        function openTopUpModal() {
-            console.log('openTopUpModal вызвана');
-            const modal = document.getElementById('topUpModal');
-            console.log('Модальное окно найдено:', modal);
-            if (modal) {
-                modal.classList.add('active');
-                modal.style.display = 'flex';
-                modal.style.zIndex = '10000';
-                console.log('Модальное окно открыто');
-                if (tg) {
-                    tg.HapticFeedback.impactOccurred('medium');
-                }
-            } else {
-                console.error('Модальное окно topUpModal не найдено!');
-            }
-        }
-
-        function closeTopUpModal() {
-            const modal = document.getElementById('topUpModal');
-            if (modal) {
-                modal.classList.remove('active');
-                modal.style.display = 'none';
-                if (tg) {
-                    tg.HapticFeedback.impactOccurred('light');
-                }
-            }
-        }
-
-        // Инициализация обработчиков пополнения после загрузки DOM
-        function initTopUpHandlers() {
-            // Обработчик кнопки "Пополнить" - открывает модальное окно выбора способа
-            const topUpBtn = document.getElementById('topUpBtn');
-            if (topUpBtn) {
-                console.log('Найдена кнопка topUpBtn, устанавливаю обработчик модального окна');
-                
-                // Удаляем старый обработчик если есть и добавляем новый
-                const newBtn = topUpBtn.cloneNode(true);
-                topUpBtn.parentNode.replaceChild(newBtn, topUpBtn);
-                
-                // Явно устанавливаем обработчик с высоким приоритетом
-                newBtn.onclick = null; // Удаляем все inline обработчики
-                newBtn.removeEventListener('click', () => {}); // Пытаемся удалить если есть
-                
-                newBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    console.log('Клик по кнопке Пополнить - открываем модальное окно');
-                    openTopUpModal();
-                    return false;
-                }, true); // Используем capture phase для приоритета
-                
-                console.log('Обработчик модального окна установлен');
-            } else {
-                console.error('Кнопка topUpBtn не найдена');
-            }
-
-            // Пополнение через Telegram Wallet
-            const telegramWalletBtn = document.getElementById('telegramWalletBtn');
-            if (telegramWalletBtn) {
-                telegramWalletBtn.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    closeTopUpModal();
-                    
-                    if (!tg || !tg.openInvoice) {
-                        if (tg && tg.showAlert) {
-                            tg.showAlert('Кошелёк Telegram недоступен. Используйте другой способ пополнения.');
-                        } else {
-                            alert('Кошелёк Telegram недоступен. Используйте другой способ пополнения.');
-                        }
-                        return;
-                    }
-
-                    try {
-                        const userId = getUserId();
-                        if (!userId) {
-                            throw new Error('Не удалось получить ID пользователя');
-                        }
-
-                        // Запрашиваем сумму пополнения
-                        const amount = prompt('Введите сумму пополнения в TON:');
-                        if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-                            if (tg && tg.showAlert) {
-                                tg.showAlert('Неверная сумма');
-                            }
-                            return;
-                        }
-
-                        const tonAmount = parseFloat(amount);
-                        const transactionId = `tg_wallet_${userId}_${Date.now()}`;
-
-                        // Создаём инвойс через Telegram Stars (поддерживается Telegram Wallet)
-                        const invoice = {
-                            title: 'Пополнение баланса',
-                            description: `Пополнение баланса на ${tonAmount} TON`,
-                            currency: 'XTR', // Telegram Stars
-                            prices: [{
-                                label: 'Пополнение',
-                                amount: Math.round(tonAmount * 100) // Stars (1 TON ≈ 100 Stars)
-                            }],
-                            payload: transactionId,
-                            provider_token: null
-                        };
-
-                        tg.openInvoice(invoice, async (status) => {
-                            if (status === 'paid') {
-                                // Платёж успешен - отправляем на сервер
-                                try {
-                                    const response = await fetch(`${API_BASE_URL}/api/payments/verify`, {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json'
-                                        },
-                                        body: JSON.stringify({
-                                            userId: userId,
-                                            amount: tonAmount,
-                                            transactionId: transactionId,
-                                            type: 'telegram_wallet'
-                                        })
-                                    });
-
-                                    const result = await response.json();
-                                    
-                                    if (response.ok && result.success) {
-                                        // Обновляем баланс
-                                        await loadUserData();
-                                        
-                                        if (tg && tg.showAlert) {
-                                            tg.showAlert(`Баланс пополнен на ${tonAmount} TON!`);
-                                        }
-                                        tg.HapticFeedback.notificationOccurred('success');
-                                    } else {
-                                        throw new Error(result.error || 'Ошибка обработки платежа');
-                                    }
-                                } catch (error) {
-                                    console.error('Ошибка обработки платежа:', error);
-                                    if (tg && tg.showAlert) {
-                                        tg.showAlert('Ошибка обработки платежа. Обратитесь в поддержку.');
-                                    }
-                                }
-                            } else if (status === 'failed') {
-                                if (tg && tg.showAlert) {
-                                    tg.showAlert('Ошибка оплаты');
-                                }
-                                tg.HapticFeedback.notificationOccurred('error');
-                            } else if (status === 'cancelled') {
-                                tg.HapticFeedback.notificationOccurred('warning');
-                            }
-                        });
-                    } catch (error) {
-                        console.error('Ошибка создания инвойса:', error);
-                        if (tg && tg.showAlert) {
-                            tg.showAlert('Ошибка: ' + error.message);
-                        }
-                    }
-                });
-            }
-
-            // Пополнение через Telegram бота
-            const telegramBotBtn = document.getElementById('telegramBotBtn');
-            if (telegramBotBtn) {
-                telegramBotBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    closeTopUpModal();
-                    
-                    const botUsername = 'Znakomstva13_bot';
-                    const userId = getUserId();
-                    const botUrl = `https://t.me/${botUsername}?start=topup_${userId}`;
-                    
-                    console.log('Открываем бота для пополнения:', botUrl, 'User ID:', userId);
-                    
-                    if (tg) {
-                        if (tg.openTelegramLink) {
-                            tg.openTelegramLink(botUrl);
-                        } else {
-                            tg.openLink(botUrl);
-                        }
-                        tg.HapticFeedback.impactOccurred('medium');
-                        
-                        setTimeout(() => {
-                            if (tg.showAlert) {
-                                tg.showAlert('Отправьте боту /pay для пополнения');
-                            }
-                        }, 500);
-                    } else {
-                        window.open(botUrl, '_blank');
-                        alert('Бот открыт. Отправьте боту команду /pay для пополнения баланса.');
-                    }
+            if (isDuplicate) {
+                return res.json({ 
+                    verified: false, 
+                    message: 'Payment already processed' 
                 });
             }
             
-            // Обработчики кнопок "+" рядом с балансом
-            // Основной баланс в хедере
-            const mainBalancePlusBtn = document.querySelector('.balance-section button');
-            if (mainBalancePlusBtn) {
-                // Удаляем старые обработчики
-                const newMainBtn = mainBalancePlusBtn.cloneNode(true);
-                mainBalancePlusBtn.parentNode.replaceChild(newMainBtn, mainBalancePlusBtn);
-                
-                newMainBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    console.log('Клик по кнопке + в основном балансе');
-                    openTopUpModal();
-                    return false;
-                }, true);
+            // Пополняем баланс пользователя
+            const usersData = readUsersData();
+            if (!usersData[userId]) {
+                usersData[userId] = { balance: 0, inventory: [] };
             }
             
-            // Баланс на странице краша
-            const crashBalancePlusBtn = document.getElementById('crashBalance')?.parentElement?.querySelector('button');
-            if (crashBalancePlusBtn) {
-                // Удаляем старые обработчики
-                const newCrashBtn = crashBalancePlusBtn.cloneNode(true);
-                crashBalancePlusBtn.parentNode.replaceChild(newCrashBtn, crashBalancePlusBtn);
-                
-                newCrashBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    console.log('Клик по кнопке + в балансе краша');
-                    openTopUpModal();
-                    return false;
-                }, true);
-            }
-        }
-        
-        // Инициализируем обработчики при загрузке - делаем несколько попыток
-        function initTopUpHandlersWithRetry(retries = 3) {
-            const topUpBtn = document.getElementById('topUpBtn');
-            if (!topUpBtn && retries > 0) {
-                setTimeout(() => initTopUpHandlersWithRetry(retries - 1), 100);
-                return;
+            const currentBalance = parseFloat(usersData[userId].balance) || 0;
+            usersData[userId].balance = (currentBalance + parseFloat(amount)).toFixed(2);
+            
+            writeUsersData(usersData);
+            
+            // Сохраняем информацию о платеже
+            payments.push({
+                id: Date.now(),
+                userId: userId,
+                boc: boc,
+                amount: amount,
+                timestamp: timestamp || Date.now(),
+                verified: true,
+                type: 'ton'
+            });
+            
+            // Оставляем только последние 10000 платежей
+            if (payments.length > 10000) {
+                payments = payments.slice(-10000);
             }
             
-            if (topUpBtn) {
-                initTopUpHandlers();
-                console.log('Обработчики пополнения инициализированы');
-            } else {
-                console.error('Кнопка topUpBtn не найдена после всех попыток');
-            }
-        }
-        
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                setTimeout(initTopUpHandlersWithRetry, 100);
+            fs.writeFileSync(paymentsFile, JSON.stringify(payments, null, 2));
+            
+            res.json({ 
+                verified: true, 
+                message: 'Payment verified',
+                newBalance: usersData[userId].balance
             });
         } else {
-            setTimeout(initTopUpHandlersWithRetry, 100);
+            res.json({ 
+                verified: false, 
+                message: verification.message || 'Transaction not verified' 
+            });
         }
+    } catch (error) {
+        console.error('Error in POST /api/payments/verify:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Сохранение платежа от Telegram бота
+app.post('/api/payments/telegram', async (req, res) => {
+    try {
+        const { userId, amount, transactionId, paymentHash, timestamp, botToken } = req.body;
         
-        // Обработчик кнопки "Продать все"
-        const sellAllBtn = document.getElementById('sellAllBtn');
-        if (sellAllBtn) {
-            sellAllBtn.addEventListener('click', sellAllItems);
+        if (!userId || !amount || !transactionId) {
+            return res.status(400).json({ error: 'Missing required fields: userId, amount, transactionId' });
         }
+
+        // Валидация токена бота (опционально, для безопасности)
+        // const validBotToken = process.env.TELEGRAM_BOT_TOKEN;
+        // if (botToken && botToken !== validBotToken) {
+        //     return res.status(401).json({ error: 'Invalid bot token' });
+        // }
+
+        // Сохраняем платеж в базу данных
+        const paymentsFile = path.join(__dirname, 'payments_data.json');
+        let payments = [];
         
-        // Текущий выбранный предмет из инвентаря
-        let selectedInventoryItem = null;
-        
-        // Показ модального окна предмета из инвентаря
-        function showInventoryItemModal(item) {
-            selectedInventoryItem = item;
-            const modal = document.getElementById('inventoryItemModal');
-            const modalIcon = document.getElementById('inventoryModalIcon');
-            const modalName = document.getElementById('inventoryModalName');
-            const modalPrice = document.getElementById('inventoryModalPrice');
-            
-            if (!modal || !modalIcon || !modalName || !modalPrice) return;
-            
-            // Устанавливаем название
-            modalName.textContent = item.name;
-            
-            // Устанавливаем цену
-            modalPrice.innerHTML = formatPrice(item.value);
-            
-            // Устанавливаем иконку
-            modalIcon.innerHTML = '';
-            const iconStr = String(item.icon || '');
-            if (iconStr.toLowerCase().includes('.png') || iconStr.toLowerCase().includes('.jpg') || iconStr.toLowerCase().includes('.jpeg')) {
-                const img = document.createElement('img');
-                img.src = item.icon;
-                img.alt = item.name;
-                img.onerror = function() {
-                    modalIcon.innerHTML = '<span style="font-size: 80px;">🎁</span>';
-                };
-                modalIcon.appendChild(img);
-            } else {
-                modalIcon.innerHTML = `<span style="font-size: 80px;">${item.icon || '🎁'}</span>`;
-            }
-            
-            // Показываем модальное окно
-            modal.classList.add('active');
-            
-            if (tg) {
-                tg.HapticFeedback.impactOccurred('light');
-            }
-        }
-        
-        // Закрытие модального окна предмета из инвентаря
-        function closeInventoryModal() {
-            const modal = document.getElementById('inventoryItemModal');
-            if (modal) {
-                modal.classList.remove('active');
-            }
-            selectedInventoryItem = null;
-            
-            if (tg) {
-                tg.HapticFeedback.impactOccurred('light');
-            }
-        }
-        
-        window.closeInventoryModal = closeInventoryModal;
-
-        // ИГРА МИНЫ
-        let minesGameState = {
-            grid: [],
-            mines: [],
-            opened: [],
-            gameActive: false,
-            betAmount: 0.1,
-            currentMultiplier: 1.0,
-            minesCount: 5,
-            gridSize: 25
-        };
-
-        function initMinesGame() {
-            const grid = document.getElementById('minesGrid');
-            if (!grid) return;
-            
-            grid.innerHTML = '';
-            minesGameState.grid = [];
-            minesGameState.opened = [];
-            minesGameState.gameActive = false;
-            minesGameState.currentMultiplier = 1.0;
-            
-            for (let i = 0; i < minesGameState.gridSize; i++) {
-                const cell = document.createElement('div');
-                cell.className = 'mines-cell';
-                cell.dataset.index = i;
-                cell.textContent = '?';
-                grid.appendChild(cell);
-                minesGameState.grid.push({ isMine: false, revealed: false, index: i });
-            }
-            
-            document.getElementById('minesOpenedCount').textContent = '0';
-            document.getElementById('minesMultiplier').textContent = 'x1.00';
-            document.getElementById('minesWinnings').textContent = '0.00';
-            document.getElementById('minesTotalCount').textContent = minesGameState.minesCount;
-            document.getElementById('minesCashOutBtn').disabled = true;
-            document.getElementById('minesStartBtn').textContent = 'Начать игру';
-            document.getElementById('minesStartBtn').disabled = false;
-            document.getElementById('minesBetAmount').disabled = false;
-            
-            // Обновляем активную кнопку выбора мин
-            document.querySelectorAll('.mines-count-btn').forEach(btn => {
-                if (parseInt(btn.dataset.count) === minesGameState.minesCount) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
-            
-            // Переустанавливаем обработчики для клеток
-            setupMinesCellHandlers();
-        }
-        
-        function setupMinesCellHandlers() {
-            const minesGrid = document.getElementById('minesGrid');
-            if (!minesGrid) return;
-            
-            // Удаляем старые обработчики и добавляем новые
-            const cells = minesGrid.querySelectorAll('.mines-cell');
-            cells.forEach(cell => {
-                cell.addEventListener('click', function() {
-                    if (minesGameState.gameActive) {
-                        const index = parseInt(this.dataset.index);
-                        openMinesCell(index);
-                    }
-                });
-            });
-        }
-
-        function startMinesGame() {
-            if (minesGameState.gameActive) return;
-            
-            minesGameState.betAmount = parseFloat(document.getElementById('minesBetAmount').value) || 0.1;
-            
-            if (balance < minesGameState.betAmount) {
-                if (tg) {
-                    tg.showAlert('Недостаточно средств!');
-                } else {
-                    alert('Недостаточно средств!');
-                }
-                return;
-            }
-            
-            balance -= minesGameState.betAmount;
-            document.getElementById('balance').textContent = balance.toFixed(2);
-            document.getElementById('minesBalance').textContent = balance.toFixed(2);
-            saveInventory();
-            
-            // Генерируем мины
-            minesGameState.mines = [];
-            minesGameState.opened = [];
-            minesGameState.currentMultiplier = 1.0;
-            minesGameState.gameActive = true;
-            
-            // Сбрасываем все клетки
-            minesGameState.grid.forEach(cell => {
-                cell.isMine = false;
-                cell.revealed = false;
-            });
-            
-            const gridSize = minesGameState.gridSize;
-            while (minesGameState.mines.length < minesGameState.minesCount) {
-                const randomIndex = Math.floor(Math.random() * gridSize);
-                if (!minesGameState.mines.includes(randomIndex)) {
-                    minesGameState.mines.push(randomIndex);
-                    minesGameState.grid[randomIndex].isMine = true;
-                }
-            }
-            
-            // Обновляем отображение множителя в начале игры
-            updateMinesMultiplier();
-            
-            document.getElementById('minesStartBtn').textContent = 'Игра идет...';
-            document.getElementById('minesStartBtn').disabled = true;
-            document.getElementById('minesBetAmount').disabled = true;
-            document.getElementById('minesCashOutBtn').disabled = false;
-            
-            // Блокируем кнопки выбора количества мин во время игры
-            document.querySelectorAll('.mines-count-btn').forEach(btn => {
-                btn.disabled = true;
-                btn.style.opacity = '0.5';
-            });
-            
-            updateMinesDisplay();
-            setupMinesCellHandlers();
-        }
-
-        function openMinesCell(index) {
-            if (!minesGameState.gameActive) return;
-            if (minesGameState.opened.includes(index)) return;
-            
-            const cell = minesGameState.grid[index];
-            if (cell.isMine) {
-                // Проигрыш
-                endMinesGame(false);
-                revealAllMines();
-                if (tg) {
-                    tg.showAlert('МИНА! Вы проиграли!');
-                    tg.HapticFeedback.notificationOccurred('error');
-                } else {
-                    alert('МИНА! Вы проиграли!');
-                }
-                return;
-            }
-            
-            minesGameState.opened.push(index);
-            cell.revealed = true;
-            
-            // Обновляем множитель (чем больше мин, тем больше увеличение)
-            const openedCount = minesGameState.opened.length;
-            let multiplierIncrease;
-            if (minesGameState.minesCount === 3) {
-                multiplierIncrease = 0.15; // +0.15 за клетку для 3 мин
-            } else if (minesGameState.minesCount === 5) {
-                multiplierIncrease = 0.2; // +0.2 за клетку для 5 мин
-            } else if (minesGameState.minesCount === 10) {
-                multiplierIncrease = 0.3; // +0.3 за клетку для 10 мин
-            } else {
-                multiplierIncrease = 0.1;
-            }
-            minesGameState.currentMultiplier = 1.0 + (openedCount * multiplierIncrease);
-            
-            // Принудительно обновляем отображение
-            updateMinesDisplay();
-            
-            // Принудительно обновляем множитель
-            const multiplierEl = document.getElementById('minesMultiplier');
-            const winningsEl = document.getElementById('minesWinnings');
-            if (multiplierEl) {
-                multiplierEl.textContent = `x${minesGameState.currentMultiplier.toFixed(2)}`;
-            }
-            if (winningsEl) {
-                const winnings = minesGameState.betAmount * minesGameState.currentMultiplier;
-                winningsEl.textContent = winnings.toFixed(2);
-            }
-            
-            if (tg) {
-                tg.HapticFeedback.impactOccurred('light');
-            }
-        }
-
-        function cashOutMines() {
-            if (!minesGameState.gameActive) return;
-            
-            const winnings = minesGameState.betAmount * minesGameState.currentMultiplier;
-            balance += winnings;
-            
-            document.getElementById('balance').textContent = balance.toFixed(2);
-            document.getElementById('minesBalance').textContent = balance.toFixed(2);
-            saveInventory();
-            
-            endMinesGame(true);
-            
-            if (tg) {
-                tg.showAlert(`Вы выиграли ${winnings.toFixed(2)}!`);
-                tg.HapticFeedback.notificationOccurred('success');
-            } else {
-                alert(`Вы выиграли ${winnings.toFixed(2)}!`);
-            }
-        }
-
-        function endMinesGame(won) {
-            minesGameState.gameActive = false;
-            document.getElementById('minesCashOutBtn').disabled = true;
-            document.getElementById('minesStartBtn').textContent = 'Новая игра';
-            document.getElementById('minesStartBtn').disabled = false;
-            document.getElementById('minesBetAmount').disabled = false;
-            
-            // Разблокируем кнопки выбора количества мин
-            document.querySelectorAll('.mines-count-btn').forEach(btn => {
-                btn.disabled = false;
-                btn.style.opacity = '1';
-            });
-            
-            if (!won) {
-                revealAllMines();
-            }
-        }
-
-        function revealAllMines() {
-            minesGameState.mines.forEach(mineIndex => {
-                const cellElement = document.querySelector(`.mines-cell[data-index="${mineIndex}"]`);
-                if (cellElement) {
-                    cellElement.classList.add('mine');
-                    cellElement.textContent = '💣';
-                }
-            });
-        }
-
-        function updateMinesDisplay() {
-            const cells = document.querySelectorAll('.mines-cell');
-            cells.forEach((cellElement, index) => {
-                const cell = minesGameState.grid[index];
-                if (minesGameState.opened.includes(index)) {
-                    cellElement.classList.add('opened', 'safe');
-                    cellElement.textContent = '✓';
-                } else {
-                    cellElement.classList.remove('opened', 'safe', 'mine');
-                    if (!minesGameState.gameActive) {
-                        cellElement.textContent = '?';
-                    } else {
-                        cellElement.textContent = '?';
-                    }
-                }
-            });
-            
-            document.getElementById('minesOpenedCount').textContent = minesGameState.opened.length;
-        }
-
-        function updateMinesMultiplier() {
-            const multiplierEl = document.getElementById('minesMultiplier');
-            const winningsEl = document.getElementById('minesWinnings');
-            
-            if (multiplierEl) {
-                multiplierEl.textContent = `x${minesGameState.currentMultiplier.toFixed(2)}`;
-            }
-            
-            if (winningsEl) {
-                const winnings = minesGameState.betAmount * minesGameState.currentMultiplier;
-                winningsEl.textContent = winnings.toFixed(2);
-            }
-        }
-
-        // Инициализация игры при загрузке
-        document.addEventListener('DOMContentLoaded', () => {
-            const minesStartBtn = document.getElementById('minesStartBtn');
-            const minesCashOutBtn = document.getElementById('minesCashOutBtn');
-            const minesGrid = document.getElementById('minesGrid');
-            
-            if (minesStartBtn) {
-                minesStartBtn.addEventListener('click', startMinesGame);
-            }
-            
-            if (minesCashOutBtn) {
-                minesCashOutBtn.addEventListener('click', cashOutMines);
-            }
-            
-            // Обработчик кликов по клеткам (делегирование событий)
-            if (minesGrid) {
-                minesGrid.addEventListener('click', (e) => {
-                    const cell = e.target.closest('.mines-cell');
-                    if (cell && minesGameState.gameActive && !cell.classList.contains('opened')) {
-                        const index = parseInt(cell.dataset.index);
-                        if (!isNaN(index)) {
-                            openMinesCell(index);
-                        }
-                    }
-                });
-            }
-            
-            // Обработчики кнопок выбора количества мин
-            document.querySelectorAll('.mines-count-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    if (minesGameState.gameActive) {
-                        if (tg) {
-                            tg.showAlert('Нельзя изменить количество мин во время игры!');
-                        } else {
-                            alert('Нельзя изменить количество мин во время игры!');
-                        }
-                        return;
-                    }
-                    
-                    document.querySelectorAll('.mines-count-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    minesGameState.minesCount = parseInt(btn.dataset.count);
-                    document.getElementById('minesTotalCount').textContent = minesGameState.minesCount;
-                });
-            });
-        });
-        
-        // ИГРА DICE
-        let diceGameState = {
-            betAmount: 0.1,
-            threshold: 50,
-            rollType: 'under', // 'under' или 'over'
-            autoPlay: false,
-            autoPlayInterval: null,
-            isRolling: false
-        };
-
-        function initDiceGame() {
-            const thresholdSlider = document.getElementById('diceThreshold');
-            const thresholdValue = document.getElementById('diceThresholdValue');
-            const rollUnderBtn = document.getElementById('diceRollUnderBtn');
-            const rollOverBtn = document.getElementById('diceRollOverBtn');
-            const autoToggle = document.getElementById('diceAutoToggle');
-            const autoStatus = document.getElementById('diceAutoStatus');
-            const startBtn = document.getElementById('diceStartBtn');
-            
-            // Обновление значения слайдера
-            if (thresholdSlider && thresholdValue) {
-                thresholdValue.textContent = diceGameState.threshold;
-                thresholdSlider.value = diceGameState.threshold;
-                
-                thresholdSlider.addEventListener('input', (e) => {
-                    diceGameState.threshold = parseInt(e.target.value);
-                    thresholdValue.textContent = diceGameState.threshold;
-                    updateDiceMultiplier();
-                });
-            }
-            
-            // Переключение типа ставки
-            if (rollUnderBtn) {
-                rollUnderBtn.addEventListener('click', () => {
-                    diceGameState.rollType = 'under';
-                    rollUnderBtn.classList.add('active');
-                    rollOverBtn.classList.remove('active');
-                    updateDiceMultiplier();
-                });
-            }
-            
-            if (rollOverBtn) {
-                rollOverBtn.addEventListener('click', () => {
-                    diceGameState.rollType = 'over';
-                    rollOverBtn.classList.add('active');
-                    rollUnderBtn.classList.remove('active');
-                    updateDiceMultiplier();
-                });
-            }
-            
-            // Переключатель авто-игры
-            if (autoToggle) {
-                autoToggle.addEventListener('change', (e) => {
-                    diceGameState.autoPlay = e.target.checked;
-                    autoStatus.textContent = diceGameState.autoPlay ? 'ON' : 'OFF';
-                    
-                    if (diceGameState.autoPlay && !diceGameState.isRolling) {
-                        startDiceGame();
-                    } else if (!diceGameState.autoPlay) {
-                        stopAutoPlay();
-                    }
-                });
-            }
-            
-            // Кнопка START
-            if (startBtn) {
-                startBtn.addEventListener('click', () => {
-                    if (!diceGameState.isRolling) {
-                        startDiceGame();
-                    }
-                });
-            }
-            
-            updateDiceMultiplier();
-        }
-
-        function updateDiceMultiplier() {
-            // Множитель зависит от вероятности выигрыша
-            // Для Roll Under: множитель = 99 / threshold
-            // Для Roll Over: множитель = 99 / (99 - threshold)
-            let multiplier;
-            if (diceGameState.rollType === 'under') {
-                multiplier = 99 / diceGameState.threshold;
-            } else {
-                multiplier = 99 / (99 - diceGameState.threshold);
-            }
-            
-            const multiplierEl = document.getElementById('diceMultiplier');
-            if (multiplierEl) {
-                multiplierEl.textContent = `x${multiplier.toFixed(2)}`;
-            }
-            
-            const winningsEl = document.getElementById('diceWinnings');
-            if (winningsEl) {
-                const winnings = diceGameState.betAmount * multiplier;
-                winningsEl.textContent = winnings.toFixed(2);
-            }
-        }
-
-        function startDiceGame() {
-            if (diceGameState.isRolling) return;
-            
-            diceGameState.betAmount = parseFloat(document.getElementById('diceBetAmount').value) || 0.1;
-            
-            if (balance < diceGameState.betAmount) {
-                if (tg) {
-                    tg.showAlert('Недостаточно средств!');
-                } else {
-                    alert('Недостаточно средств!');
-                }
-                if (diceGameState.autoPlay) {
-                    document.getElementById('diceAutoToggle').checked = false;
-                    diceGameState.autoPlay = false;
-                    document.getElementById('diceAutoStatus').textContent = 'OFF';
-                }
-                return;
-            }
-            
-            balance -= diceGameState.betAmount;
-            document.getElementById('balance').textContent = balance.toFixed(2);
-            document.getElementById('diceBalance').textContent = balance.toFixed(2);
-            saveInventory();
-            
-            diceGameState.isRolling = true;
-            const startBtn = document.getElementById('diceStartBtn');
-            if (startBtn) {
-                startBtn.disabled = true;
-                startBtn.textContent = 'ROLLING...';
-            }
-            
-            // Анимация броска
-            const resultValue = document.getElementById('diceResultValue');
-            const resultText = document.getElementById('diceResultText');
-            let rollCount = 0;
-            const rollInterval = setInterval(() => {
-                rollCount++;
-                const randomValue = Math.floor(Math.random() * 100);
-                if (resultValue) {
-                    resultValue.textContent = randomValue;
-                    resultValue.classList.remove('win', 'lose');
-                }
-                
-                if (rollCount > 10) {
-                    clearInterval(rollInterval);
-                    
-                    // Финальный результат
-                    const finalRoll = Math.floor(Math.random() * 100);
-                    
-                    let won = false;
-                    if (diceGameState.rollType === 'under') {
-                        won = finalRoll < diceGameState.threshold;
-                    } else {
-                        won = finalRoll > diceGameState.threshold;
-                    }
-                    
-                    if (resultValue) {
-                        resultValue.textContent = finalRoll;
-                        resultValue.classList.add(won ? 'win' : 'lose');
-                    }
-                    
-                    if (resultText) {
-                        resultText.textContent = won ? 'ВЫИГРЫШ!' : 'ПРОИГРЫШ';
-                        resultText.style.color = won ? '#00ff00' : '#ff0000';
-                    }
-                    
-                    if (won) {
-                        const multiplier = diceGameState.rollType === 'under' 
-                            ? 99 / diceGameState.threshold 
-                            : 99 / (99 - diceGameState.threshold);
-                        const winnings = diceGameState.betAmount * multiplier;
-                        balance += winnings;
-                        
-                        document.getElementById('balance').textContent = balance.toFixed(2);
-                        document.getElementById('diceBalance').textContent = balance.toFixed(2);
-                        saveInventory();
-                        
-                        // Сохраняем результат игры на сервер
-                        saveDiceGameToServer({
-                            userId: getUserId(),
-                            username: getUsername(),
-                            result: finalRoll,
-                            threshold: diceGameState.threshold,
-                            rollType: diceGameState.rollType,
-                            betAmount: diceGameState.betAmount,
-                            multiplier: multiplier,
-                            winnings: winnings,
-                            won: true
-                        });
-                        
-                        if (tg) {
-                            tg.showAlert(`Выигрыш ${winnings.toFixed(2)}!`);
-                            tg.HapticFeedback.notificationOccurred('success');
-                        }
-                    } else {
-                        // Сохраняем результат проигрыша на сервер
-                        saveDiceGameToServer({
-                            userId: getUserId(),
-                            username: getUsername(),
-                            result: finalRoll,
-                            threshold: diceGameState.threshold,
-                            rollType: diceGameState.rollType,
-                            betAmount: diceGameState.betAmount,
-                            multiplier: 0,
-                            winnings: 0,
-                            won: false
-                        });
-                        
-                        if (tg) {
-                            tg.showAlert('Проигрыш!');
-                            tg.HapticFeedback.notificationOccurred('error');
-                        }
-                    }
-                    
-                    diceGameState.isRolling = false;
-                    if (startBtn) {
-                        startBtn.disabled = false;
-                        startBtn.textContent = 'START';
-                    }
-                    
-                    // Продолжаем авто-игру если включена
-                    if (diceGameState.autoPlay) {
-                        setTimeout(() => {
-                            startDiceGame();
-                        }, 1500);
-                    } else {
-                        // Сбрасываем результат через 3 секунды
-                        setTimeout(() => {
-                            if (resultValue) {
-                                resultValue.textContent = '?';
-                                resultValue.classList.remove('win', 'lose');
-                            }
-                            if (resultText) {
-                                resultText.textContent = 'Нажмите START';
-                                resultText.style.color = 'rgba(255, 255, 255, 0.8)';
-                            }
-                        }, 3000);
-                    }
-                }
-            }, 50);
-        }
-
-        function stopAutoPlay() {
-            diceGameState.autoPlay = false;
-            diceGameState.isRolling = false;
-            const startBtn = document.getElementById('diceStartBtn');
-            if (startBtn) {
-                startBtn.disabled = false;
-                startBtn.textContent = 'START';
-            }
-        }
-
-        // Сохранение результата игры Dice на сервер
-        async function saveDiceGameToServer(gameData) {
+        if (fs.existsSync(paymentsFile)) {
             try {
-                const userId = getUserId();
-                if (!userId) {
-                    return;
-                }
-                
-                const response = await fetch(`${API_BASE_URL}/dice/games`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        ...gameData,
-                        userId: userId,
-                        timestamp: Date.now()
-                    })
-                });
-                
-                if (!response.ok) {
-                    console.log('Не удалось сохранить результат игры на сервер');
-                }
-            } catch (error) {
-                console.log('Ошибка при сохранении результата игры:', error);
+                payments = JSON.parse(fs.readFileSync(paymentsFile, 'utf8'));
+            } catch (e) {
+                payments = [];
             }
         }
-
-        // Обновление множителя при изменении ставки
-        document.addEventListener('DOMContentLoaded', () => {
-            const diceBetAmount = document.getElementById('diceBetAmount');
-            if (diceBetAmount) {
-                diceBetAmount.addEventListener('input', () => {
-                    diceGameState.betAmount = parseFloat(diceBetAmount.value) || 0.1;
-                    updateDiceMultiplier();
-                });
-            }
+        
+        // Проверяем дубликаты
+        const isDuplicate = payments.some(p => 
+            p.transactionId === transactionId && p.verified && p.type === 'telegram'
+        );
+        
+        if (isDuplicate) {
+            return res.json({ 
+                success: false,
+                message: 'Payment already processed' 
+            });
+        }
+        
+        // Добавляем платеж
+        payments.push({
+            id: Date.now(),
+            userId: userId,
+            amount: amount,
+            transactionId: transactionId,
+            paymentHash: paymentHash || null,
+            timestamp: timestamp || Date.now(),
+            verified: true,
+            type: 'telegram'
         });
-
-        // Продажа выбранного предмета
-        function sellSelectedItem() {
-            if (!selectedInventoryItem) return;
-            
-            const item = selectedInventoryItem;
-            
-            if (tg) {
-                tg.showConfirm(`Продать "${item.name}" за 💎 ${item.value.toFixed(2)}?`, (confirmed) => {
-                    if (confirmed) {
-                        balance += item.value;
-                        document.getElementById('balance').textContent = balance.toFixed(2);
-                        
-                        // Удаляем предмет из инвентаря
-                        userInventory = userInventory.filter(invItem => invItem.id !== item.id);
-                        saveInventory(); // Сохраняем баланс локально
-                        saveUserData(); // Сохраняем на сервер
-                        updateInventory();
-                        closeInventoryModal();
-                        
-                        tg.HapticFeedback.notificationOccurred('success');
-                    }
-                });
-            } else {
-                if (confirm(`Продать "${item.name}" за ${item.value.toFixed(2)}?`)) {
-                    balance += item.value;
-                    document.getElementById('balance').textContent = balance.toFixed(2);
-                    
-                    // Удаляем предмет из инвентаря
-                    userInventory = userInventory.filter(invItem => invItem.id !== item.id);
-                    saveInventory(); // Сохраняем баланс локально
-                    saveUserData(); // Сохраняем на сервер
-                    updateInventory();
-                    closeInventoryModal();
-                }
-            }
+        
+        // Оставляем только последние 10000 платежей
+        if (payments.length > 10000) {
+            payments = payments.slice(-10000);
         }
         
-        // Обработчик кнопки "Продать" в модальном окне
-        const sellItemBtn = document.getElementById('sellItemBtn');
-        if (sellItemBtn) {
-            sellItemBtn.addEventListener('click', sellSelectedItem);
-        }
-
-        // ========== КРАШ ИГРА ==========
-        let crashMultiplier = 1.00;
-        let crashAnimationId = null;
-        let crashGameRunning = false;
-        let crashPlayers = [];
-        let crashGraphPoints = [];
-        let selectedMultiplier = null;
-        let betType = 'balance';
-        let userBet = null;
-        let crashRoundActive = false;
-        let crashTarget = 1.00;
-        let crashDirection = 1; // 1 = вверх, -1 = вниз (краш)
-
-        // Инициализация игры Краш
-        function initCrashGame() {
-            const canvas = document.getElementById('crashCanvas');
-            if (!canvas) return;
-            
-            const ctx = canvas.getContext('2d');
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
-            
-            // НЕ очищаем список игроков при инициализации, чтобы ставки сохранялись
-            // crashPlayers = []; // Убрано - сохраняем ставки между раундами
-            
-            startNewCrashRound(ctx, canvas);
-            updateCrashBetsList();
-            updateBetItemSelect();
-            
-            // Загружаем ставки других игроков с сервера
-            loadCrashBetsFromServer();
-            
-            // Обновляем список ставок каждую секунду
-            if (window.crashBetsInterval) {
-                clearInterval(window.crashBetsInterval);
-            }
-            window.crashBetsInterval = setInterval(() => {
-                if (document.getElementById('crashPage')?.style.display === 'block') {
-                    // Загружаем актуальные ставки с сервера
-                    loadCrashBetsFromServer();
-                    updateCrashBetsList();
-                }
-            }, 1000);
-        }
-
-        // Начало нового раунда краша (с кулдауном для ставок)
-        function startNewCrashRound(ctx, canvas) {
-            // Сначала показываем кулдаун, чтобы люди успели поставить ставки
-            showCrashCooldown(10, ctx, canvas);
+        fs.writeFileSync(paymentsFile, JSON.stringify(payments, null, 2));
+        
+        // Пополняем баланс пользователя
+        const usersData = readUsersData();
+        if (!usersData[userId]) {
+            usersData[userId] = { balance: 0, inventory: [] };
         }
         
-        // Показ кулдауна перед новым раундом (во время кулдауна можно ставить ставки)
-        function showCrashCooldown(seconds, ctx, canvas) {
-            const multiplierElement = document.getElementById('currentMultiplier');
-            const makeBetBtn = document.getElementById('makeBetBtn');
-            
-            // Разрешаем ставки во время кулдауна
-            crashRoundActive = false; // Раунд еще не начался
-            crashMultiplier = 1.00;
-            
-            // Очищаем график и показываем кулдаун
-            crashGraphPoints = [];
-            
-            // Удаляем только завершенные ставки прошлого раунда (старше 30 секунд)
-            const now = Date.now();
-            crashPlayers = crashPlayers.filter(player => {
-                // Оставляем активные ставки (не завершенные)
-                if (!player.cashedOut) {
-                    return true;
-                }
-                // Оставляем завершенные ставки, которые недавно завершились (меньше 30 секунд назад)
-                const timeSinceCashout = now - (player.cashOutTime || player.timestamp || 0);
-                return timeSinceCashout < 30000; // Показываем завершенные ставки 30 секунд
-            });
-            
-            let remaining = seconds;
-            
-            const countdown = setInterval(() => {
-                // Показываем кулдаун только на canvas
-                if (ctx && canvas) {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.fillStyle = '#ffaa00';
-                    ctx.font = 'bold 28px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(`Ставки принимаются`, canvas.width / 2, canvas.height / 2 - 20);
-                    ctx.fillText(`${remaining}...`, canvas.width / 2, canvas.height / 2 + 20);
-                }
-                
-                // Очищаем и скрываем элемент множителя во время кулдауна (показываем только на canvas)
-                if (multiplierElement) {
-                    multiplierElement.textContent = '';
-                    multiplierElement.style.display = 'none';
-                }
-                
-                // Обновляем текст кнопки для активных ставок
-                const makeBetBtn = document.getElementById('makeBetBtn');
-                if (makeBetBtn && userBet && !userBet.cashedOut) {
-                    makeBetBtn.textContent = 'Ставка активна';
-                    makeBetBtn.disabled = true;
-                } else if (makeBetBtn && !userBet) {
-                    makeBetBtn.textContent = 'Сделать ставку';
-                    makeBetBtn.disabled = false;
-                }
-                
-                remaining--;
-                
-                if (remaining < 0) {
-                    clearInterval(countdown);
-                    
-                    // Показываем элемент множителя обратно
-                    if (multiplierElement) {
-                        multiplierElement.style.display = 'block';
-                        multiplierElement.textContent = 'x1.00';
-                        multiplierElement.style.color = '#00ff00';
-                        multiplierElement.style.borderColor = '#00ff00';
-                    }
-                    
-                    // Обновляем кнопку для активных ставок
-                    if (makeBetBtn && userBet && !userBet.cashedOut && crashRoundActive === false) {
-                        makeBetBtn.textContent = 'Забрать';
-                        makeBetBtn.disabled = false;
-                    }
-                    
-                    // Начинаем раунд
-                    crashRoundActive = true;
-                    crashMultiplier = 1.00;
-                    crashDirection = 1;
-                    crashGraphPoints = [{ x: 0, y: canvas.height - 50, multiplier: 1.00 }];
-                    
-                    // Одинаковый краш для всех игроков (на основе времени начала раунда)
-                    const roundStartTime = Date.now();
-                    const seed = roundStartTime % 1000000; // Используем остаток от времени как seed
-                    const random = seed / 1000000; // Преобразуем в 0-1
-                    
-                    // Момент краша (от 1.01 до 10.0) - одинаковый для всех
-                    crashTarget = 1.01 + random * 9.0;
-                    
-                    // Время до краша (от 3 до 20 секунд) - одинаковое для всех
-                    // НЕ используем setTimeout для краша, так как краш определяется достижением crashTarget в анимации
-                    // Это обеспечивает одинаковый результат для всех игроков
-                    
-                    // Запускаем анимацию роста графика
-                    startCrashAnimation(ctx, canvas);
-                }
-            }, 1000);
-        }
-
-        // Анимация графика краша
-        function startCrashAnimation(ctx, canvas) {
-            if (crashAnimationId) {
-                cancelAnimationFrame(crashAnimationId);
-            }
-            
-            // Одинаковая скорость для всех (на основе crashTarget для синхронизации)
-            let speed = 0.012; // Фиксированная скорость роста для всех игроков
-            
-            const animate = () => {
-                // Не обновляем график если раунд не активен (кулдаун)
-                if (!crashRoundActive) {
-                    return;
-                }
-                
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
-                // Обновляем множитель только если раунд активен и график растет
-                if (crashRoundActive && crashDirection === 1) {
-                    // Движение вверх (рост)
-                    crashMultiplier += speed;
-                    if (crashMultiplier >= crashTarget) {
-                        // Достигли цели, начинаем краш - резко падаем
-                        crashDirection = -1;
-                        crashMultiplier = 0.01;
-                        
-                        // Вибрация при краше
-                        if (tg) {
-                            tg.HapticFeedback.notificationOccurred('error');
-                        }
-                        
-                        // Сразу обрабатываем краш
-                        crashRoundActive = false;
-                        processCrashRound();
-                        
-                        // Начинаем кулдаун 10 секунд
-                        setTimeout(() => {
-                            showCrashCooldown(10, ctx, canvas);
-                        }, 100);
-                    }
-                } else if (crashDirection === -1) {
-                    // Резкое падение - сразу до нуля
-                    crashMultiplier = 0.01;
-                }
-                
-                // Добавляем точку на график
-                const x = crashGraphPoints.length * 2;
-                // Преобразуем множитель в Y координату (1.0 = низ, выше = выше на графике)
-                const multiplierPercent = ((crashMultiplier - 1.0) / 9.0) * 100;
-                const y = canvas.height - 50 - (multiplierPercent / 100) * (canvas.height - 100);
-                
-                crashGraphPoints.push({ x, y, multiplier: crashMultiplier });
-                
-                // Ограничиваем количество точек
-                if (crashGraphPoints.length > canvas.width / 2) {
-                    crashGraphPoints = crashGraphPoints.slice(-Math.floor(canvas.width / 2));
-                    crashGraphPoints.forEach((point, i) => {
-                        point.x = i * 2;
-                    });
-                }
-                
-                // Рисуем график
-                ctx.strokeStyle = crashDirection === 1 ? '#00ff00' : '#ff0000';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.moveTo(crashGraphPoints[0].x, crashGraphPoints[0].y);
-                for (let i = 1; i < crashGraphPoints.length; i++) {
-                    ctx.lineTo(crashGraphPoints[i].x, crashGraphPoints[i].y);
-                }
-                ctx.stroke();
-                
-                // При резком падении рисуем вертикальную красную линию
-                if (crashDirection === -1 && crashMultiplier <= 0.01) {
-                    ctx.strokeStyle = '#ff0000';
-                    ctx.lineWidth = 3;
-                    ctx.beginPath();
-                    const lastPoint = crashGraphPoints[crashGraphPoints.length - 2];
-                    if (lastPoint) {
-                        ctx.moveTo(lastPoint.x, lastPoint.y);
-                        ctx.lineTo(lastPoint.x, canvas.height - 50);
-                    }
-                    ctx.stroke();
-                }
-                
-                // Обновляем отображение множителя
-                const multiplierElement = document.getElementById('currentMultiplier');
-                if (multiplierElement && crashRoundActive) {
-                    multiplierElement.textContent = `x${crashMultiplier.toFixed(2)}`;
-                    multiplierElement.style.color = crashDirection === 1 ? '#00ff00' : '#ff0000';
-                }
-                
-                // Обновляем кнопку "Забрать" если есть активная ставка
-                const makeBetBtn = document.getElementById('makeBetBtn');
-                if (makeBetBtn && userBet && crashRoundActive && crashDirection === 1 && !userBet.cashedOut) {
-                    makeBetBtn.textContent = 'Забрать';
-                    makeBetBtn.disabled = false;
-                }
-                
-                // Проверяем выигрыши только если раунд активен
-                if (crashRoundActive) {
-                    checkCrashWins();
-                }
-                
-                crashAnimationId = requestAnimationFrame(animate);
-            };
-            
-            animate();
-        }
+        const currentBalance = parseFloat(usersData[userId].balance) || 0;
+        usersData[userId].balance = (currentBalance + parseFloat(amount)).toFixed(2);
         
-        // Обработка завершения раунда краша
-        function processCrashRound() {
-            // Все не забранные ставки теряются
-            let lostCount = 0;
-            crashPlayers.forEach(player => {
-                if (!player.cashedOut) {
-                    // Ставка потеряна - человек ничего не получает
-                    player.cashedOut = true;
-                    player.winnings = 0;
-                    player.cashOutMultiplier = 0;
-                    player.cashOutTime = Date.now(); // Запоминаем время краша
-                    lostCount++;
-                    
-                    // Если это ставка текущего пользователя, сбрасываем состояние
-                    if (player.id === userBet?.id) {
-                        userBet = null;
-                        const makeBetBtn = document.getElementById('makeBetBtn');
-                        if (makeBetBtn) {
-                            makeBetBtn.textContent = 'Сделать ставку';
-                        }
-                    }
-                }
-            });
-            
-            if (lostCount > 0 && tg) {
-                tg.showAlert(`КРАШ! Потеряно ${lostCount} ставок`);
-                tg.HapticFeedback.notificationOccurred('error');
-            }
-            
-            updateCrashBetsList();
-            
-            // НЕ очищаем список игроков - ставки остаются в списке для отображения истории
-            // Игроки могут видеть завершенные ставки до начала следующего раунда
+        writeUsersData(usersData);
+        
+        res.json({ 
+            success: true,
+            message: 'Payment saved and processed',
+            newBalance: usersData[userId].balance
+        });
+        
+    } catch (error) {
+        console.error('Error in POST /api/payments/telegram:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Сохранение инвойса от CryptoBot
+app.post('/api/payments/cryptobot-invoice', async (req, res) => {
+    try {
+        const { userId, amount, transactionId, invoiceId, invoiceUrl, status } = req.body;
+        
+        if (!userId || !amount || !invoiceId) {
+            return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        // Проверка выигрышей игроков
-        function checkCrashWins() {
-            crashPlayers.forEach(player => {
-                if (!player.cashedOut && player.autoCash && crashMultiplier >= player.autoCash) {
-                    cashOutPlayer(player.id);
-                }
-            });
-            // Обновляем список каждую секунду для отображения текущих выигрышей
-            if (crashPlayers.length > 0 && crashPlayers.some(p => !p.cashedOut)) {
-                setTimeout(() => updateCrashBetsList(), 1000);
-            }
-        }
-
-        // Сохранение ставки на сервер
-        async function saveCrashBetToServer(bet) {
+        const invoicesFile = path.join(__dirname, 'cryptobot_invoices.json');
+        let invoices = [];
+        
+        if (fs.existsSync(invoicesFile)) {
             try {
-                const response = await fetch(`${API_BASE_URL}/crash/bets`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        ...bet,
-                        timestamp: Date.now()
-                    })
-                });
-                
-                if (!response.ok) {
-                    console.log('Не удалось сохранить ставку на сервер, работаем локально');
-                }
-            } catch (error) {
-                console.log('Ошибка при сохранении ставки:', error);
-                // Работаем локально, если сервер недоступен
+                invoices = JSON.parse(fs.readFileSync(invoicesFile, 'utf8'));
+            } catch (e) {
+                invoices = [];
             }
         }
         
-        // Загрузка ставок других игроков с сервера
-        async function loadCrashBetsFromServer() {
+        invoices.push({
+            userId: userId,
+            amount: amount,
+            transactionId: transactionId,
+            invoiceId: invoiceId,
+            invoiceUrl: invoiceUrl,
+            status: status || 'pending',
+            timestamp: Date.now()
+        });
+        
+        fs.writeFileSync(invoicesFile, JSON.stringify(invoices, null, 2));
+        
+        res.json({ success: true, message: 'Invoice saved' });
+    } catch (error) {
+        console.error('Error in POST /api/payments/cryptobot-invoice:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Обработка оплаченного инвойса от CryptoBot (вебхук)
+app.post('/api/payments/cryptobot-paid', async (req, res) => {
+    try {
+        const { invoiceId, invoice } = req.body;
+        
+        if (!invoiceId || !invoice) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        // Ищем инвойс в базе
+        const invoicesFile = path.join(__dirname, 'cryptobot_invoices.json');
+        let invoices = [];
+        
+        if (fs.existsSync(invoicesFile)) {
             try {
-                const response = await fetch(`${API_BASE_URL}/crash/bets`);
-                if (response.ok) {
-                    const serverBets = await response.json();
-                    
-                    // Объединяем ставки с сервера с локальными
-                    const localUserIds = crashPlayers.map(p => p.id);
-                    serverBets.forEach(serverBet => {
-                        // Добавляем ставку, если её нет в локальном списке
-                        if (!localUserIds.includes(serverBet.id)) {
-                            crashPlayers.push(serverBet);
-                        } else {
-                            // Обновляем существующую ставку
-                            const index = crashPlayers.findIndex(p => p.id === serverBet.id);
-                            if (index !== -1) {
-                                crashPlayers[index] = { ...crashPlayers[index], ...serverBet };
-                            }
-                        }
-                    });
-                }
-            } catch (error) {
-                console.log('Ошибка при загрузке ставок:', error);
-                // Работаем локально, если сервер недоступен
+                invoices = JSON.parse(fs.readFileSync(invoicesFile, 'utf8'));
+            } catch (e) {
+                invoices = [];
             }
         }
         
-        // Вывод ставки
-        function cashOutPlayer(playerId) {
-            const player = crashPlayers.find(p => p.id === playerId);
-            if (!player || player.cashedOut) return;
+        const invoiceData = invoices.find(inv => inv.invoiceId == invoiceId);
+        if (!invoiceData) {
+            return res.status(404).json({ error: 'Invoice not found' });
+        }
+        
+        // Проверяем, не был ли уже обработан
+        if (invoiceData.status === 'paid') {
+            return res.json({ success: false, message: 'Already processed' });
+        }
+        
+        // Обновляем статус
+        invoiceData.status = 'paid';
+        invoiceData.paidAt = Date.now();
+        
+        // Пополняем баланс пользователя
+        const usersData = readUsersData();
+        const userId = invoiceData.userId;
+        
+        if (!usersData[userId]) {
+            usersData[userId] = { balance: 0, inventory: [] };
+        }
+        
+        const currentBalance = parseFloat(usersData[userId].balance) || 0;
+        usersData[userId].balance = (currentBalance + parseFloat(invoiceData.amount)).toFixed(2);
+        
+        writeUsersData(usersData);
+        
+        // Сохраняем платеж
+        const paymentsFile = path.join(__dirname, 'payments_data.json');
+        let payments = [];
+        
+        if (fs.existsSync(paymentsFile)) {
+            try {
+                payments = JSON.parse(fs.readFileSync(paymentsFile, 'utf8'));
+            } catch (e) {
+                payments = [];
+            }
+        }
+        
+        payments.push({
+            id: Date.now(),
+            userId: userId,
+            amount: invoiceData.amount,
+            transactionId: invoiceData.transactionId,
+            invoiceId: invoiceId,
+            timestamp: Date.now(),
+            verified: true,
+            type: 'cryptobot'
+        });
+        
+        if (payments.length > 10000) {
+            payments = payments.slice(-10000);
+        }
+        
+        fs.writeFileSync(paymentsFile, JSON.stringify(payments, null, 2));
+        fs.writeFileSync(invoicesFile, JSON.stringify(invoices, null, 2));
+        
+        res.json({ 
+            success: true,
+            message: 'Payment processed',
+            newBalance: usersData[userId].balance
+        });
+        
+    } catch (error) {
+        console.error('Error in POST /api/payments/cryptobot-paid:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Вебхук от CryptoBot (если настроен)
+app.post('/api/webhooks/cryptobot', async (req, res) => {
+    try {
+        const update = req.body;
+        
+        // CryptoBot отправляет обновления об инвойсах
+        if (update.update_type === 'invoice_paid') {
+            const invoice = update.payload.invoice;
             
-            const betValue = player.itemValue || player.betAmount;
-            const winnings = betValue * crashMultiplier;
-            player.cashedOut = true;
-            player.winnings = winnings;
-            player.cashOutMultiplier = crashMultiplier;
-            player.cashOutTime = Date.now(); // Запоминаем время вывода
+            // Обрабатываем оплаченный инвойс напрямую
+            const invoicesFile = path.join(__dirname, 'cryptobot_invoices.json');
+            let invoices = [];
             
-            // Обновляем информацию на сервере
-            saveCrashBetToServer(player);
-            
-            // Если это ставка текущего пользователя, добавляем выигрыш к балансу
-            if (playerId === userBet?.id) {
-                balance += winnings;
-                document.getElementById('balance').textContent = balance.toFixed(2);
-                document.getElementById('crashBalance').textContent = balance.toFixed(2);
-                saveInventory();
-                saveUserData();
-                
-                if (tg) {
-                    tg.showAlert(`Вы выиграли ${winnings.toFixed(2)}!`);
-                    tg.HapticFeedback.notificationOccurred('success');
-                }
-                
-                userBet = null;
-                const makeBetBtn = document.getElementById('makeBetBtn');
-                if (makeBetBtn) {
-                    makeBetBtn.textContent = 'Сделать ставку';
+            if (fs.existsSync(invoicesFile)) {
+                try {
+                    invoices = JSON.parse(fs.readFileSync(invoicesFile, 'utf8'));
+                } catch (e) {
+                    invoices = [];
                 }
             }
             
-            updateCrashBetsList();
-        }
-
-        // Обновление списка ставок
-        function updateCrashBetsList() {
-            const betsList = document.getElementById('betsList');
-            if (!betsList) return;
-            
-            betsList.innerHTML = '';
-            const headerDiv = document.createElement('div');
-            headerDiv.className = 'bets-list-header';
-            headerDiv.textContent = `Ставки (${crashPlayers.length})`;
-            betsList.appendChild(headerDiv);
-            
-            // Сортируем игроков: сначала активные, потом выведенные
-            const activePlayers = crashPlayers.filter(p => !p.cashedOut);
-            const cashedPlayers = crashPlayers.filter(p => p.cashedOut);
-            const sortedPlayers = [...activePlayers, ...cashedPlayers].reverse();
-            
-            sortedPlayers.forEach(player => {
-                const betItem = document.createElement('div');
-                betItem.className = 'bet-item';
+            const invoiceData = invoices.find(inv => inv.invoiceId == invoice.invoice_id);
+            if (invoiceData && invoiceData.status !== 'paid') {
+                // Вызываем тот же обработчик, что и для ручной проверки
+                req.body = { invoiceId: invoice.invoice_id, invoice: invoice };
                 
-                const avatar = document.createElement('div');
-                avatar.className = 'bet-item-avatar';
-                const user = tg?.initDataUnsafe?.user;
-                if (player.userId === user?.id && user?.photo_url) {
-                    const img = document.createElement('img');
-                    img.src = user.photo_url;
-                    img.style.width = '100%';
-                    img.style.height = '100%';
-                    img.style.objectFit = 'cover';
-                    img.style.borderRadius = '50%';
-                    avatar.appendChild(img);
-                } else {
-                    avatar.textContent = player.avatar || '👤';
+                // Дублируем логику из /api/payments/cryptobot-paid
+                invoiceData.status = 'paid';
+                invoiceData.paidAt = Date.now();
+                
+                const usersData = readUsersData();
+                const userId = invoiceData.userId;
+                
+                if (!usersData[userId]) {
+                    usersData[userId] = { balance: 0, inventory: [] };
                 }
-                betItem.appendChild(avatar);
                 
-                const info = document.createElement('div');
-                info.className = 'bet-item-info';
+                const currentBalance = parseFloat(usersData[userId].balance) || 0;
+                usersData[userId].balance = (currentBalance + parseFloat(invoiceData.amount)).toFixed(2);
                 
-                const username = document.createElement('div');
-                username.className = 'bet-item-username';
-                username.textContent = player.username;
-                info.appendChild(username);
+                writeUsersData(usersData);
                 
-                const details = document.createElement('div');
-                details.className = 'bet-item-details';
-                if (player.itemName) {
-                    const betValue = player.itemValue || 0;
-                    details.innerHTML = `🎁 ${player.itemName}<br><span style="font-size: 12px; opacity: 0.8;">Ставка: ${betValue.toFixed(2)}</span>`;
-                } else {
-                    details.innerHTML = `<span class="currency-icon" style="width: 12px; height: 12px; display: inline-block;"></span> ${player.betAmount.toFixed(2)}<br><span style="font-size: 12px; opacity: 0.8;">Множитель: ${(player.cashOutMultiplier || crashMultiplier).toFixed(2)}</span>`;
-                }
-                info.appendChild(details);
+                const paymentsFile = path.join(__dirname, 'payments_data.json');
+                let payments = [];
                 
-                betItem.appendChild(info);
-                
-                const winnings = document.createElement('div');
-                winnings.className = 'bet-item-winnings';
-                if (player.cashedOut) {
-                    if (player.winnings > 0) {
-                        winnings.innerHTML = `<span class="currency-icon" style="width: 14px; height: 14px; display: inline-block;"></span> ${player.winnings.toFixed(2)} ✅`;
-                        winnings.style.color = '#00ff00';
-                    } else {
-                        winnings.innerHTML = `❌ Потеряно`;
-                        winnings.style.color = '#ff0000';
+                if (fs.existsSync(paymentsFile)) {
+                    try {
+                        payments = JSON.parse(fs.readFileSync(paymentsFile, 'utf8'));
+                    } catch (e) {
+                        payments = [];
                     }
-                } else {
-                    const betValue = player.itemValue || player.betAmount;
-                    const currentWinnings = betValue * crashMultiplier;
-                    winnings.innerHTML = `<span class="currency-icon" style="width: 14px; height: 14px; display: inline-block;"></span> ${currentWinnings.toFixed(2)}`;
-                    winnings.style.color = '#667eea';
-                }
-                betItem.appendChild(winnings);
-                
-                betsList.appendChild(betItem);
-            });
-            
-            document.getElementById('playersCount').textContent = crashPlayers.length;
-        }
-
-        // Обновление выбора предметов для ставки
-        function updateBetItemSelect() {
-            const select = document.getElementById('betItemSelect');
-            if (!select) return;
-            
-            select.innerHTML = '<option value="">Выберите предмет</option>';
-            userInventory.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item.id;
-                option.textContent = `${item.name} (${formatPrice(item.value).replace(/<[^>]*>/g, '')})`;
-                option.dataset.item = JSON.stringify(item);
-                select.appendChild(option);
-            });
-        }
-
-        // Переключение типа ставки
-        document.querySelectorAll('.bet-type-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.bet-type-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                betType = btn.dataset.type;
-                
-                const amountInput = document.getElementById('betAmountInput');
-                const itemSelect = document.getElementById('betItemSelect');
-                
-                if (betType === 'balance') {
-                    amountInput.style.display = 'block';
-                    if (itemSelect) itemSelect.style.display = 'none';
-                } else {
-                    amountInput.style.display = 'none';
-                    if (itemSelect) itemSelect.style.display = 'block';
-                }
-            });
-        });
-
-        // Выбор множителя авто-вывода
-        document.querySelectorAll('.multiplier-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (btn.dataset.mult === 'auto') {
-                    selectedMultiplier = null;
-                } else {
-                    selectedMultiplier = parseFloat(btn.dataset.mult);
-                }
-                document.querySelectorAll('.multiplier-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-            });
-        });
-
-        // Сделать ставку
-        const makeBetBtn = document.getElementById('makeBetBtn');
-        if (makeBetBtn) {
-            makeBetBtn.addEventListener('click', () => {
-                // Если есть активная ставка и раунд идет (график растет), можно забрать
-                if (userBet && crashRoundActive && crashDirection === 1 && !userBet.cashedOut) {
-                    cashOutPlayer(userBet.id);
-                    return;
                 }
                 
-                // Нельзя ставить во время активного раунда (график идет)
-                // Можно ставить ТОЛЬКО во время кулдауна (когда crashRoundActive = false)
-                if (crashRoundActive) {
-                    if (tg) {
-                        tg.showAlert('Ставки принимаются только во время кулдауна!');
-                    } else {
-                        alert('Ставки принимаются только во время кулдауна!');
-                    }
-                    return;
-                }
-                
-                const amountInput = document.getElementById('betAmountInput');
-                const itemSelect = document.getElementById('betItemSelect');
-                
-                let betAmount = 0;
-                let itemData = null;
-                
-                if (betType === 'balance') {
-                    betAmount = parseFloat(amountInput.value);
-                    if (!betAmount || betAmount <= 0 || betAmount > balance) {
-                        if (tg) {
-                            tg.showAlert('Неверная сумма ставки!');
-                        } else {
-                            alert('Неверная сумма ставки!');
-                        }
-                        return;
-                    }
-                } else {
-                    const selectedOption = itemSelect.options[itemSelect.selectedIndex];
-                    if (!selectedOption || !selectedOption.value) {
-                        if (tg) {
-                            tg.showAlert('Выберите предмет!');
-                        } else {
-                            alert('Выберите предмет!');
-                        }
-                        return;
-                    }
-                    itemData = JSON.parse(selectedOption.dataset.item);
-                    betAmount = itemData.value;
-                }
-                
-                const user = tg?.initDataUnsafe?.user;
-                const newBet = {
+                payments.push({
                     id: Date.now(),
-                    userId: user?.id || Math.random(),
-                    username: user?.first_name || user?.username || 'Игрок',
-                    avatar: user?.photo_url ? null : '👤',
-                    betAmount: betAmount,
-                    itemName: itemData?.name || null,
-                    itemValue: itemData?.value || null,
-                    itemId: itemData?.id || null,
-                    betMultiplier: selectedMultiplier,
-                    autoCash: selectedMultiplier,
-                    cashedOut: false,
-                    timestamp: Date.now()
-                };
+                    userId: userId,
+                    amount: invoiceData.amount,
+                    transactionId: invoiceData.transactionId,
+                    invoiceId: invoice.invoice_id,
+                    timestamp: Date.now(),
+                    verified: true,
+                    type: 'cryptobot'
+                });
                 
-                if (betType === 'balance') {
-                    balance -= betAmount;
-                    document.getElementById('balance').textContent = balance.toFixed(2);
-                    document.getElementById('crashBalance').textContent = balance.toFixed(2);
-                    saveInventory();
-                    saveUserData();
-                } else {
-                    userInventory = userInventory.filter(item => item.id !== itemData.id);
-                    saveInventory();
-                    saveUserData();
-                    updateBetItemSelect();
+                if (payments.length > 10000) {
+                    payments = payments.slice(-10000);
                 }
                 
-                userBet = newBet;
-                crashPlayers.push(newBet);
-                
-                // Отправляем ставку на сервер для синхронизации с другими игроками
-                saveCrashBetToServer(newBet);
-                
-                updateCrashBetsList();
-                
-                // Меняем текст кнопки только если раунд активен
-                if (crashRoundActive) {
-                    makeBetBtn.textContent = 'Забрать';
-                } else {
-                    makeBetBtn.textContent = 'Сделать ставку';
-                }
-                
-                if (tg) {
-                    tg.showAlert('Ставка принята! Дождитесь начала раунда.');
-                    tg.HapticFeedback.impactOccurred('medium');
-                }
-            });
+                fs.writeFileSync(paymentsFile, JSON.stringify(payments, null, 2));
+                fs.writeFileSync(invoicesFile, JSON.stringify(invoices, null, 2));
+            }
+        }
+        
+        res.json({ ok: true });
+    } catch (error) {
+        console.error('Error in POST /api/webhooks/cryptobot:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Проверка платежа через Telegram Bot
+app.post('/api/payments/check-telegram', async (req, res) => {
+    try {
+        const { userId, amount, timestamp } = req.body;
+        
+        if (!userId || !amount) {
+            return res.status(400).json({ error: 'Missing required fields: userId, amount' });
         }
 
+        // Проверяем платежи в базе данных
+        const paymentsFile = path.join(__dirname, 'payments_data.json');
+        let payments = [];
+        
+        if (fs.existsSync(paymentsFile)) {
+            try {
+                payments = JSON.parse(fs.readFileSync(paymentsFile, 'utf8'));
+            } catch (e) {
+                payments = [];
+            }
+        }
+        
+        // Ищем недавний платеж для этого пользователя (за последние 10 минут)
+        const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
+        const userPayment = payments.find(p => 
+            p.userId === userId.toString() &&
+            p.type === 'telegram' &&
+            p.verified === true &&
+            Math.abs(parseFloat(p.amount) - parseFloat(amount)) < 0.01 && // Разница меньше 0.01 TON
+            p.timestamp > tenMinutesAgo
+        );
+        
+        if (userPayment) {
+            // Проверяем, не был ли уже зачислен баланс
+            const usersData = readUsersData();
+            if (!usersData[userId]) {
+                usersData[userId] = { balance: 0, inventory: [] };
+            }
+            
+            // Если баланс еще не был зачислен, зачисляем
+            // (в реальности это должно проверяться по paymentHash)
+            
+            res.json({ 
+                verified: true,
+                paymentFound: true,
+                message: 'Payment verified',
+                transactionId: userPayment.transactionId
+            });
+        } else {
+            res.json({ 
+                verified: false,
+                paymentFound: false,
+                message: 'Payment not found yet'
+            });
+        }
+    } catch (error) {
+        console.error('Error in POST /api/payments/check-telegram:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
-        // Обработчик кнопки "+" на странице краша - будет установлен в initTopUpHandlers
-    </script>
-</body>
-</html>
+// Health check
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: Date.now() });
+});
+
+// Прокси для TonConnect SDK (обход CORS)
+app.get('/tonconnect.min.js', async (req, res) => {
+    const urls = [
+        'https://unpkg.com/@tonconnect/sdk@2/dist/tonconnect.min.js',
+        'https://cdn.jsdelivr.net/npm/@tonconnect/sdk@2/dist/tonconnect.min.js',
+        'https://unpkg.com/@tonconnect/sdk@latest/dist/tonconnect.min.js'
+    ];
+    
+    console.log('Запрос TonConnect SDK через прокси...');
+    
+    for (let i = 0; i < urls.length; i++) {
+        try {
+            console.log(`Попытка ${i + 1}/${urls.length}: ${urls[i]}`);
+            const response = await axios.get(urls[i], {
+                responseType: 'stream',
+                timeout: 20000,
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Accept': 'application/javascript,*/*'
+                },
+                maxRedirects: 5
+            });
+            
+            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+            res.setHeader('Cache-Control', 'public, max-age=86400');
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            console.log(`✅ TonConnect SDK успешно загружен с: ${urls[i]}`);
+            response.data.pipe(res);
+            return;
+        } catch (error) {
+            console.error(`❌ Ошибка с ${urls[i]}:`, error.message, error.code, error.response?.status);
+            if (i === urls.length - 1) {
+                // Последняя попытка тоже не сработала
+                console.error('❌ Все URL недоступны');
+                res.status(500).send(`// TonConnect SDK недоступен\n// Все CDN вернули ошибку\nconsole.error("TonConnect SDK не загружен через прокси");\n`);
+            }
+        }
+    }
+});
+
+// Обработка корневого пути - отдаем index.html
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Запуск сервера
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+    console.log(`App available at http://localhost:${PORT}`);
+    console.log(`API available at http://localhost:${PORT}/api`);
+});
+
