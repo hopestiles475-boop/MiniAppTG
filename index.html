@@ -4982,13 +4982,41 @@
                 mainPage.style.setProperty('opacity', '1', 'important');
                 mainPage.style.setProperty('pointer-events', 'auto', 'important');
                 mainPage.style.position = 'relative';
+                mainPage.style.width = '100%';
+                mainPage.style.minHeight = '100vh';
                 
-                // Принудительно показываем содержимое
+                // Принудительно показываем все содержимое mainPage
                 const casesCarousel = document.getElementById('casesCarousel');
                 if (casesCarousel) {
-                    casesCarousel.style.display = 'flex';
-                    casesCarousel.style.visibility = 'visible';
-                    casesCarousel.style.opacity = '1';
+                    casesCarousel.style.setProperty('display', 'flex', 'important');
+                    casesCarousel.style.setProperty('visibility', 'visible', 'important');
+                    casesCarousel.style.setProperty('opacity', '1', 'important');
+                    casesCarousel.style.pointerEvents = 'auto';
+                }
+                
+                // Показываем все кейсы
+                const caseCards = document.querySelectorAll('.case-card');
+                caseCards.forEach(card => {
+                    card.style.display = 'flex';
+                    card.style.visibility = 'visible';
+                    card.style.opacity = '1';
+                    card.style.pointerEvents = 'auto';
+                });
+                
+                // Показываем табы
+                const tabs = document.querySelectorAll('.tab');
+                tabs.forEach(tab => {
+                    tab.style.display = 'block';
+                    tab.style.visibility = 'visible';
+                    tab.style.opacity = '1';
+                });
+                
+                // Показываем навигацию внизу
+                const navBar = document.querySelector('.nav-bar');
+                if (navBar) {
+                    navBar.style.display = 'flex';
+                    navBar.style.visibility = 'visible';
+                    navBar.style.opacity = '1';
                 }
                 
                 // Переинициализируем кейсы после возврата
@@ -4998,6 +5026,10 @@
                     }
                     if (typeof initOpenButton === 'function') {
                         initOpenButton();
+                    }
+                    // Обновляем отображение баланса
+                    if (typeof updateBalanceDisplay === 'function') {
+                        updateBalanceDisplay();
                     }
                 }, 100);
             }
