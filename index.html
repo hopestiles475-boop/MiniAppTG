@@ -2765,23 +2765,7 @@
     </div>
 
     <script>
-        // ========== ГЛОБАЛЬНАЯ ДИАГНОСТИКА КЛИКОВ ==========
-        // Добавляем глобальный обработчик всех кликов для диагностики
-        document.addEventListener('click', function(e) {
-            console.log('🖱️ ГЛОБАЛЬНЫЙ КЛИК:', {
-                target: e.target,
-                tagName: e.target.tagName,
-                className: e.target.className,
-                id: e.target.id,
-                dataPage: e.target.dataset.page || e.target.closest('[data-page]')?.dataset.page,
-                pointerEvents: window.getComputedStyle(e.target).pointerEvents,
-                zIndex: window.getComputedStyle(e.target).zIndex,
-                display: window.getComputedStyle(e.target).display,
-                visibility: window.getComputedStyle(e.target).visibility
-            });
-        }, true); // Используем capture phase
-        
-        // ========== БЕЗОПАСНАЯ ИНИЦИАЛИЗАЦИЯ TELEGRAM WEB APP ==========
+        // Безопасная инициализация Telegram Web App
         let tg = null;
         let isTelegram = false;
         
@@ -3362,282 +3346,133 @@
         // Инициализация при загрузке DOM
         function initializeApp() {
             try {
-                console.log('🚀 Начинаю полную инициализацию приложения...');
-                console.log('📊 Состояние DOM:', document.readyState);
-                console.log('📊 Количество элементов на странице:', document.querySelectorAll('*').length);
-                
                 // Сначала проверяем критические элементы
                 safeInit();
                 
                 // Затем инициализируем обработчики событий
                 setTimeout(() => {
-                    console.log('⏰ Вызываю initEventHandlers через setTimeout...');
-                    if (typeof initEventHandlers === 'function') {
-                        console.log('✅ Функция initEventHandlers найдена, вызываю...');
-                        try {
-                            initEventHandlers();
-                        } catch (err) {
-                            console.error('❌ Ошибка при вызове initEventHandlers:', err);
-                            console.error('Stack:', err.stack);
-                        }
-                    } else {
-                        console.error('❌ Функция initEventHandlers не найдена!');
-                        console.error('🔍 Проверка window:', {
-                            initEventHandlers: typeof window.initEventHandlers,
-                            initEventHandlers_in_scope: typeof initEventHandlers
-                        });
-                    }
-                }, 200);
-                
-                // Дополнительная инициализация с большей задержкой
-                setTimeout(() => {
-                    console.log('⏰ Дополнительная инициализация через 1 секунду...');
                     if (typeof initEventHandlers === 'function') {
                         initEventHandlers();
+                    } else {
+                        console.error('❌ Функция initEventHandlers не найдена!');
                     }
-                }, 1000);
+                }, 200);
             } catch (error) {
                 console.error('❌ Критическая ошибка инициализации:', error);
-                console.error('Stack:', error.stack);
                 alert('Ошибка загрузки: ' + error.message);
             }
         }
         
-        // Проверяем состояние DOM перед инициализацией
-        console.log('🔍 Проверка состояния DOM перед инициализацией:', document.readyState);
-        
         if (document.readyState === 'loading') {
-            console.log('⏳ DOM загружается, жду DOMContentLoaded...');
-            document.addEventListener('DOMContentLoaded', function() {
-                console.log('✅ DOMContentLoaded получен, запускаю initializeApp');
-                initializeApp();
-            });
+            document.addEventListener('DOMContentLoaded', initializeApp);
         } else {
             // DOM уже загружен
-            console.log('✅ DOM уже загружен, запускаю initializeApp сразу');
             setTimeout(initializeApp, 100);
         }
-        
-        // Также пробуем инициализировать сразу после загрузки скрипта
-        console.log('🔄 Пробую инициализировать сразу...');
-        setTimeout(function() {
-            console.log('🔄 Пробую инициализировать через 500ms после загрузки скрипта...');
-            if (document.body && document.body.querySelector('.nav-item')) {
-                console.log('✅ Навигация найдена, вызываю initializeApp');
-                initializeApp();
-            } else {
-                console.log('⏳ Навигация еще не найдена, жду...');
-            }
-        }, 500);
         
         // Инициализация обработчиков после загрузки DOM
         function initEventHandlers() {
             try {
-                console.log('🔧 Инициализация обработчиков событий...');
-                console.log('🔍 Проверка доступности функций:');
-                console.log('- initTabs:', typeof initTabs);
-                console.log('- initCaseCards:', typeof initCaseCards);
-                console.log('- initOpenButton:', typeof initOpenButton);
-                console.log('- initSubscribeButton:', typeof initSubscribeButton);
-                console.log('- initInventoryHandlers:', typeof initInventoryHandlers);
-                console.log('- initProfileHandlers:', typeof initProfileHandlers);
-                console.log('- initTopUpHandlers:', typeof initTopUpHandlers);
-                console.log('- initWithdrawHandlers:', typeof initWithdrawHandlers);
-                
-                // Навигация между вкладками - АГРЕССИВНАЯ ИНИЦИАЛИЗАЦИЯ
+                // Навигация между вкладками
                 const navItems = document.querySelectorAll('.nav-item');
-                console.log(`🔍 Найдено элементов навигации: ${navItems.length}`);
-                
-                if (navItems.length === 0) {
-                    console.error('❌ Элементы навигации не найдены! Проверяю через bottom-nav...');
-                    const bottomNav = document.querySelector('.bottom-nav');
-                    if (bottomNav) {
-                        const items = bottomNav.querySelectorAll('[data-page]');
-                        console.log(`🔍 Найдено элементов в .bottom-nav: ${items.length}`);
-                    }
-                }
                 
                 if (navItems.length > 0) {
-                    navItems.forEach((item, index) => {
-                        try {
-                            const page = item.dataset.page || item.getAttribute('data-page');
-                            console.log(`🔧 Инициализация навигации ${index + 1}: ${page}`);
+                    navItems.forEach((item) => {
+                        const page = item.dataset.page || item.getAttribute('data-page');
+                        
+                        // Удаляем старые обработчики через клон
+                        const newItem = item.cloneNode(true);
+                        const parent = item.parentNode;
+                        if (parent) {
+                            parent.replaceChild(newItem, item);
                             
-                            // Сначала устанавливаем стили для кликабельности
-                            item.style.cursor = 'pointer';
-                            item.style.pointerEvents = 'auto';
-                            item.style.position = 'relative';
-                            item.style.zIndex = '10000';
+                            // Обработчик через onclick
+                            newItem.onclick = function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                e.stopImmediatePropagation();
+                                
+                                const targetPage = newItem.dataset.page || page || newItem.getAttribute('data-page');
+                                if (targetPage && typeof handleNavClick === 'function') {
+                                    handleNavClick(targetPage, newItem);
+                                }
+                                return false;
+                            };
                             
-                            // Также для дочерних элементов
-                            const icon = item.querySelector('.nav-icon');
-                            const label = item.querySelector('.nav-label');
-                            if (icon) {
-                                icon.style.pointerEvents = 'none';
-                            }
-                            if (label) {
-                                label.style.pointerEvents = 'none';
-                            }
-                            
-                            // Удаляем старые обработчики через клон
-                            const newItem = item.cloneNode(true);
-                            const parent = item.parentNode;
-                            if (parent) {
-                                parent.replaceChild(newItem, item);
+                            // Также через addEventListener
+                            newItem.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                e.stopImmediatePropagation();
                                 
-                                // Устанавливаем стили для нового элемента
-                                newItem.style.cursor = 'pointer';
-                                newItem.style.pointerEvents = 'auto';
-                                newItem.style.position = 'relative';
-                                newItem.style.zIndex = '10000';
-                                
-                                // Обработчик через onclick (наивысший приоритет)
-                                newItem.onclick = function(e) {
-                                    console.log('🔥 ОНКЛИК по навигации:', newItem.dataset.page || page);
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    e.stopImmediatePropagation();
-                                    
-                                    const targetPage = newItem.dataset.page || page || newItem.getAttribute('data-page');
-                                    console.log('📄 Целевая страница:', targetPage);
-                                    
-                                    if (targetPage && typeof handleNavClick === 'function') {
-                                        handleNavClick(targetPage, newItem);
-                                    } else {
-                                        console.error('❌ Ошибка: страница или функция не найдена');
-                                        console.error('   targetPage:', targetPage);
-                                        console.error('   handleNavClick:', typeof handleNavClick);
-                                    }
-                                    return false;
-                                };
-                                
-                                // Также через addEventListener
-                                newItem.addEventListener('click', function(e) {
-                                    console.log('🔥 ADD EVENT LISTENER по навигации:', newItem.dataset.page || page);
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    e.stopImmediatePropagation();
-                                    
-                                    const targetPage = newItem.dataset.page || page || newItem.getAttribute('data-page');
-                                    if (targetPage && typeof handleNavClick === 'function') {
-                                        handleNavClick(targetPage, newItem);
-                                    }
-                                }, { capture: true, passive: false });
-                                
-                                // Для мобильных устройств - touchstart
-                                newItem.addEventListener('touchstart', function(e) {
-                                    console.log('📱 TOUCH по навигации:', newItem.dataset.page || page);
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    
-                                    const targetPage = newItem.dataset.page || page || newItem.getAttribute('data-page');
-                                    if (targetPage && typeof handleNavClick === 'function') {
-                                        handleNavClick(targetPage, newItem);
-                                    }
-                                }, { passive: false });
-                                
-                                console.log(`✅ Навигация ${index + 1} (${page}) полностью инициализирована`);
-                            } else {
-                                console.error(`❌ Не найден родитель для элемента навигации ${index + 1}`);
-                            }
-                        } catch (err) {
-                            console.error(`❌ Ошибка инициализации навигации ${index + 1}:`, err);
-                            console.error('Stack:', err.stack);
+                                const targetPage = newItem.dataset.page || page || newItem.getAttribute('data-page');
+                                if (targetPage && typeof handleNavClick === 'function') {
+                                    handleNavClick(targetPage, newItem);
+                                }
+                            }, { capture: true, passive: false });
                         }
                     });
-                    console.log('✅ Все элементы навигации инициализированы');
-                } else {
-                    console.error('❌ Элементы навигации не найдены! Возможна проблема с загрузкой DOM.');
                 }
                 
                 // Обработчики табов
                 if (typeof initTabs === 'function') {
                     initTabs();
-                } else {
-                    console.error('❌ Функция initTabs не найдена');
                 }
                 
                 // Обработчики карточек кейсов
                 if (typeof initCaseCards === 'function') {
                     initCaseCards();
-                } else {
-                    console.error('❌ Функция initCaseCards не найдена');
                 }
                 
                 // Обработчик кнопки "Открыть"
                 if (typeof initOpenButton === 'function') {
                     initOpenButton();
-                } else {
-                    console.error('❌ Функция initOpenButton не найдена');
                 }
                 
                 // Обработчик кнопки подписки
                 if (typeof initSubscribeButton === 'function') {
                     initSubscribeButton();
-                } else {
-                    console.error('❌ Функция initSubscribeButton не найдена');
                 }
                 
                 // Обработчики инвентаря
                 if (typeof initInventoryHandlers === 'function') {
                     initInventoryHandlers();
-                } else {
-                    console.error('❌ Функция initInventoryHandlers не найдена');
                 }
                 
                 // Обработчики кнопок профиля
                 if (typeof initProfileHandlers === 'function') {
                     initProfileHandlers();
-                } else {
-                    console.error('❌ Функция initProfileHandlers не найдена');
                 }
                 
                 // Инициализация обработчиков пополнения и вывода
                 if (typeof initTopUpHandlers === 'function') {
                     initTopUpHandlers();
-                } else {
-                    console.error('❌ Функция initTopUpHandlers не найдена');
                 }
                 
                 if (typeof initWithdrawHandlers === 'function') {
                     initWithdrawHandlers();
-                } else {
-                    console.error('❌ Функция initWithdrawHandlers не найдена');
                 }
-                
-                console.log('✅ Обработчики событий инициализированы');
             } catch (error) {
                 console.error('❌ Критическая ошибка инициализации обработчиков:', error);
-                console.error('Stack:', error.stack);
-                alert('Критическая ошибка инициализации: ' + error.message);
             }
         }
         
         // Функция обработки клика по навигации
         function handleNavClick(page, clickedItem) {
             try {
-                console.log('🔄 Переключение на страницу:', page);
-                console.log('📄 clickedItem:', clickedItem);
-                
                 if (!page) {
-                    console.error('❌ Страница не указана!');
                     return;
                 }
                 
                 // Обновляем активную вкладку
                 const allNavItems = document.querySelectorAll('.nav-item');
-                console.log(`🔍 Найдено ${allNavItems.length} элементов навигации для обновления`);
                 allNavItems.forEach(i => {
                     i.classList.remove('active');
-                    i.style.pointerEvents = 'auto';
                 });
                 
                 if (clickedItem) {
                     clickedItem.classList.add('active');
-                    clickedItem.style.pointerEvents = 'auto';
-                    console.log('✅ Активная вкладка обновлена:', page);
                 } else {
-                    console.warn('⚠️ clickedItem не передан, пытаемся найти элемент навигации');
                     const foundItem = document.querySelector(`[data-page="${page}"]`);
                     if (foundItem) {
                         foundItem.classList.add('active');
@@ -3682,10 +3517,7 @@
                 });
                 
                 // Показываем нужную страницу
-                console.log(`📄 Показываем страницу: ${page}`);
-                
                 if (page === 'cases') {
-                    console.log('📂 Переход на страницу Кейсы');
                     if (header) {
                         header.style.display = 'flex';
                         header.style.visibility = 'visible';
@@ -3693,9 +3525,7 @@
                     }
                     mainPage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; pointer-events: auto !important; z-index: 1 !important;';
                     mainPage.classList.remove('hidden');
-                    console.log('✅ Страница Кейсы показана');
                 } else if (page === 'profile') {
-                    console.log('👤 Переход на страницу Профиль');
                     if (header) {
                         header.style.display = 'flex';
                         header.style.visibility = 'visible';
@@ -3703,7 +3533,6 @@
                     }
                     profilePage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; pointer-events: auto !important; z-index: 1 !important;';
                     profilePage.classList.remove('hidden');
-                    console.log('✅ Страница Профиль показана');
                     
                     // Обновляем данные профиля
                     try {
@@ -3730,7 +3559,6 @@
                         }
                     }, 100);
                 } else if (page === 'crash') {
-                    console.log('🚀 Переход на страницу Краш');
                     if (header) {
                         header.style.display = 'none';
                         header.style.visibility = 'hidden';
@@ -3738,7 +3566,6 @@
                     if (crashPage) {
                         crashPage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 100% !important; z-index: 100 !important; pointer-events: auto !important;';
                         crashPage.classList.remove('hidden');
-                        console.log('✅ Страница Краш показана');
                         
                         try {
                             if (typeof updateBalanceDisplay === 'function') {
@@ -3750,11 +3577,8 @@
                         } catch (err) {
                             console.error('Ошибка инициализации краша:', err);
                         }
-                    } else {
-                        console.error('❌ Страница crashPage не найдена');
                     }
                 } else if (page === 'mines') {
-                    console.log('💣 Переход на страницу Мины');
                     if (header) {
                         header.style.display = 'flex';
                         header.style.visibility = 'visible';
@@ -3763,7 +3587,6 @@
                     if (minesPage) {
                         minesPage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 100% !important; z-index: 100 !important; pointer-events: auto !important;';
                         minesPage.classList.remove('hidden');
-                        console.log('✅ Страница Мины показана');
                         
                         try {
                             if (typeof updateBalanceDisplay === 'function') {
@@ -3775,11 +3598,8 @@
                         } catch (err) {
                             console.error('Ошибка инициализации мин:', err);
                         }
-                    } else {
-                        console.error('❌ Страница minesPage не найдена');
                     }
                 } else if (page === 'dice') {
-                    console.log('🎲 Переход на страницу Dice');
                     if (header) {
                         header.style.display = 'flex';
                         header.style.visibility = 'visible';
@@ -3788,7 +3608,6 @@
                     if (dicePage) {
                         dicePage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 100% !important; z-index: 100 !important; pointer-events: auto !important;';
                         dicePage.classList.remove('hidden');
-                        console.log('✅ Страница Dice показана');
                         
                         try {
                             if (typeof updateBalanceDisplay === 'function') {
@@ -3800,11 +3619,7 @@
                         } catch (err) {
                             console.error('Ошибка инициализации dice:', err);
                         }
-                    } else {
-                        console.error('❌ Страница dicePage не найдена');
                     }
-                } else {
-                    console.error('❌ Неизвестная страница:', page);
                 }
                 
                 if (tg && tg.HapticFeedback) {
@@ -4129,24 +3944,12 @@
         }
         
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('📦 DOMContentLoaded сработал - начинаем инициализацию');
-            
             const mainPage = document.getElementById('mainPage');
             const detailPage = document.getElementById('caseDetailPage');
             const profilePage = document.getElementById('profilePage');
             
-            console.log('🔍 Проверка страниц:', {
-                mainPage: !!mainPage,
-                detailPage: !!detailPage,
-                profilePage: !!profilePage
-            });
-            
             if (!mainPage || !detailPage || !profilePage) {
                 console.error('❌ Критические страницы не найдены!');
-                console.error('   mainPage:', mainPage);
-                console.error('   detailPage:', detailPage);
-                console.error('   profilePage:', profilePage);
-                alert('Ошибка: критические страницы не найдены. Проверьте консоль.');
                 return;
             }
             
@@ -4156,100 +3959,20 @@
             detailPage.classList.remove('active');
             profilePage.style.display = 'none';
             
-            console.log('✅ Базовые страницы инициализированы');
-            
-            // Инициализируем обработчики событий МНОЖЕСТВЕННЫМИ способами для гарантии
-            console.log('🔧 Начинаю установку обработчиков...');
-            
-            // Способ 1: через initializeApp (уже должен быть вызван)
+            // Инициализируем обработчики событий
             setTimeout(() => {
-                console.log('🔄 Способ 1: Повторная инициализация обработчиков через setTimeout...');
                 if (typeof initEventHandlers === 'function') {
-                    console.log('✅ Функция initEventHandlers найдена, вызываю...');
                     initEventHandlers();
-                } else {
-                    console.error('❌ Функция initEventHandlers НЕ найдена!');
                 }
                 
                 // Дополнительная инициализация обработчиков пополнения и вывода
                 if (typeof initTopUpHandlers === 'function') {
                     initTopUpHandlers();
-                } else {
-                    console.error('❌ Функция initTopUpHandlers НЕ найдена!');
                 }
                 if (typeof initWithdrawHandlers === 'function') {
                     initWithdrawHandlers();
-                } else {
-                    console.error('❌ Функция initWithdrawHandlers НЕ найдена!');
                 }
             }, 300);
-            
-            // Способ 2: прямая установка на навигацию (если initEventHandlers не сработала)
-            setTimeout(() => {
-                console.log('🔄 Способ 2: Прямая установка обработчиков на навигацию...');
-                const navItems = document.querySelectorAll('.nav-item');
-                console.log(`🔍 Найдено элементов навигации для прямой установки: ${navItems.length}`);
-                
-                navItems.forEach((item, index) => {
-                    const page = item.dataset.page || item.getAttribute('data-page');
-                    console.log(`🔧 Прямая установка обработчика для: ${page}`);
-                    
-                    // Устанавливаем стили
-                    item.style.cursor = 'pointer';
-                    item.style.pointerEvents = 'auto';
-                    item.style.userSelect = 'none';
-                    
-                    // Прямой onclick (наивысший приоритет)
-                    if (!item.onclick || item.onclick.toString().includes('handleNavClick')) {
-                        item.onclick = function(e) {
-                            console.log(`🔥🔥🔥 ПРЯМОЙ ОНКЛИК ПО НАВИГАЦИИ: ${page}`);
-                            e.preventDefault();
-                            e.stopPropagation();
-                            e.stopImmediatePropagation();
-                            
-                            const targetPage = this.dataset.page || this.getAttribute('data-page');
-                            console.log(`📄 Целевая страница: ${targetPage}`);
-                            
-                            if (targetPage && typeof handleNavClick === 'function') {
-                                handleNavClick(targetPage, this);
-                            } else {
-                                console.error('❌ Ошибка: targetPage или handleNavClick отсутствует');
-                                console.error('   targetPage:', targetPage);
-                                console.error('   handleNavClick:', typeof handleNavClick);
-                            }
-                            return false;
-                        };
-                    }
-                });
-            }, 500);
-            
-            // Способ 3: делегирование событий на bottom-nav
-            setTimeout(() => {
-                console.log('🔄 Способ 3: Делегирование событий на .bottom-nav...');
-                const bottomNav = document.querySelector('.bottom-nav');
-                if (bottomNav) {
-                    bottomNav.style.pointerEvents = 'auto';
-                    bottomNav.style.zIndex = '9999';
-                    
-                    bottomNav.addEventListener('click', function(e) {
-                        console.log('🔥 Делегирование клика на bottom-nav');
-                        const navItem = e.target.closest('.nav-item');
-                        if (navItem) {
-                            const page = navItem.dataset.page || navItem.getAttribute('data-page');
-                            console.log(`📄 Найдена навигация: ${page}`);
-                            if (page && typeof handleNavClick === 'function') {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleNavClick(page, navItem);
-                            }
-                        }
-                    }, { capture: true, passive: false });
-                    
-                    console.log('✅ Делегирование установлено на bottom-nav');
-                } else {
-                    console.error('❌ .bottom-nav не найден!');
-                }
-            }, 700);
             
             // Загружаем подарки с сервера или из localStorage
             fetchGlobalPrizes();
