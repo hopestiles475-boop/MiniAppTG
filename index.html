@@ -2761,7 +2761,7 @@
         </div>
     </div>
 
-    <div class="bottom-nav">
+    <div class="bottom-nav" id="bottomNav">
         <div class="nav-item active" data-page="cases">
             <div class="nav-icon">🎁</div>
             <div class="nav-label">Кейсы</div>
@@ -3396,6 +3396,26 @@
             }
         }
         
+        // УСТАНАВЛИВАЕМ ДЕЛЕГИРОВАНИЕ МНОЖЕСТВЕННО - ГАРАНТИЯ РАБОТЫ
+        function initNavigationMultipleTimes() {
+            setupNavigationDelegation();
+            
+            // Повторяем несколько раз для гарантии
+            setTimeout(setupNavigationDelegation, 100);
+            setTimeout(setupNavigationDelegation, 300);
+            setTimeout(setupNavigationDelegation, 500);
+            setTimeout(setupNavigationDelegation, 1000);
+        }
+        
+        if (document.body) {
+            initNavigationMultipleTimes();
+        } else {
+            document.addEventListener('DOMContentLoaded', initNavigationMultipleTimes);
+        }
+        
+        // Также устанавливаем при полной загрузке
+        window.addEventListener('load', initNavigationMultipleTimes);
+        
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initializeApp);
         } else {
@@ -3403,18 +3423,58 @@
             setTimeout(initializeApp, 100);
         }
         
+        // ДЕЛЕГИРОВАНИЕ СОБЫТИЙ НА .bottom-nav - РАБОТАЕТ ВСЕГДА
+        function setupNavigationDelegation() {
+            // Пробуем найти bottom-nav разными способами
+            let bottomNav = document.getElementById('bottomNav');
+            if (!bottomNav) {
+                bottomNav = document.querySelector('.bottom-nav');
+            }
+            
+            if (bottomNav) {
+                // Устанавливаем обработчик на родительский элемент - НЕ КЛОНИРУЕМ!
+                bottomNav.addEventListener('click', function navClickHandler(e) {
+                    // Ищем ближайший .nav-item
+                    const navItem = e.target.closest('.nav-item');
+                    if (navItem) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        
+                        const page = navItem.dataset.page || navItem.getAttribute('data-page');
+                        if (page && typeof handleNavClick === 'function') {
+                            // Визуальный фидбек
+                            navItem.style.opacity = '0.7';
+                            setTimeout(() => {
+                                navItem.style.opacity = '1';
+                            }, 150);
+                            
+                            handleNavClick(page, navItem);
+                        }
+                    }
+                }, { capture: true, passive: false }); // Используем capture для приоритета
+            }
+        }
+        
         // Инициализация обработчиков после загрузки DOM
         function initEventHandlers() {
-            // Навигация между вкладками - ПРОСТОЙ ВАРИАНТ БЕЗ КЛОНИРОВАНИЯ
+            // Устанавливаем делегирование событий
+            setupNavigationDelegation();
+            
+            // Дополнительно устанавливаем onclick на каждый элемент
             const navItems = document.querySelectorAll('.nav-item');
             navItems.forEach((item) => {
                 const page = item.dataset.page;
-                item.onclick = function(e) {
-                    e.preventDefault();
-                    if (page && typeof handleNavClick === 'function') {
-                        handleNavClick(page, this);
-                    }
-                };
+                if (page) {
+                    item.onclick = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (typeof handleNavClick === 'function') {
+                            handleNavClick(page, this);
+                        }
+                        return false;
+                    };
+                }
             });
             
             // Обработчики табов
@@ -3962,6 +4022,11 @@
             detailPage.style.display = 'none';
             detailPage.classList.remove('active');
             profilePage.style.display = 'none';
+            
+            // Устанавливаем делегирование сразу
+            if (typeof setupNavigationDelegation === 'function') {
+                setupNavigationDelegation();
+            }
             
             // Инициализируем обработчики событий
             setTimeout(() => {
