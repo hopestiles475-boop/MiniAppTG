@@ -78,6 +78,7 @@
                 // Получаем страницы
                 var mainPage = document.getElementById('mainPage');
                 var profilePage = document.getElementById('profilePage');
+                var crashPage = document.getElementById('crashPage');
                 var minesPage = document.getElementById('minesPage');
                 var dicePage = document.getElementById('dicePage');
                 var caseDetailPage = document.getElementById('caseDetailPage');
@@ -88,6 +89,7 @@
                 
                 // Скрываем все страницы, включая детальный просмотр кейса
                 var pages = [mainPage, profilePage];
+                if (crashPage) pages.push(crashPage);
                 if (minesPage) pages.push(minesPage);
                 if (dicePage) pages.push(dicePage);
                 if (caseDetailPage) pages.push(caseDetailPage);
@@ -144,6 +146,25 @@
                         if (typeof initProfileHandlers === 'function') initProfileHandlers();
                         if (typeof initTopUpHandlers === 'function') initTopUpHandlers();
                         if (typeof initWithdrawHandlers === 'function') initWithdrawHandlers();
+                    }, 50);
+                } else if (page === 'crash' && crashPage) {
+                    if (header) header.style.display = 'flex';
+                    crashPage.style.display = 'block';
+                    crashPage.style.visibility = 'visible';
+                    crashPage.style.opacity = '1';
+                    crashPage.style.position = 'fixed';
+                    crashPage.style.top = '0';
+                    crashPage.style.left = '0';
+                    crashPage.style.right = '0';
+                    crashPage.style.bottom = '0';
+                    crashPage.style.width = '100%';
+                    crashPage.style.height = '100%';
+                    crashPage.style.zIndex = '100';
+                    crashPage.style.pointerEvents = 'auto';
+                    // Инициализируем краш игру
+                    setTimeout(function() {
+                        if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+                        if (typeof initCrashGame === 'function') initCrashGame();
                     }, 50);
                 } else if (page === 'mines' && minesPage) {
                     if (header) header.style.display = 'flex';
@@ -1685,6 +1706,127 @@
             z-index: 1;
         }
 
+        .crash-page {
+            padding: 20px;
+            padding-bottom: 120px;
+            min-height: 100vh;
+            background: #0a0a0a;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .crash-header {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .crash-balance {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+        }
+
+        .crash-graph-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        #crashCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .crash-multiplier {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 28px;
+            font-weight: 700;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+        }
+
+        .crash-controls {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .crash-bet-control {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .crash-bet-control label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .crash-input {
+            padding: 10px 15px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            width: 150px;
+            text-align: right;
+            box-sizing: border-box;
+        }
+
+        .crash-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .crash-bet-btn {
+            width: 100%;
+            padding: 18px;
+            border-radius: 16px;
+            border: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .crash-bet-btn:active {
+            transform: scale(0.98);
+        }
+
+        .crash-bet-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .dice-page {
             padding: 20px;
             padding-bottom: 120px;
@@ -2833,10 +2975,37 @@
         </div>
     </div>
 
+    <div id="crashPage" class="crash-page" style="display: none;">
+        <div class="crash-header">
+            <div class="crash-balance">
+                <span class="currency-icon"></span>
+                <span id="crashBalance">0.00</span>
+                <button style="background: transparent; border: none; color: #ffffff; font-size: 18px; cursor: pointer; padding: 0 5px;" onclick="try{window.handleTopUp(event);}catch(e){alert('Ошибка: '+e.message);}">+</button>
+            </div>
+        </div>
+
+        <div class="crash-graph-container">
+            <canvas id="crashCanvas"></canvas>
+            <div class="crash-multiplier" id="crashMultiplier">x1.00</div>
+        </div>
+
+        <div class="crash-controls">
+            <div class="crash-bet-control">
+                <label>Ставка:</label>
+                <input type="number" id="crashBetAmount" class="crash-input" value="0.1" min="0.01" step="0.01" placeholder="0.00">
+            </div>
+            <button id="crashBetBtn" class="crash-bet-btn" onclick="try{window.handleCrashBet(event);}catch(e){alert('Ошибка: '+e.message);}">Сделать ставку</button>
+        </div>
+    </div>
+
     <div class="bottom-nav" id="bottomNav">
         <div class="nav-item active" data-page="cases" onclick="handleNavClick('cases', this)">
             <div class="nav-icon">🎁</div>
             <div class="nav-label">Кейсы</div>
+        </div>
+        <div class="nav-item" data-page="crash" onclick="handleNavClick('crash', this)">
+            <div class="nav-icon">🚀</div>
+            <div class="nav-label">Краш</div>
         </div>
         <div class="nav-item" data-page="mines" onclick="handleNavClick('mines', this)">
             <div class="nav-icon">💣</div>
@@ -2897,6 +3066,17 @@
             gridSize: 25
         };
         
+        // Состояние игры Crash
+        let crashGameState = {
+            multiplier: 1.00,
+            targetMultiplier: 2.0,
+            isRunning: false,
+            hasBet: false,
+            betAmount: 0,
+            animationId: null,
+            graphPoints: []
+        };
+
         // Состояние игры Dice
         let diceGameState = {
             betAmount: 0.1,
@@ -3011,6 +3191,23 @@
                 }
             } catch(err) {
                 console.error('Ошибка handleWithdraw:', err);
+                alert('Ошибка: ' + err.message);
+            }
+        };
+
+        window.handleCrashBet = function(e) {
+            console.log('🔵 Клик по кнопке краш ставка');
+            try {
+                if (typeof window.makeCrashBet === 'function') {
+                    window.makeCrashBet();
+                } else if (typeof makeCrashBet === 'function') {
+                    makeCrashBet();
+                } else {
+                    alert('Ошибка: makeCrashBet не найдена. Перезагрузите страницу.');
+                    console.error('makeCrashBet не определена');
+                }
+            } catch(err) {
+                console.error('Ошибка handleCrashBet:', err);
                 alert('Ошибка: ' + err.message);
             }
         };
@@ -4626,6 +4823,7 @@
             const detailPage = document.getElementById('caseDetailPage');
             const modal = document.getElementById('prizeModal');
             const profilePage = document.getElementById('profilePage');
+            const crashPage = document.getElementById('crashPage');
             
             // Скрываем все страницы кроме деталей кейса
             // Скрываем mainPage
@@ -4648,6 +4846,12 @@
             // Скрываем другие страницы игр
             const minesPage = document.getElementById('minesPage');
             const dicePage = document.getElementById('dicePage');
+            if (crashPage) {
+                crashPage.style.display = 'none';
+                crashPage.style.visibility = 'hidden';
+                crashPage.style.opacity = '0';
+                crashPage.style.pointerEvents = 'none';
+            }
             if (minesPage) {
                 minesPage.style.display = 'none';
                 minesPage.style.visibility = 'hidden';
@@ -6418,6 +6622,288 @@
             sellItemBtn.addEventListener('click', sellSelectedItem);
         }
 
+        // ========== ИГРА КРАШ ==========
+        
+        function initCrashGame() {
+            const canvas = document.getElementById('crashCanvas');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+            
+            // Устанавливаем размеры canvas
+            const container = canvas.parentElement;
+            const containerWidth = container ? container.offsetWidth : window.innerWidth - 40;
+            const containerHeight = 300;
+            
+            const dpr = window.devicePixelRatio || 1;
+            canvas.style.width = containerWidth + 'px';
+            canvas.style.height = containerHeight + 'px';
+            canvas.width = containerWidth * dpr;
+            canvas.height = containerHeight * dpr;
+            ctx.scale(dpr, dpr);
+            
+            // Обновляем баланс
+            updateCrashBalance();
+            
+            // Если игра не запущена, запускаем новый раунд
+            if (!crashGameState.isRunning) {
+                startCrashRound(ctx, canvas);
+            }
+        }
+        
+        function startCrashRound(ctx, canvas) {
+            // Сбрасываем состояние
+            crashGameState.multiplier = 1.00;
+            crashGameState.graphPoints = [];
+            crashGameState.isRunning = true;
+            crashGameState.hasBet = false;
+            
+            // Генерируем случайную цель (от 1.5 до 10.0)
+            const seed = Date.now() % 1000000;
+            crashGameState.targetMultiplier = 1.5 + (seed / 1000000) * 8.5;
+            
+            console.log('🚀 Новый раунд! Цель:', crashGameState.targetMultiplier.toFixed(2));
+            
+            // Обновляем кнопку
+            const betBtn = document.getElementById('crashBetBtn');
+            if (betBtn) {
+                betBtn.textContent = 'Сделать ставку';
+                betBtn.disabled = false;
+            }
+            
+            // Запускаем анимацию
+            animateCrash(ctx, canvas);
+        }
+        
+        function animateCrash(ctx, canvas) {
+            // Останавливаем предыдущую анимацию
+            if (crashGameState.animationId) {
+                cancelAnimationFrame(crashGameState.animationId);
+            }
+            
+            const canvasWidth = canvas.width / (window.devicePixelRatio || 1);
+            const canvasHeight = canvas.height / (window.devicePixelRatio || 1);
+            const speed = 0.02;
+            
+            const animate = () => {
+                if (!crashGameState.isRunning) {
+                    crashGameState.animationId = null;
+                    return;
+                }
+                
+                // Очищаем canvas
+                ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+                ctx.fillStyle = 'rgba(20, 20, 30, 1)';
+                ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+                
+                // Увеличиваем множитель
+                crashGameState.multiplier += speed;
+                
+                // Добавляем точку графика
+                const x = 10 + crashGameState.graphPoints.length * 2;
+                const multPercent = ((crashGameState.multiplier - 1.0) / 9.0) * 100;
+                const y = canvasHeight - 30 - (multPercent / 100) * (canvasHeight - 60);
+                
+                crashGameState.graphPoints.push({ x, y, mult: crashGameState.multiplier });
+                
+                // Ограничиваем количество точек
+                const maxPoints = Math.floor((canvasWidth - 20) / 2);
+                if (crashGameState.graphPoints.length > maxPoints) {
+                    crashGameState.graphPoints.shift();
+                    crashGameState.graphPoints.forEach((p, i) => {
+                        p.x = 10 + i * 2;
+                    });
+                }
+                
+                // Рисуем график
+                if (crashGameState.graphPoints.length >= 2) {
+                    ctx.strokeStyle = '#00ff00';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(crashGameState.graphPoints[0].x, crashGameState.graphPoints[0].y);
+                    for (let i = 1; i < crashGameState.graphPoints.length; i++) {
+                        ctx.lineTo(crashGameState.graphPoints[i].x, crashGameState.graphPoints[i].y);
+                    }
+                    ctx.stroke();
+                    
+                    // Последняя точка
+                    const lastPoint = crashGameState.graphPoints[crashGameState.graphPoints.length - 1];
+                    ctx.fillStyle = '#00ff00';
+                    ctx.beginPath();
+                    ctx.arc(lastPoint.x, lastPoint.y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Обновляем множитель
+                const multEl = document.getElementById('crashMultiplier');
+                if (multEl) {
+                    multEl.textContent = `x${crashGameState.multiplier.toFixed(2)}`;
+                    multEl.style.color = '#00ff00';
+                    multEl.style.borderColor = '#00ff00';
+                }
+                
+                // Обновляем кнопку если есть ставка
+                if (crashGameState.hasBet) {
+                    const betBtn = document.getElementById('crashBetBtn');
+                    if (betBtn) {
+                        betBtn.textContent = 'Забрать';
+                        betBtn.disabled = false;
+                    }
+                }
+                
+                // Проверяем краш
+                if (crashGameState.multiplier >= crashGameState.targetMultiplier) {
+                    // РИЗКО ПАДАЕТ
+                    crashGameState.isRunning = false;
+                    
+                    // Рисуем красную линию падения
+                    if (crashGameState.graphPoints.length > 0) {
+                        const lastPoint = crashGameState.graphPoints[crashGameState.graphPoints.length - 1];
+                        ctx.strokeStyle = '#ff0000';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.moveTo(lastPoint.x, lastPoint.y);
+                        ctx.lineTo(lastPoint.x, canvasHeight - 30);
+                        ctx.stroke();
+                    }
+                    
+                    // Вибрация
+                    if (tg) {
+                        try { tg.HapticFeedback.notificationOccurred('error'); } catch(e) {}
+                    }
+                    
+                    // Обновляем множитель (красный)
+                    const multEl = document.getElementById('crashMultiplier');
+                    if (multEl) {
+                        multEl.textContent = `x${crashGameState.targetMultiplier.toFixed(2)}`;
+                        multEl.style.color = '#ff0000';
+                        multEl.style.borderColor = '#ff0000';
+                    }
+                    
+                    // Обрабатываем результат
+                    processCrashResult();
+                    
+                    // Новый раунд через 3 секунды
+                    setTimeout(() => {
+                        startCrashRound(ctx, canvas);
+                    }, 3000);
+                    
+                    crashGameState.animationId = null;
+                    return;
+                }
+                
+                // Продолжаем анимацию
+                crashGameState.animationId = requestAnimationFrame(animate);
+            };
+            
+            animate();
+        }
+        
+        function makeCrashBet() {
+            // Если игра не запущена, нельзя ставить
+            if (!crashGameState.isRunning) {
+                if (tg) {
+                    tg.showAlert('Дождитесь начала нового раунда!');
+                } else {
+                    alert('Дождитесь начала нового раунда!');
+                }
+                return;
+            }
+            
+            // Если уже есть ставка - забираем выигрыш
+            if (crashGameState.hasBet) {
+                cashOutCrash();
+                return;
+            }
+            
+            // Получаем сумму ставки
+            const betInput = document.getElementById('crashBetAmount');
+            if (!betInput) return;
+            
+            const betAmount = parseFloat(betInput.value);
+            if (!betAmount || betAmount <= 0 || betAmount > _balance) {
+                if (tg) {
+                    tg.showAlert('Неверная сумма ставки!');
+                } else {
+                    alert('Неверная сумма ставки!');
+                }
+                return;
+            }
+            
+            // Списываем баланс
+            if (!changeBalance(-betAmount, 'crashBet')) {
+                return;
+            }
+            
+            crashGameState.hasBet = true;
+            crashGameState.betAmount = betAmount;
+            
+            // Обновляем кнопку
+            const betBtn = document.getElementById('crashBetBtn');
+            if (betBtn) {
+                betBtn.textContent = 'Забрать';
+                betBtn.disabled = false;
+            }
+            
+            updateCrashBalance();
+            
+            if (tg) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
+        }
+        
+        function cashOutCrash() {
+            if (!crashGameState.hasBet) return;
+            
+            const winnings = crashGameState.betAmount * crashGameState.multiplier;
+            changeBalance(winnings, 'crashWin');
+            
+            crashGameState.hasBet = false;
+            crashGameState.betAmount = 0;
+            
+            // Обновляем кнопку
+            const betBtn = document.getElementById('crashBetBtn');
+            if (betBtn) {
+                betBtn.textContent = 'Сделать ставку';
+                betBtn.disabled = false;
+            }
+            
+            updateCrashBalance();
+            
+            if (tg) {
+                tg.showAlert(`Вы выиграли ${winnings.toFixed(2)}!`);
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+        }
+        
+        function processCrashResult() {
+            // Если была ставка и не забрали - теряем
+            if (crashGameState.hasBet) {
+                crashGameState.hasBet = false;
+                crashGameState.betAmount = 0;
+                
+                const betBtn = document.getElementById('crashBetBtn');
+                if (betBtn) {
+                    betBtn.textContent = 'Сделать ставку';
+                    betBtn.disabled = false;
+                }
+                
+                if (tg) {
+                    tg.showAlert('КРАШ! Ставка потеряна');
+                }
+            }
+        }
+        
+        function updateCrashBalance() {
+            const balanceEl = document.getElementById('crashBalance');
+            if (balanceEl) {
+                balanceEl.textContent = _balance.toFixed(2);
+            }
+        }
+        
+        window.makeCrashBet = makeCrashBet;
+        
         // ========== ИГРА МИНЫ ==========
     </script>
 </body>
