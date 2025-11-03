@@ -2644,11 +2644,11 @@
         </div>
 
         <div class="top-up-buttons">
-            <button class="top-up-btn primary" id="topUpBtn">
+            <button class="top-up-btn primary" id="topUpBtn" onclick="window.handleTopUp && window.handleTopUp(event)">
                 <span class="btn-icon"><span class="currency-icon" style="width: 18px; height: 18px; display: inline-block;"></span></span>
                 <span>Пополнить</span>
             </button>
-            <button class="top-up-btn secondary" id="withdrawBtn">
+            <button class="top-up-btn secondary" id="withdrawBtn" onclick="window.handleWithdraw && window.handleWithdraw(event)">
                 <span>Вывести</span>
             </button>
         </div>
@@ -2753,7 +2753,7 @@
             <select class="bet-item-select" id="betItemSelect" style="display: none;">
                 <option value="">Выберите предмет</option>
             </select>
-            <button class="make-bet-btn" id="makeBetBtn">Сделать ставку</button>
+            <button class="make-bet-btn" id="makeBetBtn" onclick="window.handleCrashBetClick && window.handleCrashBetClick(event)">Сделать ставку</button>
         </div>
 
         <div class="bets-list" id="betsList">
@@ -2788,7 +2788,7 @@
                     <div class="mines-multiplier-value" id="minesMultiplier">x1.00</div>
                 </div>
                 <button id="minesCashOutBtn" class="mines-cash-out-btn" disabled>Забрать</button>
-                <button id="minesStartBtn" class="mines-start-btn">Начать игру</button>
+                <button id="minesStartBtn" class="mines-start-btn" onclick="window.handleMinesStart && window.handleMinesStart(event)">Начать игру</button>
             </div>
             
             <div class="mines-grid-container">
@@ -2856,7 +2856,7 @@
                     <span class="dice-auto-status" id="diceAutoStatus">OFF</span>
                 </div>
                 
-                <button id="diceStartBtn" class="dice-start-btn">START</button>
+                <button id="diceStartBtn" class="dice-start-btn" onclick="window.handleDiceStart && window.handleDiceStart(event)">START</button>
             </div>
             
             <div class="dice-result-container">
@@ -3738,10 +3738,12 @@
                     topUpBtn.parentNode.replaceChild(newBtn, topUpBtn);
                     
                     // Устанавливаем обработчик
-                    newBtn.onclick = function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
+                    const topUpHandler = function(e) {
+                        if (e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.stopImmediatePropagation();
+                        }
                         console.log('✅ Клик по кнопке "Пополнить" в профиле');
                         
                         try {
@@ -3758,16 +3760,9 @@
                         return false;
                     };
                     
-                    // Также добавляем через addEventListener для гарантии
-                    newBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                        console.log('✅ Клик по кнопке "Пополнить" (addEventListener)');
-                        if (typeof openTopUpModal === 'function') {
-                            openTopUpModal();
-                        }
-                    }, { capture: true });
+                    newBtn.onclick = topUpHandler;
+                    newBtn.addEventListener('click', topUpHandler, { capture: true });
+                    window.handleTopUp = topUpHandler;
                     
                     console.log('✅ Кнопка "Пополнить" в профиле инициализирована');
                 } else {
@@ -3782,10 +3777,12 @@
                     withdrawBtn.parentNode.replaceChild(newBtn, withdrawBtn);
                     
                     // Устанавливаем обработчик
-                    newBtn.onclick = function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
+                    const withdrawHandler = function(e) {
+                        if (e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.stopImmediatePropagation();
+                        }
                         console.log('✅ Клик по кнопке "Вывести" в профиле');
                         
                         try {
@@ -3802,16 +3799,9 @@
                         return false;
                     };
                     
-                    // Также добавляем через addEventListener для гарантии
-                    newBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                        console.log('✅ Клик по кнопке "Вывести" (addEventListener)');
-                        if (typeof openWithdrawModal === 'function') {
-                            openWithdrawModal();
-                        }
-                    }, { capture: true });
+                    newBtn.onclick = withdrawHandler;
+                    newBtn.addEventListener('click', withdrawHandler, { capture: true });
+                    window.handleWithdraw = withdrawHandler;
                     
                     console.log('✅ Кнопка "Вывести" в профиле инициализирована');
                 } else {
@@ -5447,7 +5437,15 @@
             if (minesStartBtn) {
                 const newBtn = minesStartBtn.cloneNode(true);
                 minesStartBtn.parentNode.replaceChild(newBtn, minesStartBtn);
+                newBtn.onclick = startMinesGame;
                 newBtn.addEventListener('click', startMinesGame);
+                window.handleMinesStart = function(e) {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    startMinesGame();
+                };
             }
             
             const minesCashOutBtn = document.getElementById('minesCashOutBtn');
@@ -5808,11 +5806,20 @@
             if (startBtn) {
                 const newBtn = startBtn.cloneNode(true);
                 startBtn.parentNode.replaceChild(newBtn, startBtn);
-                newBtn.addEventListener('click', () => {
+                const diceHandler = () => {
                     if (!diceGameState.isRolling) {
                         startDiceGame();
                     }
-                });
+                };
+                newBtn.onclick = diceHandler;
+                newBtn.addEventListener('click', diceHandler);
+                window.handleDiceStart = function(e) {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    diceHandler();
+                };
             }
             
             updateDiceMultiplier();
@@ -6083,6 +6090,63 @@
         let crashTarget = 1.00;
         let crashDirection = 1; // 1 = вверх, -1 = вниз (краш)
 
+        // Глобальные обработчики для inline onclick
+        window.handleCrashBetClick = function(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            const makeBetBtn = document.getElementById('makeBetBtn');
+            if (makeBetBtn && makeBetBtn.onclick) {
+                makeBetBtn.onclick();
+            } else {
+                const btn = makeBetBtn || document.getElementById('makeBetBtn');
+                if (btn) {
+                    btn.click();
+                }
+            }
+        };
+        
+        window.handleMinesStart = function(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            if (typeof startMinesGame === 'function') {
+                startMinesGame();
+            }
+        };
+        
+        window.handleDiceStart = function(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            if (typeof startDiceGame === 'function') {
+                startDiceGame();
+            }
+        };
+        
+        window.handleTopUp = function(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            if (typeof openTopUpModal === 'function') {
+                openTopUpModal();
+            }
+        };
+        
+        window.handleWithdraw = function(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            if (typeof openWithdrawModal === 'function') {
+                openWithdrawModal();
+            }
+        };
+        
         // Инициализация игры Краш
         function initCrashGame() {
             const canvas = document.getElementById('crashCanvas');
@@ -6102,8 +6166,8 @@
                 const newBtn = makeBetBtn.cloneNode(true);
                 makeBetBtn.parentNode.replaceChild(newBtn, makeBetBtn);
                 
-                // Добавляем обработчик на новую кнопку
-                newBtn.addEventListener('click', function() {
+                // Создаем обработчик функции
+                const betHandler = function() {
                     // Если есть активная ставка и раунд идет (график растет), можно забрать
                     if (userBet && crashRoundActive && crashDirection === 1 && !userBet.cashedOut) {
                         cashOutPlayer(userBet.id);
@@ -6192,7 +6256,20 @@
                         makeBetBtn2.textContent = 'Забрать';
                         makeBetBtn2.disabled = false;
                     }
-                });
+                };
+                
+                // Устанавливаем обработчик
+                newBtn.onclick = betHandler;
+                newBtn.addEventListener('click', betHandler);
+                
+                // Обновляем глобальный обработчик
+                window.handleCrashBetClick = function(e) {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    betHandler();
+                };
             }
             
             // Переустанавливаем обработчики кнопок типа ставки
