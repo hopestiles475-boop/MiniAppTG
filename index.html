@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>NFT Cases</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://unpkg.com/@tonconnect/sdk@2/dist/tonconnect.min.js"></script>
+    <script src="https://unpkg.com/@tonconnect/sdk@2/dist/tonconnect.min.js" 
+            onload="console.log('✅ TonConnect SDK загружен'); window.tonConnectLibLoaded = true;" 
+            onerror="console.error('❌ Ошибка загрузки TonConnect SDK'); window.tonConnectLibLoaded = false;"></script>
     <style>
         * {
             margin: 0;
@@ -4367,29 +4369,43 @@
             }
         }
         
-        // Глобальная проверка готовности TonConnect
-        window.tonConnectReady = false;
-        window.tonConnectCheckCount = 0;
-        
-        // Проверяем загрузку TonConnect каждые 300мс
-        const checkTonConnectInterval = setInterval(() => {
-            window.tonConnectCheckCount++;
+        // Глобальная проверка готовности TonConnect - запускаем сразу при загрузке скрипта
+        (function() {
+            window.tonConnectReady = false;
+            window.tonConnectCheckCount = 0;
             
-            if (typeof TonConnect !== 'undefined') {
-                window.tonConnectReady = true;
-                clearInterval(checkTonConnectInterval);
-                console.log(`✅ TonConnect SDK загружен (попытка ${window.tonConnectCheckCount})`);
-                initTonConnect();
-            } else if (window.tonConnectCheckCount >= 50) {
-                // Через 15 секунд (50 попыток * 300мс)
-                clearInterval(checkTonConnectInterval);
-                console.error('❌ TonConnect SDK не загрузился за 15 секунд');
-                console.log('Диагностика:', {
-                    scriptsLoaded: document.querySelectorAll('script[src*="tonconnect"]').length,
-                    networkStatus: navigator.onLine ? 'online' : 'offline'
-                });
+            console.log('🔍 Начало проверки загрузки TonConnect SDK...');
+            console.log('Проверка скрипта:', document.querySelector('script[src*="tonconnect"]') ? '✅ Найден в DOM' : '❌ Не найден в DOM');
+            
+            // Функция проверки
+            function checkTonConnect() {
+                window.tonConnectCheckCount++;
+                
+                if (typeof TonConnect !== 'undefined') {
+                    window.tonConnectReady = true;
+                    clearInterval(checkTonConnectInterval);
+                    console.log(`✅ TonConnect SDK обнаружен! (попытка ${window.tonConnectCheckCount})`);
+                    console.log('TonConnect type:', typeof TonConnect);
+                    initTonConnect();
+                } else if (window.tonConnectCheckCount >= 50) {
+                    clearInterval(checkTonConnectInterval);
+                    console.error('❌ TonConnect SDK не загрузился за 15 секунд');
+                    console.log('Диагностика:', {
+                        scriptsInDOM: document.querySelectorAll('script[src*="tonconnect"]').length,
+                        networkStatus: navigator.onLine ? 'online' : 'offline',
+                        TonConnectType: typeof TonConnect,
+                        windowTonConnect: typeof window.TonConnect,
+                        libLoaded: window.tonConnectLibLoaded
+                    });
+                } else if (window.tonConnectCheckCount % 10 === 0) {
+                    console.log(`⏳ Ожидание TonConnect SDK... (${window.tonConnectCheckCount}/50)`);
+                }
             }
-        }, 300);
+            
+            // Запускаем проверку сразу и затем каждые 300мс
+            checkTonConnect();
+            const checkTonConnectInterval = setInterval(checkTonConnect, 300);
+        })();
 
         // Подключение к Tonkeeper
         async function connectTonkeeper() {
