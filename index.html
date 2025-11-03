@@ -2389,14 +2389,22 @@
         }
 
         .crash-graph {
-            width: 100%;
-            height: 100%;
+            width: 100% !important;
+            height: 250px !important;
+            min-height: 250px !important;
             position: relative;
+            display: block !important;
+            visibility: visible !important;
+            overflow: visible !important;
         }
 
         #crashCanvas {
-            width: 100%;
-            height: 100%;
+            width: 100% !important;
+            height: 250px !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            background: rgba(20, 20, 30, 1) !important;
         }
 
         .current-multiplier {
@@ -6673,27 +6681,45 @@
             const containerWidth = container ? container.offsetWidth : window.innerWidth - 40;
             const containerHeight = 250; // Фиксированная высота для графика
             
+            console.log('📏 Размеры контейнера:', containerWidth, 'x', containerHeight);
+            console.log('📏 Canvas до установки размеров:', canvas.width, 'x', canvas.height);
+            
             // Устанавливаем внутренние размеры canvas (в пикселях)
             // Умножаем на devicePixelRatio для четкости на Retina дисплеях
             const dpr = window.devicePixelRatio || 1;
+            
+            // Устанавливаем CSS размеры СНАЧАЛА
+            canvas.style.width = containerWidth + 'px';
+            canvas.style.height = containerHeight + 'px';
+            canvas.style.display = 'block';
+            canvas.style.visibility = 'visible';
+            canvas.style.opacity = '1';
+            
+            // Затем устанавливаем внутренние размеры
             canvas.width = containerWidth * dpr;
             canvas.height = containerHeight * dpr;
             
-            // Устанавливаем CSS размеры
-            canvas.style.width = containerWidth + 'px';
-            canvas.style.height = containerHeight + 'px';
-            
-            // Масштабируем контекст для Retina
+            // Масштабируем контекст для Retina (важно делать ПОСЛЕ установки размеров)
             ctx.scale(dpr, dpr);
             
-            console.log('✅ Canvas размеры:', canvas.width / dpr, 'x', canvas.height / dpr, 'DPR:', dpr);
+            console.log('✅ Canvas размеры установлены:', canvas.width / dpr, 'x', canvas.height / dpr, 'DPR:', dpr);
+            console.log('✅ Canvas CSS размеры:', canvas.style.width, 'x', canvas.style.height);
             
-            // Очищаем canvas
-            ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
-            
-            // Рисуем фон
+            // Очищаем canvas и рисуем начальный фон
+            const canvasWidth = canvas.width / dpr;
+            const canvasHeight = canvas.height / dpr;
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
             ctx.fillStyle = 'rgba(20, 20, 30, 1)';
-            ctx.fillRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            // Рисуем тестовую линию чтобы убедиться что canvas работает
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(10, canvasHeight - 50);
+            ctx.lineTo(50, canvasHeight - 100);
+            ctx.stroke();
+            console.log('✅ Тестовая линия нарисована на canvas');
             
             // НЕ очищаем список игроков при инициализации, чтобы ставки сохранялись
             // crashPlayers = []; // Убрано - сохраняем ставки между раундами
