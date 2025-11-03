@@ -2503,15 +2503,15 @@
                     <button class="payment-method-btn" id="telegramWalletBtn">
                         <div class="payment-method-icon">💳</div>
                         <div class="payment-method-info">
-                            <div class="payment-method-name">Telegram Wallet</div>
-                            <div class="payment-method-desc">Пополнить через кошелёк Telegram</div>
+                            <div class="payment-method-name">Кошелёк Telegram</div>
+                            <div class="payment-method-desc">Пополнить через встроенный кошелёк</div>
                         </div>
                     </button>
                     <button class="payment-method-btn" id="telegramBotBtn">
                         <div class="payment-method-icon">🤖</div>
                         <div class="payment-method-info">
-                            <div class="payment-method-name">Через бота</div>
-                            <div class="payment-method-desc">Пополнить через CryptoBot</div>
+                            <div class="payment-method-name">Бот CryptoBot</div>
+                            <div class="payment-method-desc">Пополнить через бота Telegram</div>
                         </div>
                     </button>
                 </div>
