@@ -6833,21 +6833,17 @@
                 const newBtn = btn.cloneNode(true);
                 btn.parentNode.replaceChild(newBtn, btn);
                 
-                // Создаем функцию обработчика
+                // Создаем функцию обработчика БЕЗ stopImmediatePropagation
                 const handleBetTypeClick = function(e) {
                     if (e) {
                         e.preventDefault();
                         e.stopPropagation();
-                        e.stopImmediatePropagation();
+                        // НЕ используем stopImmediatePropagation - блокирует inline onclick
                     }
-                    
-                    console.log('🔵 Клик по кнопке типа ставки:', newBtn.dataset.type);
                     
                     document.querySelectorAll('.bet-type-btn').forEach(b => b.classList.remove('active'));
                     newBtn.classList.add('active');
                     betType = newBtn.dataset.type;
-                    
-                    console.log('✅ betType установлен:', betType);
                     
                     const amountInput = document.getElementById('betAmountInput');
                     const itemSelect = document.getElementById('betItemSelect');
@@ -6869,14 +6865,16 @@
                         if (itemSelect) {
                             itemSelect.style.display = 'block';
                             itemSelect.style.visibility = 'visible';
-                            updateBetItemSelect(); // Обновляем список подарков
+                            if (typeof updateBetItemSelect === 'function') {
+                                updateBetItemSelect();
+                            }
                         }
                     }
                 };
                 
-                // Устанавливаем и onclick и addEventListener
+                // Устанавливаем только addEventListener БЕЗ capture фазы
                 newBtn.onclick = handleBetTypeClick;
-                newBtn.addEventListener('click', handleBetTypeClick, true);
+                newBtn.addEventListener('click', handleBetTypeClick);
                 newBtn.style.cursor = 'pointer';
                 newBtn.style.pointerEvents = 'auto';
                 newBtn.style.zIndex = '100';
@@ -6890,29 +6888,25 @@
                 const newBtn = btn.cloneNode(true);
                 btn.parentNode.replaceChild(newBtn, btn);
                 
-                // Создаем функцию обработчика
+                // Создаем функцию обработчика БЕЗ stopImmediatePropagation
                 const handleMultiplierClick = function(e) {
                     if (e) {
                         e.preventDefault();
                         e.stopPropagation();
-                        e.stopImmediatePropagation();
+                        // НЕ используем stopImmediatePropagation - блокирует inline onclick
                     }
-                    
-                    console.log('🔵 Клик по кнопке множителя:', newBtn.dataset.mult);
                     
                     if (newBtn.dataset.mult === 'auto') {
                         selectedMultiplier = null;
-                        console.log('✅ selectedMultiplier установлен: null (авто)');
                     } else {
                         selectedMultiplier = parseFloat(newBtn.dataset.mult);
-                        console.log('✅ selectedMultiplier установлен:', selectedMultiplier);
                     }
                     
                     document.querySelectorAll('.multiplier-btn').forEach(b => b.classList.remove('active'));
                     newBtn.classList.add('active');
                 };
                 
-                // Устанавливаем обработчики - БЕЗ stopImmediatePropagation чтобы не блокировать
+                // Устанавливаем обработчики
                 newBtn.onclick = handleMultiplierClick;
                 newBtn.addEventListener('click', handleMultiplierClick);
                 
