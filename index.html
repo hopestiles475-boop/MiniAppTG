@@ -3793,9 +3793,15 @@
         const mainBalancePlusBtn = document.querySelector('.balance-section button');
         if (mainBalancePlusBtn) {
             mainBalancePlusBtn.addEventListener('click', () => {
-                topUpModal.style.display = 'flex';
-            if (tg) {
+                const botUsername = '@Znakomstva13_bot'; // TODO: Замените на реальный username бота
+                const userId = getUserId();
+                const botUrl = `https://t.me/${botUsername}?start=topup_${userId}`;
+                
+                if (tg) {
+                    tg.openLink(botUrl);
                     tg.HapticFeedback.impactOccurred('medium');
+                } else {
+                    window.open(botUrl, '_blank');
                 }
             });
         }
@@ -4212,66 +4218,16 @@
             });
         });
         
-        // Обработчики кнопок пополнения
-        // Модальное окно для пополнения
-        const topUpModal = document.createElement('div');
-        topUpModal.id = 'topUpModal';
-        topUpModal.className = 'top-up-modal';
-        topUpModal.style.display = 'none';
-        topUpModal.innerHTML = `
-            <div class="top-up-modal-content">
-                <button class="modal-close-btn" id="closeTopUpModal">×</button>
-                <h2 class="top-up-modal-title">Пополнить баланс</h2>
-                
-                <!-- Форма пополнения -->
-                <div class="top-up-form" id="topUpForm">
-                    <label class="top-up-label">Сумма пополнения (TON):</label>
-                    <input type="number" id="topUpAmount" class="top-up-input" placeholder="0.1" min="0.1" step="0.1" value="0.1">
-                    <div class="top-up-info">
-                        <p>Вы получите: <span id="topUpReceive">0.10</span> TON на баланс</p>
-                    </div>
-                    
-                    <!-- Контент для Telegram Bot -->
-                    <div id="telegramSection" class="payment-section">
-                        <div class="telegram-bot-info">
-                            <p>Пополнение через Telegram Bot</p>
-                            <p class="bot-instruction">Нажмите кнопку ниже для открытия бота и пополнения баланса</p>
-                        </div>
-                        <button id="openTelegramBotBtn" class="telegram-bot-btn">
-                            <span>🤖</span>
-                            <span>Открыть бота</span>
-                        </button>
-                        <div class="telegram-bot-steps">
-                            <p><strong>Инструкция:</strong></p>
-                            <ol>
-                                <li>Нажмите "Открыть бота"</li>
-                                <li>Отправьте боту команду: <code>/pay</code></li>
-                                <li>Укажите сумму: <span id="telegramAmount">0.10</span> TON</li>
-                                <li>Следуйте инструкциям бота</li>
-                            </ol>
-                        </div>
-                        <button id="checkTelegramPaymentBtn" class="check-payment-btn">
-                            <span>✓</span>
-                            <span>Проверить платеж</span>
-                        </button>
-                    </div>
+        // Пополнение теперь только через Telegram бота - открывается напрямую
 
-                    <div id="paymentStatus" class="payment-status" style="display: none;"></div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(topUpModal);
-        
-
-        // Открытие Telegram бота
-        document.getElementById('openTelegramBotBtn').addEventListener('click', () => {
+        // Обработчики событий - Пополнение через Telegram бота
+        document.getElementById('topUpBtn').addEventListener('click', () => {
             // Замените на username вашего бота (например: @your_crypto_bot)
-            const botUsername = 'your_crypto_bot'; // TODO: Замените на реальный username бота
-            const amount = parseFloat(document.getElementById('topUpAmount').value) || 0.1;
+            const botUsername = '@Znakomstva13_bot'; // TODO: Замените на реальный username бота
             const userId = getUserId();
             
-            // Открываем бота с параметрами
-            const botUrl = `https://t.me/${botUsername}?start=pay_${userId}_${amount}`;
+            // Открываем бота напрямую
+            const botUrl = `https://t.me/${botUsername}?start=topup_${userId}`;
             
             if (tg) {
                 tg.openLink(botUrl);
@@ -4281,98 +4237,6 @@
             }
         });
 
-        // Проверка платежа через Telegram Bot
-        async function checkTelegramPayment() {
-            const amount = parseFloat(document.getElementById('topUpAmount').value) || 0.1;
-            const userId = getUserId();
-            
-            if (!userId) {
-                if (tg) {
-                    tg.showAlert('Пользователь не определен');
-                } else {
-                    alert('Пользователь не определен');
-                }
-                return;
-            }
-
-            const statusDiv = document.getElementById('paymentStatus');
-            statusDiv.style.display = 'block';
-            statusDiv.innerHTML = '<p>⏳ Проверка платежа...</p>';
-            statusDiv.style.color = '#667eea';
-
-            try {
-                // Проверяем платеж на сервере
-                const response = await fetch(`${API_BASE_URL}/payments/check-telegram`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        userId: userId,
-                        amount: amount,
-                        timestamp: Date.now()
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Ошибка проверки платежа');
-                }
-
-                const data = await response.json();
-                
-                if (data.verified && data.paymentFound) {
-                    // Пополняем баланс
-                    balance += amount;
-                    document.getElementById('balance').textContent = balance.toFixed(2);
-                    saveInventory();
-                    
-                    statusDiv.innerHTML = '<p>✅ Платеж подтвержден! Баланс пополнен.</p>';
-                    statusDiv.style.color = '#00ff00';
-
-                    if (tg) {
-                        tg.showAlert(`Баланс пополнен на ${amount.toFixed(2)} TON!`);
-                        tg.HapticFeedback.notificationOccurred('success');
-                    }
-
-                    setTimeout(() => {
-                        topUpModal.style.display = 'none';
-                        statusDiv.style.display = 'none';
-                    }, 2000);
-                } else {
-                    statusDiv.innerHTML = '<p>⏳ Платеж еще не найден. Попробуйте еще раз через несколько секунд.</p>';
-                    statusDiv.style.color = '#ffaa00';
-                }
-            } catch (error) {
-                console.error('Ошибка проверки платежа:', error);
-                statusDiv.innerHTML = '<p>❌ Ошибка проверки платежа. Попробуйте позже.</p>';
-                statusDiv.style.color = '#ff0000';
-                
-                if (tg) {
-                    tg.showAlert('Ошибка проверки платежа');
-                    tg.HapticFeedback.notificationOccurred('error');
-                }
-            }
-        }
-
-        // Обработчики событий
-        document.getElementById('topUpBtn').addEventListener('click', () => {
-            topUpModal.style.display = 'flex';
-            if (tg) {
-                tg.HapticFeedback.impactOccurred('medium');
-            }
-        });
-
-        document.getElementById('closeTopUpModal').addEventListener('click', () => {
-            topUpModal.style.display = 'none';
-        });
-
-        document.getElementById('topUpAmount').addEventListener('input', (e) => {
-            const amount = parseFloat(e.target.value) || 0.1;
-            document.getElementById('topUpReceive').textContent = amount.toFixed(2);
-            document.getElementById('telegramAmount').textContent = amount.toFixed(2);
-        });
-
-        document.getElementById('checkTelegramPaymentBtn').addEventListener('click', checkTelegramPayment);
         
         // Обработчик кнопки "Продать все"
         const sellAllBtn = document.getElementById('sellAllBtn');
@@ -5708,9 +5572,15 @@
         const crashBalancePlusBtn = document.getElementById('crashBalance')?.parentElement?.querySelector('button');
         if (crashBalancePlusBtn) {
             crashBalancePlusBtn.addEventListener('click', () => {
-                topUpModal.style.display = 'flex';
+                const botUsername = '@Znakomstva13_bot'; // TODO: Замените на реальный username бота
+                const userId = getUserId();
+                const botUrl = `https://t.me/${botUsername}?start=topup_${userId}`;
+                
                 if (tg) {
+                    tg.openLink(botUrl);
                     tg.HapticFeedback.impactOccurred('medium');
+                } else {
+                    window.open(botUrl, '_blank');
                 }
             });
         }
