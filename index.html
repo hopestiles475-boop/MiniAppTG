@@ -2994,7 +2994,7 @@
                 <label>Ставка:</label>
                 <input type="number" id="crashBetAmount" class="crash-input" value="0.1" min="0.01" step="0.01" placeholder="0.00">
             </div>
-            <button id="crashBetBtn" class="crash-bet-btn" onclick="try{window.handleCrashBet(event);}catch(e){alert('Ошибка: '+e.message);}">Сделать ставку</button>
+            <button id="crashBetBtn" class="crash-bet-btn" onclick="try{console.log('🔵 Клик по кнопке краш, hasBet:', typeof crashGameState !== 'undefined' ? crashGameState.hasBet : 'undefined');window.handleCrashBet(event);}catch(e){alert('Ошибка: '+e.message);console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 999 !important;">Сделать ставку</button>
         </div>
     </div>
 
@@ -6825,8 +6825,9 @@
         }
         
         function makeCrashBet() {
-            // Если уже есть ставка - забираем выигрыш (можно в любой момент)
+            // Если уже есть ставка - забираем выигрыш (можно в любой момент, даже во время раунда)
             if (crashGameState.hasBet) {
+                console.log('✅ Забираем ставку, множитель:', crashGameState.multiplier);
                 cashOutCrash();
                 return;
             }
@@ -6888,7 +6889,12 @@
         }
         
         function cashOutCrash() {
-            if (!crashGameState.hasBet) return;
+            if (!crashGameState.hasBet) {
+                console.log('⚠️ Нет активной ставки для забирания');
+                return;
+            }
+            
+            console.log('💰 Забираем ставку:', crashGameState.betAmount, 'Множитель:', crashGameState.multiplier);
             
             const winnings = crashGameState.betAmount * crashGameState.multiplier;
             changeBalance(winnings, 'crashWin');
@@ -6896,11 +6902,22 @@
             crashGameState.hasBet = false;
             crashGameState.betAmount = 0;
             
-            // Обновляем кнопку
+            // Обновляем кнопку в зависимости от состояния игры
             const betBtn = document.getElementById('crashBetBtn');
             if (betBtn) {
-                betBtn.textContent = 'Сделать ставку';
-                betBtn.disabled = false;
+                if (crashGameState.isRunning) {
+                    // Если раунд идет - блокируем кнопку (ставку уже забрали)
+                    betBtn.textContent = 'Раунд начался';
+                    betBtn.disabled = true;
+                } else if (crashGameState.isCooldown) {
+                    // Если кулдаун - разрешаем новую ставку
+                    betBtn.textContent = 'Сделать ставку';
+                    betBtn.disabled = false;
+                } else {
+                    // Иначе - обычное состояние
+                    betBtn.textContent = 'Сделать ставку';
+                    betBtn.disabled = false;
+                }
             }
             
             updateCrashBalance();
@@ -6908,6 +6925,8 @@
             if (tg) {
                 tg.showAlert(`Вы выиграли ${winnings.toFixed(2)}!`);
                 tg.HapticFeedback.notificationOccurred('success');
+            } else {
+                alert(`Вы выиграли ${winnings.toFixed(2)}!`);
             }
         }
         
