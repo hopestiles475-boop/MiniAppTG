@@ -46,10 +46,109 @@
         })();
     </script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- ЗАГРУЗКА TONCONNECT SDK - ПРЯМАЯ ЗАГРУЗКА -->
-    <script src="https://cdn.jsdelivr.net/npm/@tonconnect/sdk@2/dist/tonconnect.min.js" 
-            onload="console.log('✅ TONCONNECT SDK ЗАГРУЖЕН (прямая загрузка)'); window.tonConnectLibLoaded = true;" 
-            onerror="console.error('❌ ОШИБКА ПРЯМОЙ ЗАГРУЗКИ TONCONNECT'); window.tonConnectLibLoaded = false;"></script>
+    <!-- ЗАГРУЗКА TONCONNECT SDK -->
+    <script>
+        // Улучшенная загрузка TonConnect с множественными CDN и fallback
+        (function() {
+            // CDN для TonConnect SDK (для GitHub Pages)
+            const tonConnectUrls = [
+                'https://cdn.jsdelivr.net/npm/@tonconnect/sdk@2/dist/tonconnect.min.js',
+                'https://unpkg.com/@tonconnect/sdk@2/dist/tonconnect.min.js',
+                'https://unpkg.com/@tonconnect/sdk@latest/dist/tonconnect.min.js',
+                'https://esm.sh/@tonconnect/sdk@2/dist/tonconnect.min.js'
+            ];
+            
+            // Для локального сервера пробуем прокси
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                tonConnectUrls.unshift(window.location.origin + '/tonconnect.min.js');
+            }
+            
+            let urlIndex = 0;
+            window.tonConnectLibLoaded = false;
+            
+            // Метод 1: Загрузка через script тег
+            function tryLoadViaScript() {
+                if (urlIndex >= tonConnectUrls.length) {
+                    console.warn('⚠️ Все CDN недоступны через script тег, пробуем fetch...');
+                    tryLoadViaFetch();
+                    return;
+                }
+                
+                const script = document.createElement('script');
+                script.src = tonConnectUrls[urlIndex];
+                script.async = false;
+                script.crossOrigin = 'anonymous';
+                
+                script.onload = function() {
+                    console.log('✅ TONCONNECT SDK ЗАГРУЖЕН через script с:', tonConnectUrls[urlIndex]);
+                    window.tonConnectLibLoaded = true;
+                    checkTonConnectAvailable();
+                };
+                
+                script.onerror = function(e) {
+                    console.warn('⚠️ Ошибка загрузки через script:', tonConnectUrls[urlIndex]);
+                    urlIndex++;
+                    setTimeout(tryLoadViaScript, 300);
+                };
+                
+                console.log('📥 Попытка загрузки через script:', tonConnectUrls[urlIndex]);
+                (document.head || document.getElementsByTagName('head')[0]).appendChild(script);
+            }
+            
+            // Метод 2: Загрузка через fetch + eval (fallback)
+            async function tryLoadViaFetch() {
+                urlIndex = 0; // Сбрасываем индекс
+                
+                for (let i = 0; i < tonConnectUrls.length; i++) {
+                    try {
+                        console.log('📥 Попытка загрузки через fetch:', tonConnectUrls[i]);
+                        const response = await fetch(tonConnectUrls[i], {
+                            mode: 'cors',
+                            cache: 'default'
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                        
+                        const code = await response.text();
+                        console.log('✅ Код получен через fetch, выполнение...');
+                        
+                        // Выполняем код
+                        eval(code);
+                        
+                        window.tonConnectLibLoaded = true;
+                        checkTonConnectAvailable();
+                        return;
+                    } catch (error) {
+                        console.warn('⚠️ Ошибка fetch с:', tonConnectUrls[i], error.message);
+                        if (i === tonConnectUrls.length - 1) {
+                            console.error('❌ Все методы загрузки TonConnect провалились');
+                            window.tonConnectLibLoaded = false;
+                        }
+                    }
+                }
+            }
+            
+            // Проверка доступности TonConnect класса
+            function checkTonConnectAvailable() {
+                setTimeout(() => {
+                    if (typeof TonConnect !== 'undefined') {
+                        console.log('✅ TonConnect класс доступен:', typeof TonConnect);
+                    } else {
+                        console.warn('⚠️ TonConnect загружен, но класс не доступен');
+                    }
+                }, 100);
+            }
+            
+            // Запускаем загрузку
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', tryLoadViaScript);
+            } else {
+                tryLoadViaScript();
+            }
+        })();
+    </script>
     <script>
         // ПРОСТАЯ ПРОВЕРКА И АЛЬТЕРНАТИВНАЯ ЗАГРУЗКА
         console.log('🔍 Проверка TonConnect SDK...');
@@ -3103,11 +3202,11 @@
 
         // Обновление аватарки и имени в шапке
         function updateHeaderAvatar() {
-            const user = tg?.initDataUnsafe?.user;
+        const user = tg?.initDataUnsafe?.user;
             const usernameEl = document.getElementById('username');
             const avatarEl = document.querySelector('.avatar');
             
-            if (user) {
+        if (user) {
                 if (usernameEl) {
                     usernameEl.textContent = user.first_name || user.username || 'User';
                 }
@@ -3894,7 +3993,7 @@
         if (mainBalancePlusBtn) {
             mainBalancePlusBtn.addEventListener('click', () => {
                 topUpModal.style.display = 'flex';
-                if (tg) {
+            if (tg) {
                     tg.HapticFeedback.impactOccurred('medium');
                 }
             });
@@ -3940,7 +4039,7 @@
                                 }
                             };
                         }
-                    } else {
+            } else {
                         // Если фото недоступно, показываем эмодзи
                         profileAvatarContainer.innerHTML = '';
                         const fallback = document.createElement('span');
@@ -4402,7 +4501,9 @@
                 
                 console.log('✅ TonConnect класс найден, инициализация...');
                 
+                // URL манифеста для GitHub Pages
                 const manifestUrl = 'https://hopestiles475-boop.github.io/MiniAppTG/tonconnect-manifest.json';
+                console.log('📍 Используемый URL манифеста:', manifestUrl);
                 
                 // Проверяем доступность манифеста
                 try {
