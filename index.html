@@ -3365,6 +3365,13 @@
                 // Обработчики инвентаря
                 initInventoryHandlers();
                 
+                // Обработчики кнопок профиля
+                initProfileHandlers();
+                
+                // Инициализация обработчиков пополнения и вывода
+                initTopUpHandlers();
+                initWithdrawHandlers();
+                
                 console.log('✅ Обработчики событий инициализированы');
             } catch (error) {
                 console.error('❌ Ошибка инициализации обработчиков:', error);
@@ -3427,6 +3434,12 @@
                     profilePage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; pointer-events: auto !important;';
                     updateProfileInfo();
                     updateInventory();
+                    // Переинициализируем обработчики при открытии профиля (на случай, если они не были инициализированы)
+                    setTimeout(() => {
+                        initProfileHandlers();
+                        initTopUpHandlers();
+                        initWithdrawHandlers();
+                    }, 100);
                 } else if (page === 'crash') {
                     if (header) header.style.display = 'none';
                     if (crashPage) {
@@ -3609,13 +3622,70 @@
                     newBtn.addEventListener('click', function(e) {
                         e.preventDefault();
                         e.stopPropagation();
+                        console.log('Клик по кнопке "Продать все"');
                         sellAllItems();
                     });
+                    console.log('✅ Кнопка "Продать все" инициализирована');
+                } else {
+                    console.warn('⚠️ Кнопка "Продать все" не найдена или функция sellAllItems недоступна');
                 }
                 
                 // Инициализация слотов инвентаря происходит динамически при обновлении инвентаря
             } catch (error) {
                 console.error('❌ Ошибка инициализации инвентаря:', error);
+            }
+        }
+        
+        // Инициализация обработчиков кнопок профиля
+        function initProfileHandlers() {
+            try {
+                console.log('🔧 Инициализация обработчиков профиля...');
+                
+                // Кнопка "Пополнить"
+                const topUpBtn = document.getElementById('topUpBtn');
+                if (topUpBtn) {
+                    const newBtn = topUpBtn.cloneNode(true);
+                    topUpBtn.parentNode.replaceChild(newBtn, topUpBtn);
+                    newBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        console.log('Клик по кнопке "Пополнить" в профиле');
+                        if (typeof openTopUpModal === 'function') {
+                            openTopUpModal();
+                        } else {
+                            console.error('Функция openTopUpModal не найдена');
+                        }
+                    });
+                    console.log('✅ Кнопка "Пополнить" в профиле инициализирована');
+                } else {
+                    console.warn('⚠️ Кнопка "Пополнить" не найдена');
+                }
+                
+                // Кнопка "Вывести"
+                const withdrawBtn = document.getElementById('withdrawBtn');
+                if (withdrawBtn) {
+                    const newBtn = withdrawBtn.cloneNode(true);
+                    withdrawBtn.parentNode.replaceChild(newBtn, withdrawBtn);
+                    newBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        console.log('Клик по кнопке "Вывести" в профиле');
+                        if (typeof openWithdrawModal === 'function') {
+                            openWithdrawModal();
+                        } else {
+                            console.error('Функция openWithdrawModal не найдена');
+                        }
+                    });
+                    console.log('✅ Кнопка "Вывести" в профиле инициализирована');
+                } else {
+                    console.warn('⚠️ Кнопка "Вывести" не найдена');
+                }
+                
+                console.log('✅ Обработчики профиля инициализированы');
+            } catch (error) {
+                console.error('❌ Ошибка инициализации обработчиков профиля:', error);
             }
         }
         
@@ -3637,6 +3707,12 @@
             
             // Инициализируем обработчики событий
             initEventHandlers();
+            
+            // Дополнительная инициализация обработчиков пополнения и вывода
+            setTimeout(() => {
+                initTopUpHandlers();
+                initWithdrawHandlers();
+            }, 200);
             
             // Загружаем подарки с сервера или из localStorage
             fetchGlobalPrizes();
