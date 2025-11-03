@@ -1284,92 +1284,6 @@
             font-weight: 700;
         }
 
-        .tonkeeper-btn {
-            width: 100%;
-            padding: 16px;
-            border-radius: 16px;
-            border: none;
-            background: linear-gradient(135deg, #0088cc 0%, #006699 100%);
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: all 0.3s;
-            box-shadow: 0 4px 20px rgba(0, 136, 204, 0.4);
-        }
-
-        .tonkeeper-btn:active {
-            transform: scale(0.98);
-        }
-
-        .tonkeeper-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        .tonkeeper-payment-info {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .tonkeeper-payment-info p {
-            margin: 8px 0;
-            color: rgba(255, 255, 255, 0.9);
-        }
-        
-        .payment-instruction {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.7) !important;
-        }
-        
-        .payment-address-info {
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            text-align: center;
-        }
-        
-        .payment-address-info p {
-            margin: 8px 0;
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 14px;
-        }
-        
-        .payment-address-code {
-            display: block;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            word-break: break-all;
-            color: #667eea;
-            margin: 10px 0;
-        }
-        
-        .copy-address-btn {
-            width: 100%;
-            padding: 12px;
-            border-radius: 12px;
-            border: 2px solid rgba(102, 126, 234, 0.5);
-            background: rgba(102, 126, 234, 0.2);
-            color: #667eea;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 10px;
-        }
-        
-        .copy-address-btn:active {
-            transform: scale(0.98);
-            background: rgba(102, 126, 234, 0.3);
-        }
 
         .payment-status {
             padding: 12px;
@@ -1383,39 +1297,6 @@
             margin: 0;
         }
 
-        /* Выбор способа оплаты */
-        .payment-method-selector {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .payment-method-btn {
-            flex: 1;
-            padding: 14px 20px;
-            border-radius: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.05);
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.3s;
-        }
-
-        .payment-method-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-color: rgba(255, 255, 255, 0.5);
-            color: white;
-        }
-
-        .payment-method-btn:active {
-            transform: scale(0.98);
-        }
 
         .payment-section {
             margin-top: 10px;
@@ -4342,18 +4223,6 @@
                 <button class="modal-close-btn" id="closeTopUpModal">×</button>
                 <h2 class="top-up-modal-title">Пополнить баланс</h2>
                 
-                <!-- Выбор способа пополнения -->
-                <div class="payment-method-selector">
-                    <button class="payment-method-btn active" data-method="tonkeeper" id="methodTonkeeper">
-                        <span>🔵</span>
-                        <span>Tonkeeper</span>
-                    </button>
-                    <button class="payment-method-btn" data-method="telegram" id="methodTelegram">
-                        <span>🤖</span>
-                        <span>Telegram Bot</span>
-                    </button>
-                </div>
-
                 <!-- Форма пополнения -->
                 <div class="top-up-form" id="topUpForm">
                     <label class="top-up-label">Сумма пополнения (TON):</label>
@@ -4362,25 +4231,8 @@
                         <p>Вы получите: <span id="topUpReceive">0.10</span> TON на баланс</p>
                     </div>
                     
-                    <!-- Контент для Tonkeeper -->
-                    <div id="tonkeeperSection" class="payment-section">
-                        <div class="tonkeeper-payment-info">
-                            <p>Пополнение через Tonkeeper</p>
-                            <p class="payment-instruction">Нажмите кнопку для открытия Tonkeeper с готовым переводом</p>
-                        </div>
-                        <button id="sendTonkeeperPaymentBtn" class="tonkeeper-btn">
-                            <span>💰</span>
-                            <span>Открыть Tonkeeper</span>
-                        </button>
-                        <div class="payment-address-info">
-                            <p><strong>Адрес получателя:</strong></p>
-                            <code id="paymentAddress" class="payment-address-code">UQCC14SVH6ANPso6cwi6vABF_woZP1bo2u1q4KQN3eyADL0t</code>
-                            <button id="copyAddressBtn" class="copy-address-btn">📋 Копировать</button>
-                        </div>
-                    </div>
-
                     <!-- Контент для Telegram Bot -->
-                    <div id="telegramSection" class="payment-section" style="display: none;">
+                    <div id="telegramSection" class="payment-section">
                         <div class="telegram-bot-info">
                             <p>Пополнение через Telegram Bot</p>
                             <p class="bot-instruction">Отправьте команду боту для создания платежа</p>
@@ -4410,182 +4262,6 @@
         `;
         document.body.appendChild(topUpModal);
         
-        let selectedPaymentMethod = 'tonkeeper';
-        
-        // Адрес получателя (ЗАМЕНИТЕ НА ВАШ РЕАЛЬНЫЙ АДРЕС КОШЕЛЬКА)
-        const recipientAddress = 'UQCC14SVH6ANPso6cwi6vABF_woZP1bo2u1q4KQN3eyADL0t';
-        
-        // Открытие Tonkeeper через deep link (БЕЗ SDK)
-        function openTonkeeperPayment() {
-            const amountInput = document.getElementById('topUpAmount');
-            const amount = parseFloat(amountInput.value) || 0.1;
-            
-            if (amount < 0.1) {
-                if (tg) {
-                    tg.showAlert('Минимальная сумма: 0.1 TON');
-                } else {
-                    alert('Минимальная сумма: 0.1 TON');
-                }
-                return;
-            }
-            
-            // Конвертируем адрес в правильный формат (user-friendly)
-            const userFriendlyAddress = recipientAddress;
-            
-            // Создаём deep link для Tonkeeper
-            // Формат: ton://transfer/<address>?amount=<nano>
-            const amountInNano = Math.floor(amount * 1000000000);
-            
-            // Пробуем разные форматы deep links
-            const tonkeeperLinks = [
-                `ton://transfer/${userFriendlyAddress}?amount=${amountInNano}`,
-                `https://app.tonkeeper.com/transfer/${userFriendlyAddress}?amount=${amountInNano}`,
-                `tonkeeper://transfer/${userFriendlyAddress}?amount=${amountInNano}`
-            ];
-            
-            // Пробуем открыть Tonkeeper
-            let opened = false;
-            for (const link of tonkeeperLinks) {
-                try {
-                    window.location.href = link;
-                    opened = true;
-                    break;
-                } catch (e) {
-                    console.log('Не удалось открыть:', link);
-                }
-            }
-            
-            if (!opened) {
-                // Если deep link не сработал, показываем инструкцию
-                const statusDiv = document.getElementById('paymentStatus');
-                statusDiv.style.display = 'block';
-                statusDiv.innerHTML = `
-                    <p><strong>Инструкция:</strong></p>
-                    <p>1. Откройте Tonkeeper</p>
-                    <p>2. Отправьте перевод на адрес:</p>
-                    <p style="word-break: break-all; font-size: 12px;">${userFriendlyAddress}</p>
-                    <p>3. Сумма: <strong>${amount.toFixed(2)} TON</strong></p>
-                    <p>4. После отправки нажмите "Проверить платеж"</p>
-                `;
-                statusDiv.style.color = '#ffffff';
-            } else {
-                // Deep link открыт, запускаем проверку платежа
-                const statusDiv = document.getElementById('paymentStatus');
-                statusDiv.style.display = 'block';
-                statusDiv.innerHTML = '<p>⏳ Откройте Tonkeeper и подтвердите перевод</p>';
-                statusDiv.style.color = '#667eea';
-                
-                // Показываем кнопку проверки платежа
-                const tonkeeperSection = document.getElementById('tonkeeperSection');
-                if (tonkeeperSection) {
-                    const checkBtn = tonkeeperSection.querySelector('.check-payment-btn');
-                    if (checkBtn) {
-                        checkBtn.style.display = 'block';
-                    }
-                }
-                
-                // Автоматически начинаем проверку через 10 секунд
-                setTimeout(() => {
-                    checkTonkeeperPayment(amount, userFriendlyAddress);
-                }, 10000);
-            }
-            
-            if (tg) {
-                tg.HapticFeedback.impactOccurred('medium');
-            }
-        }
-        
-        // Проверка платежа через Tonkeeper (проверка транзакции на блокчейне)
-        async function checkTonkeeperPayment(amount, address) {
-            const statusDiv = document.getElementById('paymentStatus');
-            statusDiv.style.display = 'block';
-            statusDiv.innerHTML = '<p>⏳ Проверка платежа...</p>';
-            statusDiv.style.color = '#667eea';
-            
-            try {
-                const userId = getUserId();
-                if (!userId) {
-                    throw new Error('Пользователь не определен');
-                }
-                
-                // Проверяем на сервере
-                const response = await fetch(`${API_BASE_URL}/payments/check-tonkeeper`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        userId: userId,
-                        amount: amount,
-                        address: address,
-                        timestamp: Date.now()
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Ошибка проверки платежа');
-                }
-                
-                const data = await response.json();
-                
-                if (data.verified) {
-                    // Пополняем баланс
-                    balance += amount;
-                    document.getElementById('balance').textContent = balance.toFixed(2);
-                    if (document.getElementById('crashBalance')) {
-                        document.getElementById('crashBalance').textContent = balance.toFixed(2);
-                    }
-                    saveInventory();
-                    saveUserData();
-                    
-                    statusDiv.innerHTML = '<p>✅ Платеж подтвержден! Баланс пополнен.</p>';
-                    statusDiv.style.color = '#00ff00';
-                    
-                    if (tg) {
-                        tg.showAlert(`Баланс пополнен на ${amount.toFixed(2)} TON!`);
-                        tg.HapticFeedback.notificationOccurred('success');
-                    }
-                    
-                    setTimeout(() => {
-                        topUpModal.style.display = 'none';
-                        statusDiv.style.display = 'none';
-                    }, 2000);
-                } else {
-                    statusDiv.innerHTML = '<p>⏳ Платеж еще не найден. Нажмите "Проверить платеж"</p>';
-                    statusDiv.style.color = '#ffaa00';
-                    // Показываем кнопку проверки
-                    const tonkeeperSection = document.getElementById('tonkeeperSection');
-                    if (tonkeeperSection) {
-                        const checkBtn = tonkeeperSection.querySelector('.check-payment-btn');
-                        if (checkBtn) {
-                            checkBtn.style.display = 'block';
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Ошибка проверки платежа:', error);
-                statusDiv.innerHTML = '<p>⚠️ Ошибка проверки. Попробуйте еще раз.</p>';
-                statusDiv.style.color = '#ffaa00';
-            }
-        }
-
-
-        // Переключение между методами оплаты
-        document.getElementById('methodTonkeeper').addEventListener('click', () => {
-            selectedPaymentMethod = 'tonkeeper';
-            document.getElementById('methodTonkeeper').classList.add('active');
-            document.getElementById('methodTelegram').classList.remove('active');
-            document.getElementById('tonkeeperSection').style.display = 'block';
-            document.getElementById('telegramSection').style.display = 'none';
-        });
-
-        document.getElementById('methodTelegram').addEventListener('click', () => {
-            selectedPaymentMethod = 'telegram';
-            document.getElementById('methodTelegram').classList.add('active');
-            document.getElementById('methodTonkeeper').classList.remove('active');
-            document.getElementById('tonkeeperSection').style.display = 'none';
-            document.getElementById('telegramSection').style.display = 'block';
-        });
 
         // Открытие Telegram бота
         document.getElementById('openTelegramBotBtn').addEventListener('click', () => {
@@ -4696,50 +4372,6 @@
             document.getElementById('telegramAmount').textContent = amount.toFixed(2);
         });
 
-        // Обработчик для кнопки отправки платежа через Tonkeeper (deep link)
-        const sendTonkeeperPaymentBtn = document.getElementById('sendTonkeeperPaymentBtn');
-        if (sendTonkeeperPaymentBtn) {
-            sendTonkeeperPaymentBtn.addEventListener('click', openTonkeeperPayment);
-        }
-        
-        // Обработчик для кнопки копирования адреса
-        const copyAddressBtn = document.getElementById('copyAddressBtn');
-        if (copyAddressBtn) {
-            copyAddressBtn.addEventListener('click', () => {
-                const addressCode = document.getElementById('paymentAddress');
-                if (addressCode) {
-                    navigator.clipboard.writeText(recipientAddress).then(() => {
-                        if (tg) {
-                            tg.showAlert('Адрес скопирован в буфер обмена!');
-                            tg.HapticFeedback.impactOccurred('light');
-                        } else {
-                            alert('Адрес скопирован!');
-                        }
-                        copyAddressBtn.textContent = '✅ Скопировано';
-                        setTimeout(() => {
-                            copyAddressBtn.textContent = '📋 Копировать';
-                        }, 2000);
-                    }).catch(err => {
-                        console.error('Ошибка копирования:', err);
-                    });
-                }
-            });
-        }
-        
-        // Кнопка для ручной проверки платежа Tonkeeper
-        const checkTonkeeperPaymentBtn = document.createElement('button');
-        checkTonkeeperPaymentBtn.className = 'check-payment-btn';
-        checkTonkeeperPaymentBtn.innerHTML = '<span>✓</span><span>Проверить платеж</span>';
-        checkTonkeeperPaymentBtn.style.display = 'none';
-        checkTonkeeperPaymentBtn.addEventListener('click', () => {
-            const amountInput = document.getElementById('topUpAmount');
-            const amount = parseFloat(amountInput.value) || 0.1;
-            checkTonkeeperPayment(amount, recipientAddress);
-        });
-        const tonkeeperSection = document.getElementById('tonkeeperSection');
-        if (tonkeeperSection) {
-            tonkeeperSection.appendChild(checkTonkeeperPaymentBtn);
-        }
         document.getElementById('checkTelegramPaymentBtn').addEventListener('click', checkTelegramPayment);
         
         // Обработчик кнопки "Продать все"
