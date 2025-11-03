@@ -3438,54 +3438,55 @@
             try {
                 console.log('🔧 initEventHandlers вызвана');
                 
-                // Навигация между вкладками - простая инициализация
+                // НАВИГАЦИЯ - УСТАНАВЛИВАЕМ ПРЯМО И БЕЗ ПРОВЕРОК
                 const navItems = document.querySelectorAll('.nav-item');
                 console.log(`🔍 Найдено элементов навигации: ${navItems.length}`);
                 
-                if (navItems.length === 0) {
+                if (navItems.length > 0) {
+                    navItems.forEach((item, index) => {
+                        const page = item.dataset.page || item.getAttribute('data-page') || '';
+                        console.log(`🔧 [${index}] Устанавливаю обработчик для: ${page}`);
+                        
+                        // Принудительно делаем кликабельным
+                        item.style.cursor = 'pointer';
+                        item.style.pointerEvents = 'auto';
+                        item.style.userSelect = 'none';
+                        
+                        // УДАЛЯЕМ ВСЕ СТАРЫЕ ОБРАБОТЧИКИ
+                        const newItem = item.cloneNode(true);
+                        item.parentNode.replaceChild(newItem, item);
+                        
+                        // УСТАНАВЛИВАЕМ НОВЫЙ ОБРАБОТЧИК НАПРЯМУЮ
+                        newItem.onclick = function(e) {
+                            console.log(`🔥🔥🔥 КЛИК! Страница: ${this.dataset.page || page}`);
+                            
+                            const targetPage = this.dataset.page || page || this.getAttribute('data-page');
+                            console.log(`📄 targetPage = ${targetPage}`);
+                            
+                            if (!targetPage) {
+                                console.error('❌ Страница не найдена!');
+                                return false;
+                            }
+                            
+                            console.log(`🔄 Вызываю handleNavClick('${targetPage}', this)`);
+                            
+                            try {
+                                handleNavClick(targetPage, this);
+                                console.log('✅ handleNavClick вызвана успешно');
+                            } catch (err) {
+                                console.error('❌ ОШИБКА в handleNavClick:', err);
+                                alert('Ошибка: ' + err.message);
+                            }
+                            
+                            return false;
+                        };
+                        
+                        console.log(`✅ [${index}] Обработчик установлен: ${page}`);
+                    });
+                    console.log('✅ ВСЯ НАВИГАЦИЯ ИНИЦИАЛИЗИРОВАНА');
+                } else {
                     console.error('❌ Элементы навигации не найдены!');
-                    return;
                 }
-                
-                navItems.forEach((item, index) => {
-                    const page = item.dataset.page || item.getAttribute('data-page');
-                    console.log(`🔧 Устанавливаю обработчик для навигации ${index + 1}: ${page}`);
-                    
-                    // Проверяем, что handleNavClick существует
-                    if (typeof handleNavClick !== 'function') {
-                        console.error('❌ Функция handleNavClick не найдена!');
-                        return;
-                    }
-                    
-                    // Убеждаемся, что элемент кликабелен
-                    item.style.cursor = 'pointer';
-                    item.style.pointerEvents = 'auto';
-                    
-                    // Простой обработчик клика
-                    item.onclick = function(e) {
-                        console.log(`🔥 Клик по навигации: ${this.dataset.page || page}`);
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        const targetPage = this.dataset.page || page || this.getAttribute('data-page');
-                        console.log(`📄 Целевая страница: ${targetPage}`);
-                        
-                        if (targetPage && typeof handleNavClick === 'function') {
-                            console.log('✅ Вызываю handleNavClick');
-                            handleNavClick(targetPage, this);
-                        } else {
-                            console.error('❌ Не могу вызвать handleNavClick:', {
-                                targetPage: targetPage,
-                                handleNavClick: typeof handleNavClick
-                            });
-                        }
-                        return false;
-                    };
-                    
-                    console.log(`✅ Обработчик установлен для: ${page}`);
-                });
-                
-                console.log('✅ Навигация инициализирована');
                 
                 // Обработчики табов
                 if (typeof initTabs === 'function') {
@@ -4069,15 +4070,46 @@
             detailPage.classList.remove('active');
             profilePage.style.display = 'none';
             
-            // Инициализируем обработчики событий
+            // Инициализируем обработчики событий МНОЖЕСТВЕННО
+            console.log('⏰ DOMContentLoaded сработал');
+            
+            // Первая попытка - сразу
             setTimeout(() => {
-                console.log('⏰ DOMContentLoaded: Вызываю initEventHandlers');
-                console.log('🔍 Проверка наличия элементов навигации:', document.querySelectorAll('.nav-item').length);
-                
+                console.log('⏰ Попытка 1: Инициализация через 100ms');
                 if (typeof initEventHandlers === 'function') {
                     initEventHandlers();
-                } else {
-                    console.error('❌ Функция initEventHandlers не найдена в DOMContentLoaded!');
+                }
+            }, 100);
+            
+            // Вторая попытка - через 300ms
+            setTimeout(() => {
+                console.log('⏰ Попытка 2: Инициализация через 300ms');
+                if (typeof initEventHandlers === 'function') {
+                    initEventHandlers();
+                }
+                
+                // ПРЯМАЯ установка обработчиков на случай, если initEventHandlers не сработала
+                const navItems = document.querySelectorAll('.nav-item');
+                console.log(`🔧 Прямая установка: найдено ${navItems.length} элементов`);
+                navItems.forEach((item) => {
+                    const page = item.dataset.page;
+                    if (page && !item.onclick) {
+                        console.log(`🔧 Прямая установка onclick для: ${page}`);
+                        item.onclick = function() {
+                            console.log(`🔥 ПРЯМОЙ ОНКЛИК: ${page}`);
+                            if (typeof handleNavClick === 'function') {
+                                handleNavClick(page, this);
+                            }
+                        };
+                    }
+                });
+            }, 300);
+            
+            // Третья попытка - через 500ms
+            setTimeout(() => {
+                console.log('⏰ Попытка 3: Инициализация через 500ms');
+                if (typeof initEventHandlers === 'function') {
+                    initEventHandlers();
                 }
                 
                 // Дополнительная инициализация обработчиков пополнения и вывода
