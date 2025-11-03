@@ -63,166 +63,169 @@
         });
         
         // ФУНКЦИЯ НАВИГАЦИИ - ОПРЕДЕЛЯЕМ В HEAD ЧТОБЫ БЫЛА ДОСТУПНА СРАЗУ
-        window.handleNavClick = function(page, clickedItem) {
-            if (!page) return;
-            
-            // Обновляем активную вкладку
-            var items = document.querySelectorAll('.nav-item');
-            for (var i = 0; i < items.length; i++) {
-                items[i].classList.remove('active');
-            }
-            if (clickedItem) clickedItem.classList.add('active');
-            
-            // Получаем страницы
-            var mainPage = document.getElementById('mainPage');
-            var profilePage = document.getElementById('profilePage');
-            var crashPage = document.getElementById('crashPage');
-            var minesPage = document.getElementById('minesPage');
-            var dicePage = document.getElementById('dicePage');
-            var caseDetailPage = document.getElementById('caseDetailPage');
-            var header = document.querySelector('.header');
-            var openBtn = document.getElementById('openBtn');
-            
-            if (!mainPage || !profilePage) return;
-            
-            // Скрываем все страницы, включая детальный просмотр кейса
-            var pages = [mainPage, profilePage];
-            if (crashPage) pages.push(crashPage);
-            if (minesPage) pages.push(minesPage);
-            if (dicePage) pages.push(dicePage);
-            if (caseDetailPage) pages.push(caseDetailPage);
-            
-            for (var i = 0; i < pages.length; i++) {
-                if (pages[i]) {
-                    pages[i].style.display = 'none';
-                    pages[i].style.visibility = 'hidden';
-                    pages[i].style.opacity = '0';
-                    pages[i].style.pointerEvents = 'none';
-                    pages[i].classList.remove('active');
-                    // Дополнительно сбрасываем позиционирование для caseDetailPage
-                    if (pages[i].id === 'caseDetailPage') {
-                        pages[i].style.position = 'fixed';
-                        pages[i].style.top = '0';
-                        pages[i].style.left = '0';
-                        pages[i].style.right = '0';
-                        pages[i].style.bottom = '0';
-                        pages[i].style.zIndex = '-1';
+        // Если функция уже определена, не переопределяем
+        if (!window.handleNavClick) {
+            window.handleNavClick = function(page, clickedItem) {
+                if (!page) return;
+                
+                // Обновляем активную вкладку
+                var items = document.querySelectorAll('.nav-item');
+                for (var i = 0; i < items.length; i++) {
+                    items[i].classList.remove('active');
+                }
+                if (clickedItem) clickedItem.classList.add('active');
+                
+                // Получаем страницы
+                var mainPage = document.getElementById('mainPage');
+                var profilePage = document.getElementById('profilePage');
+                var crashPage = document.getElementById('crashPage');
+                var minesPage = document.getElementById('minesPage');
+                var dicePage = document.getElementById('dicePage');
+                var caseDetailPage = document.getElementById('caseDetailPage');
+                var header = document.querySelector('.header');
+                var openBtn = document.getElementById('openBtn');
+                
+                if (!mainPage || !profilePage) return;
+                
+                // Скрываем все страницы, включая детальный просмотр кейса
+                var pages = [mainPage, profilePage];
+                if (crashPage) pages.push(crashPage);
+                if (minesPage) pages.push(minesPage);
+                if (dicePage) pages.push(dicePage);
+                if (caseDetailPage) pages.push(caseDetailPage);
+                
+                for (var i = 0; i < pages.length; i++) {
+                    if (pages[i]) {
+                        pages[i].style.display = 'none';
+                        pages[i].style.visibility = 'hidden';
+                        pages[i].style.opacity = '0';
+                        pages[i].style.pointerEvents = 'none';
+                        pages[i].classList.remove('active');
+                        // Дополнительно сбрасываем позиционирование для caseDetailPage
+                        if (pages[i].id === 'caseDetailPage') {
+                            pages[i].style.position = 'fixed';
+                            pages[i].style.top = '0';
+                            pages[i].style.left = '0';
+                            pages[i].style.right = '0';
+                            pages[i].style.bottom = '0';
+                            pages[i].style.zIndex = '-1';
+                        }
                     }
                 }
-            }
-            
-            // Скрываем кнопку "Открыть" при переключении вкладок
-            if (openBtn) {
-                openBtn.style.display = 'none';
-                openBtn.style.visibility = 'hidden';
-                openBtn.style.opacity = '0';
-                openBtn.classList.remove('show');
-            }
-            
-            // Показываем нужную страницу и инициализируем
-            if (page === 'cases' && mainPage) {
-                if (header) header.style.display = 'flex';
-                mainPage.style.display = 'block';
-                mainPage.style.visibility = 'visible';
-                mainPage.style.opacity = '1';
-                mainPage.style.pointerEvents = 'auto';
-                // Инициализируем кейсы
-                setTimeout(function() {
-                    if (typeof initCaseCards === 'function') initCaseCards();
-                    if (typeof initOpenButton === 'function') initOpenButton();
-                }, 50);
-            } else if (page === 'profile' && profilePage) {
-                if (header) header.style.display = 'flex';
-                profilePage.style.display = 'block';
-                profilePage.style.visibility = 'visible';
-                profilePage.style.opacity = '1';
-                profilePage.style.pointerEvents = 'auto';
-                // Инициализируем профиль
-                setTimeout(function() {
-                    if (typeof updateProfileInfo === 'function') updateProfileInfo();
-                    if (typeof updateInventory === 'function') updateInventory();
-                    if (typeof initProfileHandlers === 'function') initProfileHandlers();
-                    if (typeof initTopUpHandlers === 'function') initTopUpHandlers();
-                    if (typeof initWithdrawHandlers === 'function') initWithdrawHandlers();
-                }, 50);
-            } else if (page === 'crash' && crashPage) {
-                if (header) header.style.display = 'none';
-                crashPage.style.display = 'block';
-                crashPage.style.visibility = 'visible';
-                crashPage.style.opacity = '1';
-                crashPage.style.position = 'fixed';
-                crashPage.style.top = '0';
-                crashPage.style.left = '0';
-                crashPage.style.right = '0';
-                crashPage.style.bottom = '0';
-                crashPage.style.width = '100%';
-                crashPage.style.height = '100%';
-                crashPage.style.zIndex = '100';
-                crashPage.style.pointerEvents = 'auto';
-                // Инициализируем краш игру
-                console.log('🚀 Инициализация игры Краш...');
-                setTimeout(function() {
-                    if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
-                    if (typeof initCrashGame === 'function') {
-                        console.log('✅ Вызываю initCrashGame');
-                        initCrashGame();
-                    } else {
-                        console.error('❌ initCrashGame не найдена!');
-                    }
-                }, 50);
-                // Дополнительные вызовы для надежности
-                setTimeout(function() {
-                    if (typeof initCrashGame === 'function') {
-                        console.log('✅ Повторный вызов initCrashGame');
-                        initCrashGame();
-                    }
-                }, 200);
-                setTimeout(function() {
-                    if (typeof initCrashGame === 'function') {
-                        console.log('✅ Третий вызов initCrashGame');
-                        initCrashGame();
-                    }
-                }, 500);
-            } else if (page === 'mines' && minesPage) {
-                if (header) header.style.display = 'flex';
-                minesPage.style.display = 'block';
-                minesPage.style.visibility = 'visible';
-                minesPage.style.opacity = '1';
-                minesPage.style.position = 'fixed';
-                minesPage.style.top = '0';
-                minesPage.style.left = '0';
-                minesPage.style.right = '0';
-                minesPage.style.bottom = '0';
-                minesPage.style.width = '100%';
-                minesPage.style.height = '100%';
-                minesPage.style.zIndex = '100';
-                minesPage.style.pointerEvents = 'auto';
-                // Инициализируем мины игру
-                setTimeout(function() {
-                    if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
-                    if (typeof initMinesGame === 'function') initMinesGame();
-                }, 50);
-            } else if (page === 'dice' && dicePage) {
-                if (header) header.style.display = 'flex';
-                dicePage.style.display = 'block';
-                dicePage.style.visibility = 'visible';
-                dicePage.style.opacity = '1';
-                dicePage.style.position = 'fixed';
-                dicePage.style.top = '0';
-                dicePage.style.left = '0';
-                dicePage.style.right = '0';
-                dicePage.style.bottom = '0';
-                dicePage.style.width = '100%';
-                dicePage.style.height = '100%';
-                dicePage.style.zIndex = '100';
-                dicePage.style.pointerEvents = 'auto';
-                // Инициализируем dice игру
-                setTimeout(function() {
-                    if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
-                    if (typeof initDiceGame === 'function') initDiceGame();
-                }, 50);
-            }
-        };
+                
+                // Скрываем кнопку "Открыть" при переключении вкладок
+                if (openBtn) {
+                    openBtn.style.display = 'none';
+                    openBtn.style.visibility = 'hidden';
+                    openBtn.style.opacity = '0';
+                    openBtn.classList.remove('show');
+                }
+                
+                // Показываем нужную страницу и инициализируем
+                if (page === 'cases' && mainPage) {
+                    if (header) header.style.display = 'flex';
+                    mainPage.style.display = 'block';
+                    mainPage.style.visibility = 'visible';
+                    mainPage.style.opacity = '1';
+                    mainPage.style.pointerEvents = 'auto';
+                    // Инициализируем кейсы
+                    setTimeout(function() {
+                        if (typeof initCaseCards === 'function') initCaseCards();
+                        if (typeof initOpenButton === 'function') initOpenButton();
+                    }, 50);
+                } else if (page === 'profile' && profilePage) {
+                    if (header) header.style.display = 'flex';
+                    profilePage.style.display = 'block';
+                    profilePage.style.visibility = 'visible';
+                    profilePage.style.opacity = '1';
+                    profilePage.style.pointerEvents = 'auto';
+                    // Инициализируем профиль
+                    setTimeout(function() {
+                        if (typeof updateProfileInfo === 'function') updateProfileInfo();
+                        if (typeof updateInventory === 'function') updateInventory();
+                        if (typeof initProfileHandlers === 'function') initProfileHandlers();
+                        if (typeof initTopUpHandlers === 'function') initTopUpHandlers();
+                        if (typeof initWithdrawHandlers === 'function') initWithdrawHandlers();
+                    }, 50);
+                } else if (page === 'crash' && crashPage) {
+                    if (header) header.style.display = 'none';
+                    crashPage.style.display = 'block';
+                    crashPage.style.visibility = 'visible';
+                    crashPage.style.opacity = '1';
+                    crashPage.style.position = 'fixed';
+                    crashPage.style.top = '0';
+                    crashPage.style.left = '0';
+                    crashPage.style.right = '0';
+                    crashPage.style.bottom = '0';
+                    crashPage.style.width = '100%';
+                    crashPage.style.height = '100%';
+                    crashPage.style.zIndex = '100';
+                    crashPage.style.pointerEvents = 'auto';
+                    // Инициализируем краш игру
+                    console.log('🚀 Инициализация игры Краш...');
+                    setTimeout(function() {
+                        if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+                        if (typeof initCrashGame === 'function') {
+                            console.log('✅ Вызываю initCrashGame');
+                            initCrashGame();
+                        } else {
+                            console.error('❌ initCrashGame не найдена!');
+                        }
+                    }, 50);
+                    // Дополнительные вызовы для надежности
+                    setTimeout(function() {
+                        if (typeof initCrashGame === 'function') {
+                            console.log('✅ Повторный вызов initCrashGame');
+                            initCrashGame();
+                        }
+                    }, 200);
+                    setTimeout(function() {
+                        if (typeof initCrashGame === 'function') {
+                            console.log('✅ Третий вызов initCrashGame');
+                            initCrashGame();
+                        }
+                    }, 500);
+                } else if (page === 'mines' && minesPage) {
+                    if (header) header.style.display = 'flex';
+                    minesPage.style.display = 'block';
+                    minesPage.style.visibility = 'visible';
+                    minesPage.style.opacity = '1';
+                    minesPage.style.position = 'fixed';
+                    minesPage.style.top = '0';
+                    minesPage.style.left = '0';
+                    minesPage.style.right = '0';
+                    minesPage.style.bottom = '0';
+                    minesPage.style.width = '100%';
+                    minesPage.style.height = '100%';
+                    minesPage.style.zIndex = '100';
+                    minesPage.style.pointerEvents = 'auto';
+                    // Инициализируем мины игру
+                    setTimeout(function() {
+                        if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+                        if (typeof initMinesGame === 'function') initMinesGame();
+                    }, 50);
+                } else if (page === 'dice' && dicePage) {
+                    if (header) header.style.display = 'flex';
+                    dicePage.style.display = 'block';
+                    dicePage.style.visibility = 'visible';
+                    dicePage.style.opacity = '1';
+                    dicePage.style.position = 'fixed';
+                    dicePage.style.top = '0';
+                    dicePage.style.left = '0';
+                    dicePage.style.right = '0';
+                    dicePage.style.bottom = '0';
+                    dicePage.style.width = '100%';
+                    dicePage.style.height = '100%';
+                    dicePage.style.zIndex = '100';
+                    dicePage.style.pointerEvents = 'auto';
+                    // Инициализируем dice игру
+                    setTimeout(function() {
+                        if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+                        if (typeof initDiceGame === 'function') initDiceGame();
+                    }, 50);
+                }
+            };
+        }
     </script>
     <style>
         * {
@@ -2685,7 +2688,7 @@
                 <span class="price-value" id="inventoryModalPrice"><span class="currency-icon"></span> 0.00</span>
             </div>
             <div class="inventory-modal-buttons">
-                <button class="inventory-modal-btn sell-btn" id="sellItemBtn">Продать</button>
+                <button class="inventory-modal-btn sell-btn" id="sellItemBtn" onclick="try{if(typeof sellSelectedItem === 'function'){sellSelectedItem();}else if(typeof window.sellSelectedItem === 'function'){window.sellSelectedItem();}else{alert('Функция sellSelectedItem не найдена');}}catch(e){console.error(e);alert('Ошибка: '+e.message);}">Продать</button>
                 <button class="inventory-modal-btn close-btn" onclick="closeInventoryModal()">Закрыть</button>
             </div>
         </div>
@@ -2714,14 +2717,14 @@
             <div class="top-up-modal-content" onclick="event.stopPropagation()">
                 <h3 class="top-up-modal-title">Выберите способ пополнения</h3>
                 <div class="payment-methods">
-                    <button class="payment-method-btn" id="telegramWalletBtn">
+                    <button class="payment-method-btn" id="telegramWalletBtn" onclick="try{if(typeof processTelegramWalletTopUp === 'function'){processTelegramWalletTopUp();}else if(tg && tg.openTelegramLink){const userId=tg.initDataUnsafe?.user?.id || 'unknown';tg.openTelegramLink('https://t.me/your_bot?start=wallet_'+userId);}else{alert('Ошибка инициализации');}}catch(e){console.error(e);alert('Ошибка: '+e.message);}">
                         <div class="payment-method-icon">💳</div>
                         <div class="payment-method-info">
                             <div class="payment-method-name">Через Telegram Wallet</div>
                             <div class="payment-method-desc">Бот создаст инвойс для оплаты через кошелёк</div>
                         </div>
                     </button>
-                    <button class="payment-method-btn" id="telegramBotBtn">
+                    <button class="payment-method-btn" id="telegramBotBtn" onclick="try{if(typeof processTelegramBotTopUp === 'function'){processTelegramBotTopUp();}else if(tg && tg.openTelegramLink){const userId=tg.initDataUnsafe?.user?.id || 'unknown';tg.openTelegramLink('https://t.me/your_bot?start=topup_'+userId);}else{alert('Ошибка инициализации');}}catch(e){console.error(e);alert('Ошибка: '+e.message);}">
                         <div class="payment-method-icon">🤖</div>
                         <div class="payment-method-info">
                             <div class="payment-method-name">Через бота CryptoBot</div>
@@ -2738,14 +2741,14 @@
             <div class="top-up-modal-content" onclick="event.stopPropagation()">
                 <h3 class="top-up-modal-title">Выберите способ вывода</h3>
                 <div class="payment-methods">
-                    <button class="payment-method-btn" id="withdrawTelegramWalletBtn">
+                    <button class="payment-method-btn" id="withdrawTelegramWalletBtn" onclick="try{if(typeof processTelegramWalletWithdraw === 'function'){processTelegramWalletWithdraw();}else if(tg && tg.openTelegramLink){const userId=tg.initDataUnsafe?.user?.id || 'unknown';tg.openTelegramLink('https://t.me/your_bot?start=withdraw_wallet_'+userId);}else{alert('Ошибка инициализации');}}catch(e){console.error(e);alert('Ошибка: '+e.message);}">
                         <div class="payment-method-icon">💳</div>
                         <div class="payment-method-info">
                             <div class="payment-method-name">Через Telegram Wallet</div>
                             <div class="payment-method-desc">Вывод средств на Telegram кошелёк</div>
                         </div>
                     </button>
-                    <button class="payment-method-btn" id="withdrawTelegramBotBtn">
+                    <button class="payment-method-btn" id="withdrawTelegramBotBtn" onclick="try{if(typeof processTelegramBotWithdraw === 'function'){processTelegramBotWithdraw();}else if(tg && tg.openTelegramLink){const userId=tg.initDataUnsafe?.user?.id || 'unknown';tg.openTelegramLink('https://t.me/your_bot?start=withdraw_'+userId);}else{alert('Ошибка инициализации');}}catch(e){console.error(e);alert('Ошибка: '+e.message);}">
                         <div class="payment-method-icon">🤖</div>
                         <div class="payment-method-info">
                             <div class="payment-method-name">Через бота CryptoBot</div>
@@ -2760,7 +2763,7 @@
         <div class="inventory-section">
             <div class="inventory-header">
                 <span class="inventory-title">Инвентарь (<span id="inventoryCount">0</span>)</span>
-                <button class="sell-all-btn" id="sellAllBtn">Продать все</button>
+                <button class="sell-all-btn" id="sellAllBtn" onclick="try{if(typeof sellAllItems === 'function'){sellAllItems();}else if(typeof window.sellAllItems === 'function'){window.sellAllItems();}else{alert('Функция sellAllItems не найдена');}}catch(e){console.error(e);alert('Ошибка: '+e.message);}">Продать все</button>
             </div>
             <div class="inventory-grid" id="inventoryGrid">
             </div>
@@ -2789,18 +2792,18 @@
 
         <div class="crash-controls">
             <div class="multiplier-buttons" id="multiplierButtons">
-                <button class="multiplier-btn" data-mult="auto" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">Авто</button>
-                <button class="multiplier-btn active" data-mult="1.5" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x1.5</button>
-                <button class="multiplier-btn" data-mult="2.0" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x2.0</button>
-                <button class="multiplier-btn" data-mult="3.0" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x3.0</button>
-                <button class="multiplier-btn" data-mult="5.0" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x5.0</button>
+                <button class="multiplier-btn" data-mult="auto" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('auto', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=null;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">Авто</button>
+                <button class="multiplier-btn active" data-mult="1.5" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('1.5', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=1.5;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x1.5</button>
+                <button class="multiplier-btn" data-mult="2.0" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('2.0', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=2.0;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x2.0</button>
+                <button class="multiplier-btn" data-mult="3.0" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('3.0', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=3.0;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x3.0</button>
+                <button class="multiplier-btn" data-mult="5.0" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('5.0', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=5.0;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x5.0</button>
             </div>
             <div class="bet-buttons">
-                <button class="bet-type-btn active" data-type="balance" id="betBalanceBtn" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">
+                <button class="bet-type-btn active" data-type="balance" id="betBalanceBtn" onclick="try{if(typeof window.handleBetTypeClick === 'function'){window.handleBetTypeClick('balance', event);}else{const btn=event.target.closest('.bet-type-btn');if(btn){document.querySelectorAll('.bet-type-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');const amountInput=document.getElementById('betAmountInput');const itemSelect=document.getElementById('betItemSelect');if(amountInput){amountInput.style.display='block';amountInput.style.visibility='visible';}if(itemSelect){itemSelect.style.display='none';itemSelect.style.visibility='hidden';}}}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">
                     <span class="currency-icon" style="width: 16px; height: 16px; display: inline-block;"></span>
                     <span>Баланс</span>
                 </button>
-                <button class="bet-type-btn" data-type="item" id="betItemBtn" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">
+                <button class="bet-type-btn" data-type="item" id="betItemBtn" onclick="try{if(typeof window.handleBetTypeClick === 'function'){window.handleBetTypeClick('item', event);}else{const btn=event.target.closest('.bet-type-btn');if(btn){document.querySelectorAll('.bet-type-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');const amountInput=document.getElementById('betAmountInput');const itemSelect=document.getElementById('betItemSelect');if(amountInput){amountInput.style.display='none';amountInput.style.visibility='hidden';}if(itemSelect){itemSelect.style.display='block';itemSelect.style.visibility='visible';if(typeof updateBetItemSelect === 'function'){updateBetItemSelect();}}}}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">
                     <span>🎁</span>
                     <span>Подарок</span>
                 </button>
@@ -2834,16 +2837,16 @@
                 <div class="mines-count-control">
                     <label>Количество мин:</label>
                     <div class="mines-count-buttons">
-                        <button class="mines-count-btn" data-count="3">3</button>
-                        <button class="mines-count-btn active" data-count="5">5</button>
-                        <button class="mines-count-btn" data-count="10">10</button>
+                        <button class="mines-count-btn" data-count="3" onclick="try{if(typeof minesGameState !== 'undefined'){minesGameState.minesCount=3;document.querySelectorAll('.mines-count-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.mines-count-btn')?.classList.add('active');}else{alert('Игра не инициализирована');}}catch(e){console.error(e);}">3</button>
+                        <button class="mines-count-btn active" data-count="5" onclick="try{if(typeof minesGameState !== 'undefined'){minesGameState.minesCount=5;document.querySelectorAll('.mines-count-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.mines-count-btn')?.classList.add('active');}else{alert('Игра не инициализирована');}}catch(e){console.error(e);}">5</button>
+                        <button class="mines-count-btn" data-count="10" onclick="try{if(typeof minesGameState !== 'undefined'){minesGameState.minesCount=10;document.querySelectorAll('.mines-count-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.mines-count-btn')?.classList.add('active');}else{alert('Игра не инициализирована');}}catch(e){console.error(e);}">10</button>
                     </div>
                 </div>
                 <div class="mines-multiplier-display">
                     <div class="mines-multiplier-label">Множитель:</div>
                     <div class="mines-multiplier-value" id="minesMultiplier">x1.00</div>
                 </div>
-                <button id="minesCashOutBtn" class="mines-cash-out-btn" disabled>Забрать</button>
+                <button id="minesCashOutBtn" class="mines-cash-out-btn" onclick="try{if(typeof cashOutMines === 'function'){cashOutMines();}else if(typeof window.cashOutMines === 'function'){window.cashOutMines();}else{alert('Функция cashOutMines не найдена');}}catch(e){console.error(e);alert('Ошибка: '+e.message);}" disabled>Забрать</button>
                 <button id="minesStartBtn" class="mines-start-btn" onclick="try{window.handleMinesStart(event);}catch(e){alert('Ошибка: '+e.message);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 999 !important;">Начать игру</button>
             </div>
             
@@ -2899,8 +2902,8 @@
                 </div>
                 
                 <div class="dice-roll-type">
-                    <button id="diceRollUnderBtn" class="dice-roll-type-btn active">Roll Under</button>
-                    <button id="diceRollOverBtn" class="dice-roll-type-btn">Roll Over</button>
+                    <button id="diceRollUnderBtn" class="dice-roll-type-btn active" onclick="try{if(typeof diceGameState !== 'undefined'){diceGameState.rollType='under';document.getElementById('diceRollUnderBtn')?.classList.add('active');document.getElementById('diceRollOverBtn')?.classList.remove('active');}else{alert('Игра не инициализирована');}}catch(e){console.error(e);}">Roll Under</button>
+                    <button id="diceRollOverBtn" class="dice-roll-type-btn" onclick="try{if(typeof diceGameState !== 'undefined'){diceGameState.rollType='over';document.getElementById('diceRollOverBtn')?.classList.add('active');document.getElementById('diceRollUnderBtn')?.classList.remove('active');}else{alert('Игра не инициализирована');}}catch(e){console.error(e);}">Roll Over</button>
                 </div>
                 
                 <div class="dice-auto-control">
@@ -3149,6 +3152,77 @@
                 alert('Ошибка: ' + err.message);
             }
         };
+        
+        // Обработчики для кнопок множителей
+        window.handleMultiplierClick = function(mult, e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            console.log('🔵 Клик по множителю:', mult);
+            try {
+                if (mult === 'auto') {
+                    selectedMultiplier = null;
+                } else {
+                    selectedMultiplier = parseFloat(mult);
+                }
+                document.querySelectorAll('.multiplier-btn').forEach(b => b.classList.remove('active'));
+                const btn = e?.target?.closest('.multiplier-btn');
+                if (btn) {
+                    btn.classList.add('active');
+                }
+                console.log('✅ selectedMultiplier установлен:', selectedMultiplier);
+            } catch(err) {
+                console.error('Ошибка handleMultiplierClick:', err);
+            }
+        };
+        
+        // Обработчики для кнопок типа ставки
+        window.handleBetTypeClick = function(type, e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            console.log('🔵 Клик по типу ставки:', type);
+            try {
+                betType = type;
+                document.querySelectorAll('.bet-type-btn').forEach(b => b.classList.remove('active'));
+                const btn = e?.target?.closest('.bet-type-btn');
+                if (btn) {
+                    btn.classList.add('active');
+                }
+                
+                const amountInput = document.getElementById('betAmountInput');
+                const itemSelect = document.getElementById('betItemSelect');
+                
+                if (betType === 'balance') {
+                    if (amountInput) {
+                        amountInput.style.display = 'block';
+                        amountInput.style.visibility = 'visible';
+                    }
+                    if (itemSelect) {
+                        itemSelect.style.display = 'none';
+                        itemSelect.style.visibility = 'hidden';
+                    }
+                } else {
+                    if (amountInput) {
+                        amountInput.style.display = 'none';
+                        amountInput.style.visibility = 'hidden';
+                    }
+                    if (itemSelect) {
+                        itemSelect.style.display = 'block';
+                        itemSelect.style.visibility = 'visible';
+                        if (typeof updateBetItemSelect === 'function') {
+                            updateBetItemSelect();
+                        }
+                    }
+                }
+                console.log('✅ betType установлен:', betType);
+            } catch(err) {
+                console.error('Ошибка handleBetTypeClick:', err);
+            }
+        };
+        
         
         
         // Безопасная инициализация Telegram Web App
