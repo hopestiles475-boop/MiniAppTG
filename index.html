@@ -2402,6 +2402,10 @@
         }
 
         .multiplier-btn {
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            position: relative !important;
+            z-index: 100 !important;
             padding: 10px 16px;
             border-radius: 12px;
             border: 2px solid rgba(255, 255, 255, 0.2);
@@ -2430,6 +2434,10 @@
         }
 
         .bet-type-btn {
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            position: relative !important;
+            z-index: 100 !important;
             flex: 1;
             padding: 12px 20px;
             border-radius: 12px;
@@ -2762,18 +2770,18 @@
 
         <div class="crash-controls">
             <div class="multiplier-buttons" id="multiplierButtons">
-                <button class="multiplier-btn" data-mult="auto">Авто</button>
-                <button class="multiplier-btn active" data-mult="1.5">x1.5</button>
-                <button class="multiplier-btn" data-mult="2.0">x2.0</button>
-                <button class="multiplier-btn" data-mult="3.0">x3.0</button>
-                <button class="multiplier-btn" data-mult="5.0">x5.0</button>
+                <button class="multiplier-btn" data-mult="auto" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">Авто</button>
+                <button class="multiplier-btn active" data-mult="1.5" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x1.5</button>
+                <button class="multiplier-btn" data-mult="2.0" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x2.0</button>
+                <button class="multiplier-btn" data-mult="3.0" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x3.0</button>
+                <button class="multiplier-btn" data-mult="5.0" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x5.0</button>
             </div>
             <div class="bet-buttons">
-                <button class="bet-type-btn active" data-type="balance" id="betBalanceBtn">
+                <button class="bet-type-btn active" data-type="balance" id="betBalanceBtn" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">
                     <span class="currency-icon" style="width: 16px; height: 16px; display: inline-block;"></span>
                     <span>Баланс</span>
                 </button>
-                <button class="bet-type-btn" data-type="item" id="betItemBtn">
+                <button class="bet-type-btn" data-type="item" id="betItemBtn" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">
                     <span>🎁</span>
                     <span>Подарок</span>
                 </button>
@@ -6639,38 +6647,92 @@
             document.querySelectorAll('.bet-type-btn').forEach(btn => {
                 const newBtn = btn.cloneNode(true);
                 btn.parentNode.replaceChild(newBtn, btn);
-                newBtn.addEventListener('click', () => {
+                
+                // Создаем функцию обработчика
+                const handleBetTypeClick = function(e) {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                    }
+                    
+                    console.log('🔵 Клик по кнопке типа ставки:', newBtn.dataset.type);
+                    
                     document.querySelectorAll('.bet-type-btn').forEach(b => b.classList.remove('active'));
                     newBtn.classList.add('active');
                     betType = newBtn.dataset.type;
+                    
+                    console.log('✅ betType установлен:', betType);
                     
                     const amountInput = document.getElementById('betAmountInput');
                     const itemSelect = document.getElementById('betItemSelect');
                     
                     if (betType === 'balance') {
-                        if (amountInput) amountInput.style.display = 'block';
-                        if (itemSelect) itemSelect.style.display = 'none';
+                        if (amountInput) {
+                            amountInput.style.display = 'block';
+                            amountInput.style.visibility = 'visible';
+                        }
+                        if (itemSelect) {
+                            itemSelect.style.display = 'none';
+                            itemSelect.style.visibility = 'hidden';
+                        }
                     } else {
-                        if (amountInput) amountInput.style.display = 'none';
-                        if (itemSelect) itemSelect.style.display = 'block';
+                        if (amountInput) {
+                            amountInput.style.display = 'none';
+                            amountInput.style.visibility = 'hidden';
+                        }
+                        if (itemSelect) {
+                            itemSelect.style.display = 'block';
+                            itemSelect.style.visibility = 'visible';
+                            updateBetItemSelect(); // Обновляем список подарков
+                        }
                     }
-                });
+                };
+                
+                // Устанавливаем и onclick и addEventListener
+                newBtn.onclick = handleBetTypeClick;
+                newBtn.addEventListener('click', handleBetTypeClick, true);
+                newBtn.style.cursor = 'pointer';
+                newBtn.style.pointerEvents = 'auto';
+                newBtn.style.zIndex = '100';
             });
             
             // Переустанавливаем обработчики кнопок множителя
             document.querySelectorAll('.multiplier-btn').forEach(btn => {
                 const newBtn = btn.cloneNode(true);
                 btn.parentNode.replaceChild(newBtn, btn);
-                newBtn.addEventListener('click', () => {
+                
+                // Создаем функцию обработчика
+                const handleMultiplierClick = function(e) {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                    }
+                    
+                    console.log('🔵 Клик по кнопке множителя:', newBtn.dataset.mult);
+                    
                     if (newBtn.dataset.mult === 'auto') {
                         selectedMultiplier = null;
+                        console.log('✅ selectedMultiplier установлен: null (авто)');
                     } else {
                         selectedMultiplier = parseFloat(newBtn.dataset.mult);
+                        console.log('✅ selectedMultiplier установлен:', selectedMultiplier);
                     }
+                    
                     document.querySelectorAll('.multiplier-btn').forEach(b => b.classList.remove('active'));
                     newBtn.classList.add('active');
-                });
+                };
+                
+                // Устанавливаем и onclick и addEventListener
+                newBtn.onclick = handleMultiplierClick;
+                newBtn.addEventListener('click', handleMultiplierClick, true);
+                newBtn.style.cursor = 'pointer';
+                newBtn.style.pointerEvents = 'auto';
+                newBtn.style.zIndex = '100';
             });
+            
+            console.log('✅ Обработчики кнопок множителей и типа ставки установлены');
             
             startNewCrashRound(ctx, canvas);
             updateCrashBetsList();
