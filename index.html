@@ -3015,332 +3015,6 @@
         
         console.log('✅ Все переменные инициализированы');
         
-        // ===== ЦЕНТРАЛИЗОВАННАЯ СИСТЕМА ОБРАБОТКИ ВСЕХ КНОПОК =====
-        // Единая точка обработки всех кликов в приложении
-        
-        // Глобальный обработчик всех кликов (делегация событий)
-        // Используем bubbling фазу и НЕ блокируем события, чтобы не мешать другим обработчикам
-        document.addEventListener('click', function(e) {
-            const target = e.target;
-            
-            try {
-                // 1. НАВИГАЦИЯ (nav-item)
-                const navItem = target.closest('.nav-item');
-                if (navItem && navItem.dataset.page) {
-                    console.log('🔵 Клик по навигации:', navItem.dataset.page);
-                    if (typeof window.handleNavClick === 'function') {
-                        window.handleNavClick(navItem.dataset.page, navItem);
-                    }
-                    return;
-                }
-                
-                // 2. КЕЙСЫ (case-card)
-                const caseCard = target.closest('.case-card');
-                if (caseCard && caseCard.dataset.case) {
-                    const caseNum = parseInt(caseCard.dataset.case);
-                    console.log('🔵 Клик по кейсу:', caseNum);
-                    if (typeof window.handleCaseClick === 'function') {
-                        window.handleCaseClick(caseNum);
-                    }
-                    return;
-                }
-                
-                // 3. КНОПКА "ОТКРЫТЬ" (openCase)
-                const openBtn = target.closest('#openBtn');
-                if (openBtn || target.id === 'openBtn') {
-                    console.log('🔵 Клик по кнопке "Открыть"');
-                    if (typeof window.openCase === 'function') {
-                        window.openCase();
-                    }
-                    return;
-                }
-                
-                // 4. КНОПКА "НАЗАД" (goBack)
-                if (target.classList.contains('back-btn') || target.closest('.back-btn')) {
-                    console.log('🔵 Клик по кнопке "Назад"');
-                    if (typeof window.goBack === 'function') {
-                        window.goBack();
-                    }
-                    return;
-                }
-                
-                // 5. КРАШ - МНОЖИТЕЛИ (multiplier-btn)
-                const multiplierBtn = target.closest('.multiplier-btn');
-                if (multiplierBtn && multiplierBtn.dataset.mult) {
-                    const mult = multiplierBtn.dataset.mult;
-                    console.log('🔵 Клик по множителю:', mult);
-                    
-                    if (mult === 'auto') {
-                        selectedMultiplier = null;
-                    } else {
-                        selectedMultiplier = parseFloat(mult);
-                    }
-                    
-                    document.querySelectorAll('.multiplier-btn').forEach(b => b.classList.remove('active'));
-                    multiplierBtn.classList.add('active');
-                    return;
-                }
-                
-                // 6. КРАШ - ТИП СТАВКИ (bet-type-btn)
-                const betTypeBtn = target.closest('.bet-type-btn');
-                if (betTypeBtn && betTypeBtn.dataset.type) {
-                    const type = betTypeBtn.dataset.type;
-                    console.log('🔵 Клик по типу ставки:', type);
-                    
-                    document.querySelectorAll('.bet-type-btn').forEach(b => b.classList.remove('active'));
-                    betTypeBtn.classList.add('active');
-                    betType = type;
-                    
-                    const amountInput = document.getElementById('betAmountInput');
-                    const itemSelect = document.getElementById('betItemSelect');
-                    
-                    if (betType === 'balance') {
-                        if (amountInput) {
-                            amountInput.style.display = 'block';
-                            amountInput.style.visibility = 'visible';
-                        }
-                        if (itemSelect) {
-                            itemSelect.style.display = 'none';
-                            itemSelect.style.visibility = 'hidden';
-                        }
-                    } else {
-                        if (amountInput) {
-                            amountInput.style.display = 'none';
-                            amountInput.style.visibility = 'hidden';
-                        }
-                        if (itemSelect) {
-                            itemSelect.style.display = 'block';
-                            itemSelect.style.visibility = 'visible';
-                            if (typeof updateBetItemSelect === 'function') {
-                                updateBetItemSelect();
-                            }
-                        }
-                    }
-                    return;
-                }
-                
-                // 7. КРАШ - СДЕЛАТЬ СТАВКУ (makeBetBtn)
-                if (target.id === 'makeBetBtn' || target.closest('#makeBetBtn')) {
-                    console.log('🔵 Клик по кнопке "Сделать ставку"');
-                    if (typeof window.makeBet === 'function') {
-                        window.makeBet();
-                    } else if (typeof window.handleCrashBetClick === 'function') {
-                        window.handleCrashBetClick(e);
-                    }
-                    return;
-                }
-                
-                // 8. МИНЫ - НАЧАТЬ ИГРУ (minesStartBtn)
-                if (target.id === 'minesStartBtn' || target.closest('#minesStartBtn')) {
-                    console.log('🔵 Клик по кнопке "Начать игру" (Мины)');
-                    if (typeof window.handleMinesStart === 'function') {
-                        window.handleMinesStart(e);
-                    }
-                    return;
-                }
-                
-                // 9. МИНЫ - ЗАБРАТЬ (minesCashOutBtn)
-                if (target.id === 'minesCashOutBtn' || target.closest('#minesCashOutBtn')) {
-                    console.log('🔵 Клик по кнопке "Забрать" (Мины)');
-                    if (typeof cashOutMines === 'function') {
-                        cashOutMines();
-                    }
-                    return;
-                }
-                
-                // 10. МИНЫ - КЛЕТКИ (mines-cell) - обрабатывается отдельно в initMinesGame
-                // Пропускаем, так как обрабатывается через делегирование в initMinesGame
-                
-                // 11. DICE - START (diceStartBtn)
-                if (target.id === 'diceStartBtn' || target.closest('#diceStartBtn')) {
-                    console.log('🔵 Клик по кнопке "START" (Dice)');
-                    if (typeof window.handleDiceStart === 'function') {
-                        window.handleDiceStart(e);
-                    }
-                    return;
-                }
-                
-                // 12. DICE - ROLL UNDER/OVER
-                if (target.id === 'diceRollUnderBtn' || target.closest('#diceRollUnderBtn')) {
-                    console.log('🔵 Клик по "Roll Under"');
-                    if (typeof diceGameState !== 'undefined') {
-                        diceGameState.rollType = 'under';
-                        document.getElementById('diceRollUnderBtn')?.classList.add('active');
-                        document.getElementById('diceRollOverBtn')?.classList.remove('active');
-                    }
-                    return;
-                }
-                
-                if (target.id === 'diceRollOverBtn' || target.closest('#diceRollOverBtn')) {
-                    console.log('🔵 Клик по "Roll Over"');
-                    if (typeof diceGameState !== 'undefined') {
-                        diceGameState.rollType = 'over';
-                        document.getElementById('diceRollOverBtn')?.classList.add('active');
-                        document.getElementById('diceRollUnderBtn')?.classList.remove('active');
-                    }
-                    return;
-                }
-                
-                // 13. ПРОФИЛЬ - ПОПОЛНИТЬ (topUpBtn)
-                if (target.id === 'topUpBtn' || target.closest('#topUpBtn')) {
-                    console.log('🔵 Клик по кнопке "Пополнить"');
-                    if (typeof window.handleTopUp === 'function') {
-                        window.handleTopUp(e);
-                    } else if (typeof openTopUpModal === 'function') {
-                        openTopUpModal();
-                    }
-                    return;
-                }
-                
-                // 14. ПРОФИЛЬ - ВЫВЕСТИ (withdrawBtn)
-                if (target.id === 'withdrawBtn' || target.closest('#withdrawBtn')) {
-                    console.log('🔵 Клик по кнопке "Вывести"');
-                    if (typeof window.handleWithdraw === 'function') {
-                        window.handleWithdraw(e);
-                    } else if (typeof openWithdrawModal === 'function') {
-                        openWithdrawModal();
-                    }
-                    return;
-                }
-                
-                // 15. ПОДПИСКА (subscribe-btn)
-                const subscribeBtn = target.closest('.subscribe-btn');
-                if (subscribeBtn) {
-                    console.log('🔵 Клик по кнопке подписки');
-                    if (tg && tg.openTelegramLink) {
-                        tg.openTelegramLink('https://t.me/your_channel');
-                    }
-                    return;
-                }
-                
-                // 16. ЗАКРЫТЬ МОДАЛКУ
-                if (target.classList.contains('modal-close-btn') || target.closest('.modal-close-btn')) {
-                    console.log('🔵 Клик по кнопке закрытия модалки');
-                    const modal = target.closest('.modal');
-                    if (modal) {
-                        modal.classList.remove('active');
-                        modal.style.display = 'none';
-                    }
-                    if (typeof closeInventoryModal === 'function') {
-                        closeInventoryModal();
-                    }
-                    return;
-                }
-                
-                // 17. МИНЫ - ВЫБОР КОЛИЧЕСТВА МИН (mines-count-btn)
-                const minesCountBtn = target.closest('.mines-count-btn');
-                if (minesCountBtn && minesCountBtn.dataset.count) {
-                    const count = parseInt(minesCountBtn.dataset.count);
-                    console.log('🔵 Клик по выбору количества мин:', count);
-                    if (typeof minesGameState !== 'undefined') {
-                        minesGameState.minesCount = count;
-                        document.querySelectorAll('.mines-count-btn').forEach(b => b.classList.remove('active'));
-                        minesCountBtn.classList.add('active');
-                    }
-                    return;
-                }
-                
-                // 18. ПРОФИЛЬ - ПРОДАТЬ ВСЕ (sellAllBtn)
-                if (target.id === 'sellAllBtn' || target.closest('#sellAllBtn')) {
-                    console.log('🔵 Клик по кнопке "Продать все"');
-                    if (typeof sellAllItems === 'function') {
-                        sellAllItems();
-                    }
-                    return;
-                }
-                
-                // 19. ИНВЕНТАРЬ - ПРОДАТЬ (sellItemBtn)
-                if (target.id === 'sellItemBtn' || target.closest('#sellItemBtn')) {
-                    console.log('🔵 Клик по кнопке "Продать"');
-                    if (typeof sellSelectedItem === 'function') {
-                        sellSelectedItem();
-                    }
-                    return;
-                }
-                
-                // 20. ПОПОЛНЕНИЕ - TELEGRAM WALLET (telegramWalletBtn)
-                if (target.id === 'telegramWalletBtn' || target.closest('#telegramWalletBtn')) {
-                    console.log('🔵 Клик по "Telegram Wallet" (пополнение)');
-                    if (typeof processTelegramWalletTopUp === 'function') {
-                        processTelegramWalletTopUp();
-                    } else if (tg && tg.openTelegramLink) {
-                        const userId = tg.initDataUnsafe?.user?.id || 'unknown';
-                        tg.openTelegramLink(`https://t.me/your_bot?start=wallet_${userId}`);
-                    }
-                    return;
-                }
-                
-                // 21. ПОПОЛНЕНИЕ - TELEGRAM BOT (telegramBotBtn)
-                if (target.id === 'telegramBotBtn' || target.closest('#telegramBotBtn')) {
-                    console.log('🔵 Клик по "Telegram Bot" (пополнение)');
-                    if (typeof processTelegramBotTopUp === 'function') {
-                        processTelegramBotTopUp();
-                    } else if (tg && tg.openTelegramLink) {
-                        const userId = tg.initDataUnsafe?.user?.id || 'unknown';
-                        tg.openTelegramLink(`https://t.me/your_bot?start=topup_${userId}`);
-                    }
-                    return;
-                }
-                
-                // 22. ВЫВОД - TELEGRAM WALLET (withdrawTelegramWalletBtn)
-                if (target.id === 'withdrawTelegramWalletBtn' || target.closest('#withdrawTelegramWalletBtn')) {
-                    console.log('🔵 Клик по "Telegram Wallet" (вывод)');
-                    if (typeof processTelegramWalletWithdraw === 'function') {
-                        processTelegramWalletWithdraw();
-                    } else if (tg && tg.openTelegramLink) {
-                        const userId = tg.initDataUnsafe?.user?.id || 'unknown';
-                        tg.openTelegramLink(`https://t.me/your_bot?start=withdraw_wallet_${userId}`);
-                    }
-                    return;
-                }
-                
-                // 23. ВЫВОД - TELEGRAM BOT (withdrawTelegramBotBtn)
-                if (target.id === 'withdrawTelegramBotBtn' || target.closest('#withdrawTelegramBotBtn')) {
-                    console.log('🔵 Клик по "Telegram Bot" (вывод)');
-                    if (typeof processTelegramBotWithdraw === 'function') {
-                        processTelegramBotWithdraw();
-                    } else if (tg && tg.openTelegramLink) {
-                        const userId = tg.initDataUnsafe?.user?.id || 'unknown';
-                        tg.openTelegramLink(`https://t.me/your_bot?start=withdraw_${userId}`);
-                    }
-                    return;
-                }
-                
-                // 24. КРАШ - ЗАБРАТЬ (crashCashOutBtn)
-                if (target.id === 'crashCashOutBtn' || target.closest('#crashCashOutBtn')) {
-                    console.log('🔵 Клик по кнопке "Забрать" (Краш)');
-                    if (typeof cashOut === 'function') {
-                        cashOut();
-                    } else if (typeof window.cashOut === 'function') {
-                        window.cashOut();
-                    }
-                    return;
-                }
-                
-                // 25. ИНВЕНТАРЬ - ЗАКРЫТЬ (close-btn в инвентаре)
-                if (target.classList.contains('close-btn') && target.closest('.inventory-modal-content')) {
-                    console.log('🔵 Клик по кнопке "Закрыть" (инвентарь)');
-                    if (typeof closeInventoryModal === 'function') {
-                        closeInventoryModal();
-                    }
-                    return;
-                }
-                
-            } catch(err) {
-                console.error('❌ Ошибка в глобальном обработчике кликов:', err);
-            }
-        }, false); // Используем bubbling фазу вместо capture, чтобы не блокировать другие обработчики
-        
-        console.log('✅ Глобальная система обработки кнопок инициализирована');
-        
-        // Объявляем переменные для краш-игры (если они еще не объявлены)
-        if (typeof selectedMultiplier === 'undefined') {
-            var selectedMultiplier = null;
-        }
-        if (typeof betType === 'undefined') {
-            var betType = 'balance';
-        }
-        
         // ГЛОБАЛЬНЫЕ ОБРАБОТЧИКИ - ОПРЕДЕЛЯЕМ СРАЗУ В НАЧАЛЕ СКРИПТА
         // Эти функции будут доступны для inline onclick
         window.handleCaseClick = function(caseNum) {
@@ -3490,7 +3164,7 @@
                 // Инициализируем только если API доступен, с обработкой ошибок
                 try {
                     if (tg && typeof tg.ready === 'function') {
-                        tg.ready();
+            tg.ready();
                         console.log('✅ Telegram Web App готов');
                     }
                 } catch (err) {
@@ -3499,7 +3173,7 @@
                 
                 try {
                     if (tg && typeof tg.expand === 'function') {
-                        tg.expand();
+            tg.expand();
                         console.log('✅ Telegram Web App развернут');
                     }
                 } catch (err) {
@@ -3508,7 +3182,7 @@
                 
                 try {
                     if (tg && typeof tg.setHeaderColor === 'function') {
-                        tg.setHeaderColor('#0a0a0a');
+            tg.setHeaderColor('#0a0a0a');
                     }
                 } catch (err) {
                     console.warn('⚠️ Ошибка tg.setHeaderColor():', err.message);
@@ -3516,13 +3190,13 @@
                 
                 try {
                     if (tg && typeof tg.setBackgroundColor === 'function') {
-                        tg.setBackgroundColor('#0a0a0a');
+            tg.setBackgroundColor('#0a0a0a');
                     }
                 } catch (err) {
                     console.warn('⚠️ Ошибка tg.setBackgroundColor():', err.message);
                 }
                 
-                isTelegram = true;
+            isTelegram = true;
                 console.log('✅ Telegram Web App инициализирован');
                 
                 // Вызываем обновление аватарки после инициализации
@@ -3632,16 +3306,39 @@
         
         // Обновление отображения баланса
         function updateBalanceDisplay() {
-            const balanceEl = document.getElementById('balance');
-            const crashBalanceEl = document.getElementById('crashBalance');
-            const minesBalanceEl = document.getElementById('minesBalance');
-            const diceBalanceEl = document.getElementById('diceBalance');
-            
-            if (balanceEl) balanceEl.textContent = _balance.toFixed(2);
-            if (crashBalanceEl) crashBalanceEl.textContent = _balance.toFixed(2);
-            if (minesBalanceEl) minesBalanceEl.textContent = _balance.toFixed(2);
-            if (diceBalanceEl) diceBalanceEl.textContent = _balance.toFixed(2);
+            try {
+                const balanceEl = document.getElementById('balance');
+                const crashBalanceEl = document.getElementById('crashBalance');
+                const minesBalanceEl = document.getElementById('minesBalance');
+                const diceBalanceEl = document.getElementById('diceBalance');
+                
+                const balanceValue = _balance.toFixed(2);
+                
+                if (balanceEl) {
+                    balanceEl.textContent = balanceValue;
+                    console.log('✅ Баланс обновлен в header:', balanceValue);
+                }
+                if (crashBalanceEl) {
+                    crashBalanceEl.textContent = balanceValue;
+                    console.log('✅ Баланс обновлен в краше:', balanceValue);
+                }
+                if (minesBalanceEl) {
+                    minesBalanceEl.textContent = balanceValue;
+                    console.log('✅ Баланс обновлен в минах:', balanceValue);
+                }
+                if (diceBalanceEl) {
+                    diceBalanceEl.textContent = balanceValue;
+                    console.log('✅ Баланс обновлен в dice:', balanceValue);
+                }
+                
+                console.log('💰 Текущий баланс:', _balance);
+            } catch(err) {
+                console.error('❌ Ошибка обновления баланса:', err);
+            }
         }
+        
+        // Сделаем функцию глобальной
+        window.updateBalanceDisplay = updateBalanceDisplay;
         
         // Защита от переопределения функций
         const protectedFunctions = {
@@ -4373,8 +4070,19 @@
                 console.error('❌ Ошибка инициализации обработчиков профиля:', error);
             }
         }
-        
+
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ DOMContentLoaded - начинаем инициализацию');
+            
+            // СРАЗУ обновляем баланс
+            setTimeout(function() {
+                if (typeof updateBalanceDisplay === 'function') {
+                    console.log('💰 Обновляю баланс при загрузке...');
+                    updateBalanceDisplay();
+                } else {
+                    console.error('❌ updateBalanceDisplay не найдена!');
+                }
+            }, 100);
             const mainPage = document.getElementById('mainPage');
             const detailPage = document.getElementById('caseDetailPage');
             const profilePage = document.getElementById('profilePage');
@@ -4501,7 +4209,7 @@
                 console.error('❌ Ошибка инициализации приложения:', error);
             }
         }
-        
+
         // Скрываем надпись "5 TON Demo"
         const tonBalance = document.querySelector('.ton-balance');
         if (tonBalance) {
@@ -4533,7 +4241,7 @@
                 const usernameEl = document.getElementById('username');
                 const avatarEl = document.querySelector('.avatar');
                 
-                if (user) {
+        if (user) {
                     // Обновляем имя пользователя
                     if (usernameEl) {
                         const displayName = user.first_name || user.username || user.last_name || 'Пользователь';
@@ -5058,11 +4766,11 @@
             // Скрываем все страницы кроме деталей кейса
             // Скрываем mainPage
             if (mainPage) {
-                mainPage.style.display = 'none';
+            mainPage.style.display = 'none';
                 mainPage.style.visibility = 'hidden';
                 mainPage.style.opacity = '0';
                 mainPage.style.pointerEvents = 'none';
-                mainPage.classList.add('hidden');
+            mainPage.classList.add('hidden');
             }
             
             // Скрываем profilePage
@@ -5105,11 +4813,11 @@
             
             // Показываем detailPage
             if (detailPage) {
-                detailPage.style.display = 'block';
+            detailPage.style.display = 'block';
                 detailPage.style.visibility = 'visible';
                 detailPage.style.opacity = '1';
                 detailPage.style.pointerEvents = 'auto';
-                detailPage.classList.add('active');
+            detailPage.classList.add('active');
                 detailPage.style.position = 'fixed';
                 detailPage.style.top = '0';
                 detailPage.style.left = '0';
@@ -5305,11 +5013,11 @@
             
             // Скрываем detailPage
             if (detailPage) {
-                detailPage.style.display = 'none';
+            detailPage.style.display = 'none';
                 detailPage.style.visibility = 'hidden';
                 detailPage.style.opacity = '0';
                 detailPage.style.pointerEvents = 'none';
-                detailPage.classList.remove('active');
+            detailPage.classList.remove('active');
                 detailPage.style.zIndex = '-1';
             }
             
@@ -5327,8 +5035,8 @@
             // Показываем mainPage и полностью восстанавливаем
             if (mainPage) {
                 // Сначала удаляем класс hidden, который может блокировать отображение
-                mainPage.classList.remove('hidden');
-                
+            mainPage.classList.remove('hidden');
+            
                 // Восстанавливаем все стили с !important через setProperty для приоритета
                 mainPage.style.setProperty('display', 'block', 'important');
                 mainPage.style.setProperty('visibility', 'visible', 'important');
@@ -5395,8 +5103,8 @@
             
             // Скрываем modal
             if (modal) {
-                modal.style.display = 'none';
-                modal.classList.remove('active');
+            modal.style.display = 'none';
+            modal.classList.remove('active');
             }
             
             document.querySelectorAll('.prize-item').forEach(item => {
@@ -5657,7 +5365,7 @@
                 if (i === slotsNeeded - 1 && remaining > 0) {
                     slot.innerHTML = '<span class="next-icon">→</span>';
                     slot.addEventListener('click', () => {
-                        if (tg) {
+            if (tg) {
                             tg.showAlert('Следующая страница в разработке');
                         }
                     });
@@ -5758,7 +5466,7 @@
                 modal.classList.remove('active');
                 modal.style.display = 'none';
                 if (tg) {
-                    tg.HapticFeedback.impactOccurred('light');
+                tg.HapticFeedback.impactOccurred('light');
                 }
             }
         }
