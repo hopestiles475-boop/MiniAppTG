@@ -2496,8 +2496,8 @@
         </div>
         
         <!-- Модальное окно выбора способа пополнения -->
-        <div class="top-up-modal" id="topUpModal">
-            <div class="top-up-modal-content">
+        <div class="top-up-modal" id="topUpModal" onclick="event.target === this && closeTopUpModal()">
+            <div class="top-up-modal-content" onclick="event.stopPropagation()">
                 <h3 class="top-up-modal-title">Выберите способ пополнения</h3>
                 <div class="payment-methods">
                     <button class="payment-method-btn" id="telegramWalletBtn">
@@ -3871,11 +3871,7 @@
             }
         });
 
-        // Обработчик кнопки "+" в основном балансе
-        const mainBalancePlusBtn = document.querySelector('.balance-section button');
-        if (mainBalancePlusBtn) {
-            mainBalancePlusBtn.addEventListener('click', openTopUpModal);
-        }
+        // Обработчик кнопки "+" в основном балансе - будет установлен в initTopUpHandlers
 
         // Обновление информации профиля
         function updateProfileInfo() {
@@ -4483,6 +4479,41 @@
                         alert('Бот открыт. Отправьте боту команду /pay для пополнения баланса.');
                     }
                 });
+            }
+            
+            // Обработчики кнопок "+" рядом с балансом
+            // Основной баланс в хедере
+            const mainBalancePlusBtn = document.querySelector('.balance-section button');
+            if (mainBalancePlusBtn) {
+                // Удаляем старые обработчики
+                const newMainBtn = mainBalancePlusBtn.cloneNode(true);
+                mainBalancePlusBtn.parentNode.replaceChild(newMainBtn, mainBalancePlusBtn);
+                
+                newMainBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    console.log('Клик по кнопке + в основном балансе');
+                    openTopUpModal();
+                    return false;
+                }, true);
+            }
+            
+            // Баланс на странице краша
+            const crashBalancePlusBtn = document.getElementById('crashBalance')?.parentElement?.querySelector('button');
+            if (crashBalancePlusBtn) {
+                // Удаляем старые обработчики
+                const newCrashBtn = crashBalancePlusBtn.cloneNode(true);
+                crashBalancePlusBtn.parentNode.replaceChild(newCrashBtn, crashBalancePlusBtn);
+                
+                newCrashBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    console.log('Клик по кнопке + в балансе краша');
+                    openTopUpModal();
+                    return false;
+                }, true);
             }
         }
         
@@ -5841,10 +5872,7 @@
         }
 
 
-        const crashBalancePlusBtn = document.getElementById('crashBalance')?.parentElement?.querySelector('button');
-        if (crashBalancePlusBtn) {
-            crashBalancePlusBtn.addEventListener('click', openTopUpModal);
-        }
+        // Обработчик кнопки "+" на странице краша - будет установлен в initTopUpHandlers
     </script>
 </body>
 </html>
