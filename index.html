@@ -2503,14 +2503,14 @@
                     <button class="payment-method-btn" id="telegramWalletBtn">
                         <div class="payment-method-icon">💳</div>
                         <div class="payment-method-info">
-                            <div class="payment-method-name">Кошелёк Telegram</div>
-                            <div class="payment-method-desc">Пополнить через встроенный кошелёк</div>
+                            <div class="payment-method-name">Через Telegram Wallet</div>
+                            <div class="payment-method-desc">Бот создаст инвойс для оплаты через кошелёк</div>
                         </div>
                     </button>
                     <button class="payment-method-btn" id="telegramBotBtn">
                         <div class="payment-method-icon">🤖</div>
                         <div class="payment-method-info">
-                            <div class="payment-method-name">Бот CryptoBot</div>
+                            <div class="payment-method-name">Через бота CryptoBot</div>
                             <div class="payment-method-desc">Пополнить через бота Telegram</div>
                         </div>
                     </button>
@@ -4353,15 +4353,6 @@
                     e.stopPropagation();
                     closeTopUpModal();
                     
-                    if (!tg || !tg.openInvoice) {
-                        if (tg && tg.showAlert) {
-                            tg.showAlert('Кошелёк Telegram недоступен. Используйте другой способ пополнения.');
-                        } else {
-                            alert('Кошелёк Telegram недоступен. Используйте другой способ пополнения.');
-                        }
-                        return;
-                    }
-
                     try {
                         const userId = getUserId();
                         if (!userId) {
@@ -4378,68 +4369,31 @@
                         }
 
                         const tonAmount = parseFloat(amount);
-                        const transactionId = `tg_wallet_${userId}_${Date.now()}`;
-
-                        // Создаём инвойс через Telegram Stars (поддерживается Telegram Wallet)
-                        const invoice = {
-                            title: 'Пополнение баланса',
-                            description: `Пополнение баланса на ${tonAmount} TON`,
-                            currency: 'XTR', // Telegram Stars
-                            prices: [{
-                                label: 'Пополнение',
-                                amount: Math.round(tonAmount * 100) // Stars (1 TON ≈ 100 Stars)
-                            }],
-                            payload: transactionId,
-                            provider_token: null
-                        };
-
-                        tg.openInvoice(invoice, async (status) => {
-                            if (status === 'paid') {
-                                // Платёж успешен - отправляем на сервер
-                                try {
-                                    const response = await fetch(`${API_BASE_URL}/api/payments/verify`, {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json'
-                                        },
-                                        body: JSON.stringify({
-                                            userId: userId,
-                                            amount: tonAmount,
-                                            transactionId: transactionId,
-                                            type: 'telegram_wallet'
-                                        })
-                                    });
-
-                                    const result = await response.json();
-                                    
-                                    if (response.ok && result.success) {
-                                        // Обновляем баланс
-                                        await loadUserData();
-                                        
-                                        if (tg && tg.showAlert) {
-                                            tg.showAlert(`Баланс пополнен на ${tonAmount} TON!`);
-                                        }
-                                        tg.HapticFeedback.notificationOccurred('success');
-                                    } else {
-                                        throw new Error(result.error || 'Ошибка обработки платежа');
-                                    }
-                                } catch (error) {
-                                    console.error('Ошибка обработки платежа:', error);
-                                    if (tg && tg.showAlert) {
-                                        tg.showAlert('Ошибка обработки платежа. Обратитесь в поддержку.');
-                                    }
-                                }
-                            } else if (status === 'failed') {
-                                if (tg && tg.showAlert) {
-                                    tg.showAlert('Ошибка оплаты');
-                                }
-                                tg.HapticFeedback.notificationOccurred('error');
-                            } else if (status === 'cancelled') {
-                                tg.HapticFeedback.notificationOccurred('warning');
+                        
+                        // Telegram Wallet через Web App требует создания инвойса на сервере
+                        // Вместо прямого использования tg.openInvoice, используем бота для создания инвойса
+                        // через CryptoBot, который поддерживает Telegram Wallet
+                        
+                        if (tg && tg.showAlert) {
+                            tg.showAlert('Пополнение через Telegram Wallet доступно через бота. Открываю бота...');
+                        }
+                        
+                        // Открываем бота для создания инвойса через CryptoBot (поддерживает Telegram Wallet)
+                        const botUsername = 'Znakomstva13_bot';
+                        const botUrl = `https://t.me/${botUsername}?start=wallet_${userId}_${tonAmount}`;
+                        
+                        if (tg) {
+                            if (tg.openTelegramLink) {
+                                tg.openTelegramLink(botUrl);
+                            } else {
+                                tg.openLink(botUrl);
                             }
-                        });
+                            tg.HapticFeedback.impactOccurred('medium');
+                        } else {
+                            window.open(botUrl, '_blank');
+                        }
                     } catch (error) {
-                        console.error('Ошибка создания инвойса:', error);
+                        console.error('Ошибка:', error);
                         if (tg && tg.showAlert) {
                             tg.showAlert('Ошибка: ' + error.message);
                         }
