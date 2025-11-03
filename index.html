@@ -46,6 +46,26 @@
         })();
     </script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        // Перехватываем ошибки от Telegram Web App SDK, чтобы они не блокировали приложение
+        window.addEventListener('error', function(e) {
+            // Игнорируем ошибки позиционирования от Telegram SDK
+            if (e.message && (e.message.includes("reading 'top'") || e.message.includes('calculatePosition'))) {
+                e.preventDefault();
+                console.warn('⚠️ Игнорирую ошибку Telegram SDK:', e.message);
+                return true;
+            }
+        }, true);
+        
+        // Также перехватываем неперехваченные промисы
+        window.addEventListener('unhandledrejection', function(e) {
+            if (e.reason && e.reason.message && (e.reason.message.includes("reading 'top'") || e.reason.message.includes('calculatePosition'))) {
+                e.preventDefault();
+                console.warn('⚠️ Игнорирую ошибку промиса Telegram SDK:', e.reason.message);
+                return true;
+            }
+        });
+    </script>
     <style>
         * {
             margin: 0;
@@ -2775,23 +2795,39 @@
                 tg = window.Telegram.WebApp;
                 console.log('✅ Telegram Web App API найден');
                 
-                // Инициализируем только если API доступен
-                if (tg && typeof tg.ready === 'function') {
-                    tg.ready();
-                    console.log('✅ Telegram Web App готов');
+                // Инициализируем только если API доступен, с обработкой ошибок
+                try {
+                    if (tg && typeof tg.ready === 'function') {
+                        tg.ready();
+                        console.log('✅ Telegram Web App готов');
+                    }
+                } catch (err) {
+                    console.warn('⚠️ Ошибка tg.ready():', err.message);
                 }
                 
-                if (tg && typeof tg.expand === 'function') {
-                    tg.expand();
-                    console.log('✅ Telegram Web App развернут');
+                try {
+                    if (tg && typeof tg.expand === 'function') {
+                        tg.expand();
+                        console.log('✅ Telegram Web App развернут');
+                    }
+                } catch (err) {
+                    console.warn('⚠️ Ошибка tg.expand():', err.message);
                 }
                 
-                if (tg && typeof tg.setHeaderColor === 'function') {
-                    tg.setHeaderColor('#0a0a0a');
+                try {
+                    if (tg && typeof tg.setHeaderColor === 'function') {
+                        tg.setHeaderColor('#0a0a0a');
+                    }
+                } catch (err) {
+                    console.warn('⚠️ Ошибка tg.setHeaderColor():', err.message);
                 }
                 
-                if (tg && typeof tg.setBackgroundColor === 'function') {
-                    tg.setBackgroundColor('#0a0a0a');
+                try {
+                    if (tg && typeof tg.setBackgroundColor === 'function') {
+                        tg.setBackgroundColor('#0a0a0a');
+                    }
+                } catch (err) {
+                    console.warn('⚠️ Ошибка tg.setBackgroundColor():', err.message);
                 }
                 
                 isTelegram = true;
@@ -3346,20 +3382,47 @@
         // Инициализация при загрузке DOM
         function initializeApp() {
             try {
+                console.log('🚀 initializeApp вызвана');
+                
                 // Сначала проверяем критические элементы
-                safeInit();
+                try {
+                    safeInit();
+                } catch (err) {
+                    console.error('❌ Ошибка в safeInit:', err);
+                }
                 
                 // Затем инициализируем обработчики событий
                 setTimeout(() => {
-                    if (typeof initEventHandlers === 'function') {
-                        initEventHandlers();
-                    } else {
-                        console.error('❌ Функция initEventHandlers не найдена!');
+                    try {
+                        console.log('⏰ Вызываю initEventHandlers через setTimeout');
+                        console.log('🔍 Проверка наличия элементов навигации:', document.querySelectorAll('.nav-item').length);
+                        console.log('🔍 Проверка handleNavClick:', typeof handleNavClick);
+                        
+                        if (typeof initEventHandlers === 'function') {
+                            initEventHandlers();
+                        } else {
+                            console.error('❌ Функция initEventHandlers не найдена!');
+                            // Пробуем установить обработчики вручную
+                            console.log('🔄 Пробую установить обработчики вручную...');
+                            const navItems = document.querySelectorAll('.nav-item');
+                            navItems.forEach((item) => {
+                                const page = item.dataset.page;
+                                if (page) {
+                                    item.onclick = function() {
+                                        if (typeof handleNavClick === 'function') {
+                                            handleNavClick(page, this);
+                                        }
+                                    };
+                                }
+                            });
+                        }
+                    } catch (err) {
+                        console.error('❌ Ошибка при вызове initEventHandlers:', err);
                     }
-                }, 200);
+                }, 500);
             } catch (error) {
                 console.error('❌ Критическая ошибка инициализации:', error);
-                alert('Ошибка загрузки: ' + error.message);
+                // Не показываем alert, чтобы не блокировать приложение
             }
         }
         
