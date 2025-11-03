@@ -6635,8 +6635,13 @@
         let crashGameRunning = false;
         let crashPlayers = [];
         let crashGraphPoints = [];
-        let selectedMultiplier = null;
-        let betType = 'balance';
+        // Объявляем переменные для краш-игры глобально
+        if (typeof selectedMultiplier === 'undefined') {
+            var selectedMultiplier = null;
+        }
+        if (typeof betType === 'undefined') {
+            var betType = 'balance';
+        }
         let userBet = null;
         let crashRoundActive = false;
         let crashTarget = 1.00;
@@ -6644,71 +6649,8 @@
 
         
         // Глобальная делегация событий для кнопок множителей и типа ставки
-        // Это работает как резервный механизм, если initCrashGame не сработала
-        document.addEventListener('click', function(e) {
-            // Проверяем клик по кнопке множителя
-            if (e.target.classList.contains('multiplier-btn') || e.target.closest('.multiplier-btn')) {
-                const btn = e.target.classList.contains('multiplier-btn') ? e.target : e.target.closest('.multiplier-btn');
-                if (btn && btn.dataset.mult) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    
-                    console.log('🔵 Глобальный обработчик: клик по множителю', btn.dataset.mult);
-                    
-                    if (btn.dataset.mult === 'auto') {
-                        selectedMultiplier = null;
-                    } else {
-                        selectedMultiplier = parseFloat(btn.dataset.mult);
-                    }
-                    
-                    document.querySelectorAll('.multiplier-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                }
-            }
-            
-            // Проверяем клик по кнопке типа ставки
-            if (e.target.classList.contains('bet-type-btn') || e.target.closest('.bet-type-btn')) {
-                const btn = e.target.classList.contains('bet-type-btn') ? e.target : e.target.closest('.bet-type-btn');
-                if (btn && btn.dataset.type) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    
-                    console.log('🔵 Глобальный обработчик: клик по типу ставки', btn.dataset.type);
-                    
-                    document.querySelectorAll('.bet-type-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    betType = btn.dataset.type;
-                    
-                    const amountInput = document.getElementById('betAmountInput');
-                    const itemSelect = document.getElementById('betItemSelect');
-                    
-                    if (betType === 'balance') {
-                        if (amountInput) {
-                            amountInput.style.display = 'block';
-                            amountInput.style.visibility = 'visible';
-                        }
-                        if (itemSelect) {
-                            itemSelect.style.display = 'none';
-                            itemSelect.style.visibility = 'hidden';
-                        }
-                    } else {
-                        if (amountInput) {
-                            amountInput.style.display = 'none';
-                            amountInput.style.visibility = 'hidden';
-                        }
-                        if (itemSelect) {
-                            itemSelect.style.display = 'block';
-                            itemSelect.style.visibility = 'visible';
-                            if (typeof updateBetItemSelect === 'function') {
-                                updateBetItemSelect();
-                            }
-                        }
-                    }
-                }
-            }
-        }, true);
+        // УБРАНО - используем только inline onclick и обработчики в initCrashGame
+        // Глобальный обработчик блокировал inline onclick
         
         // Инициализация игры Краш
         function initCrashGame() {
@@ -7126,12 +7068,16 @@
             let speed = 0.012; // Фиксированная скорость роста для всех игроков
             
             const animate = () => {
-                // Не обновляем график если раунд не активен (кулдаун)
-                if (!crashRoundActive) {
+                // Всегда рисуем canvas (даже во время кулдауна будет что-то показано)
+                if (!ctx || !canvas || canvas.width === 0 || canvas.height === 0) {
+                    console.error('❌ Canvas недоступен для рисования');
                     return;
                 }
                 
+                // Очищаем canvas и рисуем фон
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
                 // Обновляем множитель только если раунд активен и график растет
                 if (crashRoundActive && crashDirection === 1) {
@@ -7144,85 +7090,110 @@
                         
                         // Вибрация при краше
                         if (tg) {
-                            tg.HapticFeedback.notificationOccurred('error');
+                            try {
+                                tg.HapticFeedback.notificationOccurred('error');
+                            } catch(e) {
+                                console.log('HapticFeedback error:', e);
+                            }
                         }
+                        
+                        // Добавляем последнюю точку перед крашем
+                        const lastX = crashGraphPoints.length > 0 ? crashGraphPoints[crashGraphPoints.length - 1].x : 0;
+                        const lastY = crashGraphPoints.length > 0 ? crashGraphPoints[crashGraphPoints.length - 1].y : canvas.height - 50;
+                        crashGraphPoints.push({ x: lastX, y: lastY, multiplier: crashTarget });
                         
                         // Сразу обрабатываем краш
                         crashRoundActive = false;
                         processCrashRound();
                         
+                        // Рисуем красную линию падения
+                        ctx.strokeStyle = '#ff0000';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.moveTo(lastX, lastY);
+                        ctx.lineTo(lastX, canvas.height - 50);
+                        ctx.stroke();
+                        
+                        // Обновляем множитель на экране
+                        const multiplierElement = document.getElementById('currentMultiplier');
+                        if (multiplierElement) {
+                            multiplierElement.textContent = `x${crashTarget.toFixed(2)}`;
+                            multiplierElement.style.color = '#ff0000';
+                            multiplierElement.style.borderColor = '#ff0000';
+                        }
+                        
                         // Начинаем кулдаун 10 секунд
                         setTimeout(() => {
                             showCrashCooldown(10, ctx, canvas);
                         }, 100);
+                        
+                        // Останавливаем анимацию
+                        if (crashAnimationId) {
+                            cancelAnimationFrame(crashAnimationId);
+                            crashAnimationId = null;
+                        }
+                        return;
                     }
-                } else if (crashDirection === -1) {
-                    // Резкое падение - сразу до нуля
-                    crashMultiplier = 0.01;
-                }
-                
-                // Добавляем точку на график
-                const x = crashGraphPoints.length * 2;
-                // Преобразуем множитель в Y координату (1.0 = низ, выше = выше на графике)
-                const multiplierPercent = ((crashMultiplier - 1.0) / 9.0) * 100;
-                const y = canvas.height - 50 - (multiplierPercent / 100) * (canvas.height - 100);
-                
-                crashGraphPoints.push({ x, y, multiplier: crashMultiplier });
-                
-                // Ограничиваем количество точек
-                if (crashGraphPoints.length > canvas.width / 2) {
-                    crashGraphPoints = crashGraphPoints.slice(-Math.floor(canvas.width / 2));
-                    crashGraphPoints.forEach((point, i) => {
-                        point.x = i * 2;
-                    });
-                }
-                
-                // Рисуем график
-                ctx.strokeStyle = crashDirection === 1 ? '#00ff00' : '#ff0000';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.moveTo(crashGraphPoints[0].x, crashGraphPoints[0].y);
-                for (let i = 1; i < crashGraphPoints.length; i++) {
-                    ctx.lineTo(crashGraphPoints[i].x, crashGraphPoints[i].y);
-                }
-                ctx.stroke();
-                
-                // При резком падении рисуем вертикальную красную линию
-                if (crashDirection === -1 && crashMultiplier <= 0.01) {
-                    ctx.strokeStyle = '#ff0000';
-                    ctx.lineWidth = 3;
-                    ctx.beginPath();
-                    const lastPoint = crashGraphPoints[crashGraphPoints.length - 2];
-                    if (lastPoint) {
-                        ctx.moveTo(lastPoint.x, lastPoint.y);
-                        ctx.lineTo(lastPoint.x, canvas.height - 50);
+                    
+                    // Добавляем точку на график во время роста
+                    const x = crashGraphPoints.length * 2;
+                    // Преобразуем множитель в Y координату (1.0 = низ, выше = выше на графике)
+                    const multiplierPercent = ((crashMultiplier - 1.0) / 9.0) * 100;
+                    const y = canvas.height - 50 - (multiplierPercent / 100) * (canvas.height - 100);
+                    
+                    crashGraphPoints.push({ x, y, multiplier: crashMultiplier });
+                    
+                    // Ограничиваем количество точек
+                    if (crashGraphPoints.length > canvas.width / 2) {
+                        crashGraphPoints = crashGraphPoints.slice(-Math.floor(canvas.width / 2));
+                        crashGraphPoints.forEach((point, i) => {
+                            point.x = i * 2;
+                        });
                     }
-                    ctx.stroke();
-                }
-                
-                // Обновляем отображение множителя
-                const multiplierElement = document.getElementById('currentMultiplier');
-                if (multiplierElement && crashRoundActive) {
-                    multiplierElement.textContent = `x${crashMultiplier.toFixed(2)}`;
-                    multiplierElement.style.color = crashDirection === 1 ? '#00ff00' : '#ff0000';
-                }
-                
-                // Обновляем кнопку "Забрать" если есть активная ставка
-                const makeBetBtn = document.getElementById('makeBetBtn');
-                if (makeBetBtn && userBet && crashRoundActive && crashDirection === 1 && !userBet.cashedOut) {
-                    makeBetBtn.textContent = 'Забрать';
-                    makeBetBtn.disabled = false;
-                }
-                
-                // Проверяем выигрыши только если раунд активен
-                if (crashRoundActive) {
+                    
+                    // Рисуем зеленый график роста
+                    if (crashGraphPoints.length > 1) {
+                        ctx.strokeStyle = '#00ff00';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.moveTo(crashGraphPoints[0].x, crashGraphPoints[0].y);
+                        for (let i = 1; i < crashGraphPoints.length; i++) {
+                            ctx.lineTo(crashGraphPoints[i].x, crashGraphPoints[i].y);
+                        }
+                        ctx.stroke();
+                    }
+                    
+                    // Обновляем отображение множителя
+                    const multiplierElement = document.getElementById('currentMultiplier');
+                    if (multiplierElement) {
+                        multiplierElement.textContent = `x${crashMultiplier.toFixed(2)}`;
+                        multiplierElement.style.color = '#00ff00';
+                        multiplierElement.style.borderColor = '#00ff00';
+                    }
+                    
+                    // Обновляем кнопку "Забрать" если есть активная ставка
+                    const makeBetBtn = document.getElementById('makeBetBtn');
+                    if (makeBetBtn && userBet && !userBet.cashedOut) {
+                        makeBetBtn.textContent = 'Забрать';
+                        makeBetBtn.disabled = false;
+                    }
+                    
+                    // Проверяем выигрыши
                     checkCrashWins();
                 }
                 
-                crashAnimationId = requestAnimationFrame(animate);
+                // Продолжаем анимацию только если раунд активен
+                if (crashRoundActive) {
+                    crashAnimationId = requestAnimationFrame(animate);
+                }
             };
             
-            animate();
+            // Запускаем анимацию
+            if (crashRoundActive) {
+                animate();
+            } else {
+                console.log('⚠️ Раунд не активен, анимация не запущена');
+            }
         }
         
         // Обработка завершения раунда краша
