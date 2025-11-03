@@ -79,15 +79,18 @@
             var crashPage = document.getElementById('crashPage');
             var minesPage = document.getElementById('minesPage');
             var dicePage = document.getElementById('dicePage');
+            var caseDetailPage = document.getElementById('caseDetailPage');
             var header = document.querySelector('.header');
+            var openBtn = document.getElementById('openBtn');
             
             if (!mainPage || !profilePage) return;
             
-            // Скрываем все страницы
+            // Скрываем все страницы, включая детальный просмотр кейса
             var pages = [mainPage, profilePage];
             if (crashPage) pages.push(crashPage);
             if (minesPage) pages.push(minesPage);
             if (dicePage) pages.push(dicePage);
+            if (caseDetailPage) pages.push(caseDetailPage);
             
             for (var i = 0; i < pages.length; i++) {
                 if (pages[i]) {
@@ -95,7 +98,25 @@
                     pages[i].style.visibility = 'hidden';
                     pages[i].style.opacity = '0';
                     pages[i].style.pointerEvents = 'none';
+                    pages[i].classList.remove('active');
+                    // Дополнительно сбрасываем позиционирование для caseDetailPage
+                    if (pages[i].id === 'caseDetailPage') {
+                        pages[i].style.position = 'fixed';
+                        pages[i].style.top = '0';
+                        pages[i].style.left = '0';
+                        pages[i].style.right = '0';
+                        pages[i].style.bottom = '0';
+                        pages[i].style.zIndex = '-1';
+                    }
                 }
+            }
+            
+            // Скрываем кнопку "Открыть" при переключении вкладок
+            if (openBtn) {
+                openBtn.style.display = 'none';
+                openBtn.style.visibility = 'hidden';
+                openBtn.style.opacity = '0';
+                openBtn.classList.remove('show');
             }
             
             // Показываем нужную страницу и инициализируем
