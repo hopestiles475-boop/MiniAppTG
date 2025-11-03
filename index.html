@@ -98,7 +98,7 @@
                 }
             }
             
-            // Показываем нужную страницу
+            // Показываем нужную страницу и инициализируем
             if (page === 'cases' && mainPage) {
                 if (header) header.style.display = 'flex';
                 mainPage.style.display = 'block';
@@ -111,6 +111,14 @@
                 profilePage.style.visibility = 'visible';
                 profilePage.style.opacity = '1';
                 profilePage.style.pointerEvents = 'auto';
+                // Инициализируем профиль
+                setTimeout(function() {
+                    if (typeof updateProfileInfo === 'function') updateProfileInfo();
+                    if (typeof updateInventory === 'function') updateInventory();
+                    if (typeof initProfileHandlers === 'function') initProfileHandlers();
+                    if (typeof initTopUpHandlers === 'function') initTopUpHandlers();
+                    if (typeof initWithdrawHandlers === 'function') initWithdrawHandlers();
+                }, 50);
             } else if (page === 'crash' && crashPage) {
                 if (header) header.style.display = 'none';
                 crashPage.style.display = 'block';
@@ -125,6 +133,11 @@
                 crashPage.style.height = '100%';
                 crashPage.style.zIndex = '100';
                 crashPage.style.pointerEvents = 'auto';
+                // Инициализируем краш игру
+                setTimeout(function() {
+                    if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+                    if (typeof initCrashGame === 'function') initCrashGame();
+                }, 50);
             } else if (page === 'mines' && minesPage) {
                 if (header) header.style.display = 'flex';
                 minesPage.style.display = 'block';
@@ -139,6 +152,11 @@
                 minesPage.style.height = '100%';
                 minesPage.style.zIndex = '100';
                 minesPage.style.pointerEvents = 'auto';
+                // Инициализируем мины игру
+                setTimeout(function() {
+                    if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+                    if (typeof initMinesGame === 'function') initMinesGame();
+                }, 50);
             } else if (page === 'dice' && dicePage) {
                 if (header) header.style.display = 'flex';
                 dicePage.style.display = 'block';
@@ -153,6 +171,11 @@
                 dicePage.style.height = '100%';
                 dicePage.style.zIndex = '100';
                 dicePage.style.pointerEvents = 'auto';
+                // Инициализируем dice игру
+                setTimeout(function() {
+                    if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+                    if (typeof initDiceGame === 'function') initDiceGame();
+                }, 50);
             }
         };
     </script>
@@ -5459,6 +5482,33 @@
             
             // Переустанавливаем обработчики для клеток
             setupMinesCellHandlers();
+            
+            // Переустанавливаем обработчики кнопок
+            const minesStartBtn = document.getElementById('minesStartBtn');
+            if (minesStartBtn) {
+                const newBtn = minesStartBtn.cloneNode(true);
+                minesStartBtn.parentNode.replaceChild(newBtn, minesStartBtn);
+                newBtn.addEventListener('click', startMinesGame);
+            }
+            
+            const minesCashOutBtn = document.getElementById('minesCashOutBtn');
+            if (minesCashOutBtn) {
+                const newBtn = minesCashOutBtn.cloneNode(true);
+                minesCashOutBtn.parentNode.replaceChild(newBtn, minesCashOutBtn);
+                newBtn.addEventListener('click', cashOutMines);
+            }
+            
+            // Переустанавливаем обработчики кнопок выбора количества мин
+            document.querySelectorAll('.mines-count-btn').forEach(btn => {
+                const newBtn = btn.cloneNode(true);
+                btn.parentNode.replaceChild(newBtn, btn);
+                newBtn.addEventListener('click', function() {
+                    minesGameState.minesCount = parseInt(newBtn.dataset.count);
+                    document.querySelectorAll('.mines-count-btn').forEach(b => b.classList.remove('active'));
+                    newBtn.classList.add('active');
+                    updateMinesMultiplier();
+                });
+            });
         }
         
         function setupMinesCellHandlers() {
@@ -5468,7 +5518,9 @@
             // Удаляем старые обработчики и добавляем новые
             const cells = minesGrid.querySelectorAll('.mines-cell');
             cells.forEach(cell => {
-                cell.addEventListener('click', function() {
+                const newCell = cell.cloneNode(true);
+                cell.parentNode.replaceChild(newCell, cell);
+                newCell.addEventListener('click', function() {
                     if (minesGameState.gameActive) {
                         const index = parseInt(this.dataset.index);
                         openMinesCell(index);
@@ -5739,37 +5791,51 @@
                 thresholdValue.textContent = diceGameState.threshold;
                 thresholdSlider.value = diceGameState.threshold;
                 
-                thresholdSlider.addEventListener('input', (e) => {
+                // Переустанавливаем обработчик слайдера
+                const newSlider = thresholdSlider.cloneNode(true);
+                thresholdSlider.parentNode.replaceChild(newSlider, thresholdSlider);
+                
+                newSlider.addEventListener('input', (e) => {
                     diceGameState.threshold = parseInt(e.target.value);
                     thresholdValue.textContent = diceGameState.threshold;
                     updateDiceMultiplier();
                 });
             }
             
-            // Переключение типа ставки
+            // Переключение типа ставки - Roll Under
             if (rollUnderBtn) {
-                rollUnderBtn.addEventListener('click', () => {
+                const newBtn = rollUnderBtn.cloneNode(true);
+                rollUnderBtn.parentNode.replaceChild(newBtn, rollUnderBtn);
+                newBtn.addEventListener('click', () => {
                     diceGameState.rollType = 'under';
-                    rollUnderBtn.classList.add('active');
-                    rollOverBtn.classList.remove('active');
+                    newBtn.classList.add('active');
+                    const rollOver = document.getElementById('diceRollOverBtn');
+                    if (rollOver) rollOver.classList.remove('active');
                     updateDiceMultiplier();
                 });
             }
             
+            // Переключение типа ставки - Roll Over
             if (rollOverBtn) {
-                rollOverBtn.addEventListener('click', () => {
+                const newBtn = rollOverBtn.cloneNode(true);
+                rollOverBtn.parentNode.replaceChild(newBtn, rollOverBtn);
+                newBtn.addEventListener('click', () => {
                     diceGameState.rollType = 'over';
-                    rollOverBtn.classList.add('active');
-                    rollUnderBtn.classList.remove('active');
+                    newBtn.classList.add('active');
+                    const rollUnder = document.getElementById('diceRollUnderBtn');
+                    if (rollUnder) rollUnder.classList.remove('active');
                     updateDiceMultiplier();
                 });
             }
             
             // Переключатель авто-игры
             if (autoToggle) {
-                autoToggle.addEventListener('change', (e) => {
+                const newToggle = autoToggle.cloneNode(true);
+                autoToggle.parentNode.replaceChild(newToggle, autoToggle);
+                newToggle.checked = diceGameState.autoPlay;
+                newToggle.addEventListener('change', (e) => {
                     diceGameState.autoPlay = e.target.checked;
-                    autoStatus.textContent = diceGameState.autoPlay ? 'ON' : 'OFF';
+                    if (autoStatus) autoStatus.textContent = diceGameState.autoPlay ? 'ON' : 'OFF';
                     
                     if (diceGameState.autoPlay && !diceGameState.isRolling) {
                         startDiceGame();
@@ -5781,7 +5847,9 @@
             
             // Кнопка START
             if (startBtn) {
-                startBtn.addEventListener('click', () => {
+                const newBtn = startBtn.cloneNode(true);
+                startBtn.parentNode.replaceChild(newBtn, startBtn);
+                newBtn.addEventListener('click', () => {
                     if (!diceGameState.isRolling) {
                         startDiceGame();
                     }
@@ -6067,6 +6135,143 @@
             
             // НЕ очищаем список игроков при инициализации, чтобы ставки сохранялись
             // crashPlayers = []; // Убрано - сохраняем ставки между раундами
+            
+            // Переустанавливаем обработчики кнопок
+            const makeBetBtn = document.getElementById('makeBetBtn');
+            if (makeBetBtn) {
+                // Удаляем старый обработчик через клонирование
+                const newBtn = makeBetBtn.cloneNode(true);
+                makeBetBtn.parentNode.replaceChild(newBtn, makeBetBtn);
+                
+                // Добавляем обработчик на новую кнопку
+                newBtn.addEventListener('click', function() {
+                    // Если есть активная ставка и раунд идет (график растет), можно забрать
+                    if (userBet && crashRoundActive && crashDirection === 1 && !userBet.cashedOut) {
+                        cashOutPlayer(userBet.id);
+                        return;
+                    }
+                    
+                    // Нельзя ставить во время активного раунда (график идет)
+                    // Можно ставить ТОЛЬКО во время кулдауна (когда crashRoundActive = false)
+                    if (crashRoundActive) {
+                        if (tg) {
+                            tg.showAlert('Ставки принимаются только во время кулдауна!');
+                        } else {
+                            alert('Ставки принимаются только во время кулдауна!');
+                        }
+                        return;
+                    }
+                    
+                    const amountInput = document.getElementById('betAmountInput');
+                    const itemSelect = document.getElementById('betItemSelect');
+                    
+                    let betAmount = 0;
+                    let itemData = null;
+                    
+                    if (betType === 'balance') {
+                        betAmount = parseFloat(amountInput.value);
+                        if (!betAmount || betAmount <= 0 || betAmount > _balance) {
+                            if (tg) {
+                                tg.showAlert('Неверная сумма ставки!');
+                            } else {
+                                alert('Неверная сумма ставки!');
+                            }
+                            return;
+                        }
+                    } else {
+                        const selectedOption = itemSelect.options[itemSelect.selectedIndex];
+                        if (!selectedOption || !selectedOption.value) {
+                            if (tg) {
+                                tg.showAlert('Выберите предмет!');
+                            } else {
+                                alert('Выберите предмет!');
+                            }
+                            return;
+                        }
+                        itemData = JSON.parse(selectedOption.dataset.item);
+                        betAmount = itemData.value;
+                    }
+                    
+                    const user = tg?.initDataUnsafe?.user;
+                    const newBet = {
+                        id: Date.now(),
+                        userId: user?.id || Math.random(),
+                        username: user?.first_name || user?.username || 'Игрок',
+                        avatar: user?.photo_url ? null : '👤',
+                        betAmount: betAmount,
+                        itemName: itemData?.name || null,
+                        itemValue: itemData?.value || null,
+                        itemId: itemData?.id || null,
+                        betMultiplier: selectedMultiplier,
+                        autoCash: selectedMultiplier,
+                        cashedOut: false,
+                        timestamp: Date.now()
+                    };
+                    
+                    if (betType === 'balance') {
+                        if (!changeBalance(-betAmount, 'crashBet')) {
+                            return;
+                        }
+                        saveInventory();
+                        saveUserData();
+                    } else {
+                        userInventory = userInventory.filter(item => item.id !== itemData.id);
+                        saveInventory();
+                        saveUserData();
+                        updateBetItemSelect();
+                    }
+                    
+                    userBet = newBet;
+                    crashPlayers.push(newBet);
+                    updateCrashBetsList();
+                    
+                    // Сохраняем ставку на сервер
+                    saveCrashBetToServer(newBet);
+                    
+                    const makeBetBtn2 = document.getElementById('makeBetBtn');
+                    if (makeBetBtn2) {
+                        makeBetBtn2.textContent = 'Забрать';
+                        makeBetBtn2.disabled = false;
+                    }
+                });
+            }
+            
+            // Переустанавливаем обработчики кнопок типа ставки
+            document.querySelectorAll('.bet-type-btn').forEach(btn => {
+                const newBtn = btn.cloneNode(true);
+                btn.parentNode.replaceChild(newBtn, btn);
+                newBtn.addEventListener('click', () => {
+                    document.querySelectorAll('.bet-type-btn').forEach(b => b.classList.remove('active'));
+                    newBtn.classList.add('active');
+                    betType = newBtn.dataset.type;
+                    
+                    const amountInput = document.getElementById('betAmountInput');
+                    const itemSelect = document.getElementById('betItemSelect');
+                    
+                    if (betType === 'balance') {
+                        if (amountInput) amountInput.style.display = 'block';
+                        if (itemSelect) itemSelect.style.display = 'none';
+                    } else {
+                        if (amountInput) amountInput.style.display = 'none';
+                        if (itemSelect) itemSelect.style.display = 'block';
+                    }
+                });
+            });
+            
+            // Переустанавливаем обработчики кнопок множителя
+            document.querySelectorAll('.multiplier-btn').forEach(btn => {
+                const newBtn = btn.cloneNode(true);
+                btn.parentNode.replaceChild(newBtn, btn);
+                newBtn.addEventListener('click', () => {
+                    if (newBtn.dataset.mult === 'auto') {
+                        selectedMultiplier = null;
+                    } else {
+                        selectedMultiplier = parseFloat(newBtn.dataset.mult);
+                    }
+                    document.querySelectorAll('.multiplier-btn').forEach(b => b.classList.remove('active'));
+                    newBtn.classList.add('active');
+                });
+            });
             
             startNewCrashRound(ctx, canvas);
             updateCrashBetsList();
@@ -6530,42 +6735,14 @@
             });
         }
 
-        // Переключение типа ставки
-        document.querySelectorAll('.bet-type-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.bet-type-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                betType = btn.dataset.type;
-                
-                const amountInput = document.getElementById('betAmountInput');
-                const itemSelect = document.getElementById('betItemSelect');
-                
-                if (betType === 'balance') {
-                    amountInput.style.display = 'block';
-                    if (itemSelect) itemSelect.style.display = 'none';
-                } else {
-                    amountInput.style.display = 'none';
-                    if (itemSelect) itemSelect.style.display = 'block';
-                }
-            });
-        });
+        // Обработчики кнопок типа ставки и множителя устанавливаются в initCrashGame
 
-        // Выбор множителя авто-вывода
-        document.querySelectorAll('.multiplier-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (btn.dataset.mult === 'auto') {
-                    selectedMultiplier = null;
-                } else {
-                    selectedMultiplier = parseFloat(btn.dataset.mult);
-                }
-                document.querySelectorAll('.multiplier-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-            });
-        });
-
-        // Сделать ставку
+        // Сделать ставку - обработчик добавляется в initCrashGame
+        // Этот код ниже выполняется только при первой загрузке страницы
+        // и будет перезаписан в initCrashGame при переключении на страницу краша
         const makeBetBtn = document.getElementById('makeBetBtn');
-        if (makeBetBtn) {
+        if (makeBetBtn && !makeBetBtn.hasAttribute('data-handler-set')) {
+            makeBetBtn.setAttribute('data-handler-set', 'true');
             makeBetBtn.addEventListener('click', () => {
                 // Если есть активная ставка и раунд идет (график растет), можно забрать
                 if (userBet && crashRoundActive && crashDirection === 1 && !userBet.cashedOut) {
