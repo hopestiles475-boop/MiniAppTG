@@ -1857,6 +1857,26 @@
             background: rgba(255, 255, 255, 0.03);
             border-radius: 8px;
             font-size: 14px;
+            gap: 10px;
+        }
+
+        .crash-history-item.empty {
+            justify-content: center;
+        }
+
+        .crash-history-part {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .crash-history-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .crash-history-item.win {
@@ -7106,9 +7126,10 @@
             // Если история пуста, показываем сообщение
             if (crashGameState.history.length === 0) {
                 const emptyMsg = document.createElement('div');
-                emptyMsg.className = 'crash-history-item';
+                emptyMsg.className = 'crash-history-item empty';
                 emptyMsg.style.color = 'rgba(255, 255, 255, 0.5)';
                 emptyMsg.style.textAlign = 'center';
+                emptyMsg.style.padding = '20px';
                 emptyMsg.textContent = 'История ставок пуста';
                 historyList.appendChild(emptyMsg);
                 return;
@@ -7120,29 +7141,51 @@
                 item.className = `crash-history-item ${record.isWin ? 'win' : 'loss'}`;
                 
                 // Левая часть: ставка
-                const betPart = document.createElement('span');
-                betPart.className = 'crash-history-bet';
-                betPart.textContent = `${record.betAmount.toFixed(2)}`;
+                const betPart = document.createElement('div');
+                betPart.className = 'crash-history-part';
+                const betLabel = document.createElement('div');
+                betLabel.className = 'crash-history-label';
+                betLabel.textContent = 'Ставка';
+                const betValue = document.createElement('div');
+                betValue.className = 'crash-history-bet';
+                betValue.textContent = `${record.betAmount.toFixed(2)}`;
+                betPart.appendChild(betLabel);
+                betPart.appendChild(betValue);
                 
                 // Средняя часть: множитель или крестик
-                const multPart = document.createElement('span');
+                const multPart = document.createElement('div');
+                multPart.className = 'crash-history-part';
+                const multLabel = document.createElement('div');
+                multLabel.className = 'crash-history-label';
+                multLabel.textContent = record.isWin ? 'Множитель' : 'Результат';
+                const multValue = document.createElement('div');
                 if (record.isWin) {
-                    multPart.className = 'crash-history-multiplier';
-                    multPart.textContent = `x${record.multiplier.toFixed(2)}`;
+                    multValue.className = 'crash-history-multiplier';
+                    multValue.textContent = `x${record.multiplier.toFixed(2)}`;
                 } else {
-                    multPart.className = 'crash-history-loss';
-                    multPart.textContent = '✕';
+                    multValue.className = 'crash-history-loss';
+                    multValue.textContent = '✕';
+                    multValue.style.fontSize = '20px';
                 }
+                multPart.appendChild(multLabel);
+                multPart.appendChild(multValue);
                 
                 // Правая часть: выигрыш или проигрыш
-                const winPart = document.createElement('span');
+                const winPart = document.createElement('div');
+                winPart.className = 'crash-history-part';
+                const winLabel = document.createElement('div');
+                winLabel.className = 'crash-history-label';
+                winLabel.textContent = record.isWin ? 'Выигрыш' : 'Проигрыш';
+                const winValue = document.createElement('div');
                 if (record.isWin) {
-                    winPart.className = 'crash-history-winnings';
-                    winPart.textContent = `+${record.winnings.toFixed(2)}`;
+                    winValue.className = 'crash-history-winnings';
+                    winValue.textContent = `+${record.winnings.toFixed(2)}`;
                 } else {
-                    winPart.className = 'crash-history-loss';
-                    winPart.textContent = `-${record.betAmount.toFixed(2)}`;
+                    winValue.className = 'crash-history-loss';
+                    winValue.textContent = `-${record.betAmount.toFixed(2)}`;
                 }
+                winPart.appendChild(winLabel);
+                winPart.appendChild(winValue);
                 
                 item.appendChild(betPart);
                 item.appendChild(multPart);
