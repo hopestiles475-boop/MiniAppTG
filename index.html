@@ -1090,21 +1090,26 @@
         }
 
         .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
             background: rgba(10, 10, 10, 0.98);
             backdrop-filter: blur(20px);
             border-top: 2px solid rgba(255, 255, 255, 0.15);
-            display: flex;
+            display: flex !important;
             justify-content: space-around;
             padding: 12px 0;
-            z-index: 100;
+            z-index: 9999 !important;
             box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+            pointer-events: auto !important;
         }
 
         .nav-item {
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            position: relative !important;
+            z-index: 100 !important;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -3381,47 +3386,110 @@
                 console.log('- initTopUpHandlers:', typeof initTopUpHandlers);
                 console.log('- initWithdrawHandlers:', typeof initWithdrawHandlers);
                 
-                // Навигация между вкладками
+                // Навигация между вкладками - АГРЕССИВНАЯ ИНИЦИАЛИЗАЦИЯ
                 const navItems = document.querySelectorAll('.nav-item');
                 console.log(`🔍 Найдено элементов навигации: ${navItems.length}`);
+                
+                if (navItems.length === 0) {
+                    console.error('❌ Элементы навигации не найдены! Проверяю через bottom-nav...');
+                    const bottomNav = document.querySelector('.bottom-nav');
+                    if (bottomNav) {
+                        const items = bottomNav.querySelectorAll('[data-page]');
+                        console.log(`🔍 Найдено элементов в .bottom-nav: ${items.length}`);
+                    }
+                }
+                
                 if (navItems.length > 0) {
                     navItems.forEach((item, index) => {
                         try {
-                            // Удаляем старые обработчики
+                            const page = item.dataset.page || item.getAttribute('data-page');
+                            console.log(`🔧 Инициализация навигации ${index + 1}: ${page}`);
+                            
+                            // Сначала устанавливаем стили для кликабельности
+                            item.style.cursor = 'pointer';
+                            item.style.pointerEvents = 'auto';
+                            item.style.position = 'relative';
+                            item.style.zIndex = '10000';
+                            
+                            // Также для дочерних элементов
+                            const icon = item.querySelector('.nav-icon');
+                            const label = item.querySelector('.nav-label');
+                            if (icon) {
+                                icon.style.pointerEvents = 'none';
+                            }
+                            if (label) {
+                                label.style.pointerEvents = 'none';
+                            }
+                            
+                            // Удаляем старые обработчики через клон
                             const newItem = item.cloneNode(true);
-                            item.parentNode.replaceChild(newItem, item);
-                            
-                            // Добавляем новый обработчик
-                            newItem.onclick = function(e) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                e.stopImmediatePropagation();
-                                console.log('✅ Клик по навигации:', newItem.dataset.page);
-                                if (typeof handleNavClick === 'function') {
-                                    handleNavClick(newItem.dataset.page, newItem);
-                                } else {
-                                    console.error('❌ Функция handleNavClick не найдена');
-                                }
-                                return false;
-                            };
-                            
-                            newItem.addEventListener('click', function(e) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                e.stopImmediatePropagation();
-                                if (typeof handleNavClick === 'function') {
-                                    handleNavClick(newItem.dataset.page, newItem);
-                                }
-                            }, { capture: true });
-                            
-                            console.log(`✅ Навигация ${index + 1} инициализирована`);
+                            const parent = item.parentNode;
+                            if (parent) {
+                                parent.replaceChild(newItem, item);
+                                
+                                // Устанавливаем стили для нового элемента
+                                newItem.style.cursor = 'pointer';
+                                newItem.style.pointerEvents = 'auto';
+                                newItem.style.position = 'relative';
+                                newItem.style.zIndex = '10000';
+                                
+                                // Обработчик через onclick (наивысший приоритет)
+                                newItem.onclick = function(e) {
+                                    console.log('🔥 ОНКЛИК по навигации:', newItem.dataset.page || page);
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    e.stopImmediatePropagation();
+                                    
+                                    const targetPage = newItem.dataset.page || page || newItem.getAttribute('data-page');
+                                    console.log('📄 Целевая страница:', targetPage);
+                                    
+                                    if (targetPage && typeof handleNavClick === 'function') {
+                                        handleNavClick(targetPage, newItem);
+                                    } else {
+                                        console.error('❌ Ошибка: страница или функция не найдена');
+                                        console.error('   targetPage:', targetPage);
+                                        console.error('   handleNavClick:', typeof handleNavClick);
+                                    }
+                                    return false;
+                                };
+                                
+                                // Также через addEventListener
+                                newItem.addEventListener('click', function(e) {
+                                    console.log('🔥 ADD EVENT LISTENER по навигации:', newItem.dataset.page || page);
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    e.stopImmediatePropagation();
+                                    
+                                    const targetPage = newItem.dataset.page || page || newItem.getAttribute('data-page');
+                                    if (targetPage && typeof handleNavClick === 'function') {
+                                        handleNavClick(targetPage, newItem);
+                                    }
+                                }, { capture: true, passive: false });
+                                
+                                // Для мобильных устройств - touchstart
+                                newItem.addEventListener('touchstart', function(e) {
+                                    console.log('📱 TOUCH по навигации:', newItem.dataset.page || page);
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    
+                                    const targetPage = newItem.dataset.page || page || newItem.getAttribute('data-page');
+                                    if (targetPage && typeof handleNavClick === 'function') {
+                                        handleNavClick(targetPage, newItem);
+                                    }
+                                }, { passive: false });
+                                
+                                console.log(`✅ Навигация ${index + 1} (${page}) полностью инициализирована`);
+                            } else {
+                                console.error(`❌ Не найден родитель для элемента навигации ${index + 1}`);
+                            }
                         } catch (err) {
                             console.error(`❌ Ошибка инициализации навигации ${index + 1}:`, err);
+                            console.error('Stack:', err.stack);
                         }
                     });
-                    console.log('✅ Навигация инициализирована');
+                    console.log('✅ Все элементы навигации инициализированы');
                 } else {
-                    console.warn('⚠️ Элементы навигации не найдены');
+                    console.error('❌ Элементы навигации не найдены! Возможна проблема с загрузкой DOM.');
                 }
                 
                 // Обработчики табов
@@ -3490,11 +3558,33 @@
         // Функция обработки клика по навигации
         function handleNavClick(page, clickedItem) {
             try {
-                console.log('Переключение на страницу:', page);
+                console.log('🔄 Переключение на страницу:', page);
+                console.log('📄 clickedItem:', clickedItem);
+                
+                if (!page) {
+                    console.error('❌ Страница не указана!');
+                    return;
+                }
                 
                 // Обновляем активную вкладку
-                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-                clickedItem.classList.add('active');
+                const allNavItems = document.querySelectorAll('.nav-item');
+                console.log(`🔍 Найдено ${allNavItems.length} элементов навигации для обновления`);
+                allNavItems.forEach(i => {
+                    i.classList.remove('active');
+                    i.style.pointerEvents = 'auto';
+                });
+                
+                if (clickedItem) {
+                    clickedItem.classList.add('active');
+                    clickedItem.style.pointerEvents = 'auto';
+                    console.log('✅ Активная вкладка обновлена:', page);
+                } else {
+                    console.warn('⚠️ clickedItem не передан, пытаемся найти элемент навигации');
+                    const foundItem = document.querySelector(`[data-page="${page}"]`);
+                    if (foundItem) {
+                        foundItem.classList.add('active');
+                    }
+                }
                 
                 const mainPage = document.getElementById('mainPage');
                 const caseDetailPage = document.getElementById('caseDetailPage');
@@ -3534,48 +3624,129 @@
                 });
                 
                 // Показываем нужную страницу
+                console.log(`📄 Показываем страницу: ${page}`);
+                
                 if (page === 'cases') {
-                    if (header) header.style.display = 'flex';
-                    mainPage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; pointer-events: auto !important;';
+                    console.log('📂 Переход на страницу Кейсы');
+                    if (header) {
+                        header.style.display = 'flex';
+                        header.style.visibility = 'visible';
+                        header.style.pointerEvents = 'auto';
+                    }
+                    mainPage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; pointer-events: auto !important; z-index: 1 !important;';
                     mainPage.classList.remove('hidden');
+                    console.log('✅ Страница Кейсы показана');
                 } else if (page === 'profile') {
-                    if (header) header.style.display = 'flex';
-                    profilePage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; pointer-events: auto !important;';
-                    updateProfileInfo();
-                    updateInventory();
-                    // Переинициализируем обработчики при открытии профиля (на случай, если они не были инициализированы)
+                    console.log('👤 Переход на страницу Профиль');
+                    if (header) {
+                        header.style.display = 'flex';
+                        header.style.visibility = 'visible';
+                        header.style.pointerEvents = 'auto';
+                    }
+                    profilePage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; pointer-events: auto !important; z-index: 1 !important;';
+                    profilePage.classList.remove('hidden');
+                    console.log('✅ Страница Профиль показана');
+                    
+                    // Обновляем данные профиля
+                    try {
+                        if (typeof updateProfileInfo === 'function') {
+                            updateProfileInfo();
+                        }
+                        if (typeof updateInventory === 'function') {
+                            updateInventory();
+                        }
+                    } catch (err) {
+                        console.error('Ошибка обновления профиля:', err);
+                    }
+                    
+                    // Переинициализируем обработчики при открытии профиля
                     setTimeout(() => {
-                        initProfileHandlers();
-                        initTopUpHandlers();
-                        initWithdrawHandlers();
+                        if (typeof initProfileHandlers === 'function') {
+                            initProfileHandlers();
+                        }
+                        if (typeof initTopUpHandlers === 'function') {
+                            initTopUpHandlers();
+                        }
+                        if (typeof initWithdrawHandlers === 'function') {
+                            initWithdrawHandlers();
+                        }
                     }, 100);
                 } else if (page === 'crash') {
-                    if (header) header.style.display = 'none';
+                    console.log('🚀 Переход на страницу Краш');
+                    if (header) {
+                        header.style.display = 'none';
+                        header.style.visibility = 'hidden';
+                    }
                     if (crashPage) {
                         crashPage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 100% !important; z-index: 100 !important; pointer-events: auto !important;';
-                        updateBalanceDisplay();
-                        if (typeof initCrashGame === 'function') {
-                            initCrashGame();
+                        crashPage.classList.remove('hidden');
+                        console.log('✅ Страница Краш показана');
+                        
+                        try {
+                            if (typeof updateBalanceDisplay === 'function') {
+                                updateBalanceDisplay();
+                            }
+                            if (typeof initCrashGame === 'function') {
+                                initCrashGame();
+                            }
+                        } catch (err) {
+                            console.error('Ошибка инициализации краша:', err);
                         }
+                    } else {
+                        console.error('❌ Страница crashPage не найдена');
                     }
                 } else if (page === 'mines') {
-                    if (header) header.style.display = 'flex';
+                    console.log('💣 Переход на страницу Мины');
+                    if (header) {
+                        header.style.display = 'flex';
+                        header.style.visibility = 'visible';
+                        header.style.pointerEvents = 'auto';
+                    }
                     if (minesPage) {
                         minesPage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 100% !important; z-index: 100 !important; pointer-events: auto !important;';
-                        updateBalanceDisplay();
-                        if (typeof initMinesGame === 'function') {
-                            initMinesGame();
+                        minesPage.classList.remove('hidden');
+                        console.log('✅ Страница Мины показана');
+                        
+                        try {
+                            if (typeof updateBalanceDisplay === 'function') {
+                                updateBalanceDisplay();
+                            }
+                            if (typeof initMinesGame === 'function') {
+                                initMinesGame();
+                            }
+                        } catch (err) {
+                            console.error('Ошибка инициализации мин:', err);
                         }
+                    } else {
+                        console.error('❌ Страница minesPage не найдена');
                     }
                 } else if (page === 'dice') {
-                    if (header) header.style.display = 'flex';
+                    console.log('🎲 Переход на страницу Dice');
+                    if (header) {
+                        header.style.display = 'flex';
+                        header.style.visibility = 'visible';
+                        header.style.pointerEvents = 'auto';
+                    }
                     if (dicePage) {
                         dicePage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 100% !important; z-index: 100 !important; pointer-events: auto !important;';
-                        updateBalanceDisplay();
-                        if (typeof initDiceGame === 'function') {
-                            initDiceGame();
+                        dicePage.classList.remove('hidden');
+                        console.log('✅ Страница Dice показана');
+                        
+                        try {
+                            if (typeof updateBalanceDisplay === 'function') {
+                                updateBalanceDisplay();
+                            }
+                            if (typeof initDiceGame === 'function') {
+                                initDiceGame();
+                            }
+                        } catch (err) {
+                            console.error('Ошибка инициализации dice:', err);
                         }
+                    } else {
+                        console.error('❌ Страница dicePage не найдена');
                     }
+                } else {
+                    console.error('❌ Неизвестная страница:', page);
                 }
                 
                 if (tg && tg.HapticFeedback) {
