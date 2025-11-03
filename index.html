@@ -6668,19 +6668,32 @@
                 return;
             }
             
-            // Устанавливаем размеры canvas
-            const rect = canvas.getBoundingClientRect();
-            canvas.width = rect.width || canvas.offsetWidth || 400;
-            canvas.height = rect.height || canvas.offsetHeight || 250;
+            // Устанавливаем размеры canvas - используем CSS размеры
+            const container = canvas.parentElement;
+            const containerWidth = container ? container.offsetWidth : window.innerWidth - 40;
+            const containerHeight = 250; // Фиксированная высота для графика
             
-            console.log('✅ Canvas размеры:', canvas.width, 'x', canvas.height);
+            // Устанавливаем внутренние размеры canvas (в пикселях)
+            // Умножаем на devicePixelRatio для четкости на Retina дисплеях
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = containerWidth * dpr;
+            canvas.height = containerHeight * dpr;
+            
+            // Устанавливаем CSS размеры
+            canvas.style.width = containerWidth + 'px';
+            canvas.style.height = containerHeight + 'px';
+            
+            // Масштабируем контекст для Retina
+            ctx.scale(dpr, dpr);
+            
+            console.log('✅ Canvas размеры:', canvas.width / dpr, 'x', canvas.height / dpr, 'DPR:', dpr);
             
             // Очищаем canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
             
             // Рисуем фон
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(20, 20, 30, 1)';
+            ctx.fillRect(0, 0, canvas.width / dpr, canvas.height / dpr);
             
             // НЕ очищаем список игроков при инициализации, чтобы ставки сохранялись
             // crashPlayers = []; // Убрано - сохраняем ставки между раундами
@@ -6974,20 +6987,25 @@
             const countdown = setInterval(() => {
                 // Показываем кулдаун только на canvas
                 if (ctx && canvas && canvas.width > 0 && canvas.height > 0) {
+                    // Получаем размеры canvas с учетом devicePixelRatio
+                    const dpr = window.devicePixelRatio || 1;
+                    const canvasWidth = canvas.width / dpr;
+                    const canvasHeight = canvas.height / dpr;
+                    
                     // Очищаем canvas
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
                     
                     // Рисуем фон
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = 'rgba(20, 20, 30, 1)';
+                    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
                     
                     // Рисуем текст кулдауна
                     ctx.fillStyle = '#ffaa00';
                     ctx.font = 'bold 28px Arial';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.fillText(`Ставки принимаются`, canvas.width / 2, canvas.height / 2 - 20);
-                    ctx.fillText(`${remaining}...`, canvas.width / 2, canvas.height / 2 + 20);
+                    ctx.fillText(`Ставки принимаются`, canvasWidth / 2, canvasHeight / 2 - 20);
+                    ctx.fillText(`${remaining}...`, canvasWidth / 2, canvasHeight / 2 + 20);
                     
                     console.log('✅ Кулдаун нарисован:', remaining);
                 } else {
@@ -7038,7 +7056,15 @@
                     crashRoundActive = true;
                     crashMultiplier = 1.00;
                     crashDirection = 1;
-                    crashGraphPoints = [{ x: 0, y: canvas.height - 50, multiplier: 1.00 }];
+                    
+                    // Получаем актуальные размеры canvas для инициализации точек графика
+                    const dpr = window.devicePixelRatio || 1;
+                    const canvasWidth = canvas.width / dpr;
+                    const canvasHeight = canvas.height / dpr;
+                    
+                    crashGraphPoints = [{ x: 10, y: canvasHeight - 50, multiplier: 1.00 }];
+                    
+                    console.log('🚀 Начинаем новый раунд краша, график:', crashGraphPoints.length, 'точек');
                     
                     // Одинаковый краш для всех игроков (на основе времени начала раунда)
                     const roundStartTime = Date.now();
@@ -7048,11 +7074,14 @@
                     // Момент краша (от 1.01 до 10.0) - одинаковый для всех
                     crashTarget = 1.01 + random * 9.0;
                     
+                    console.log('🎯 Цель краша установлена:', crashTarget.toFixed(2));
+                    
                     // Время до краша (от 3 до 20 секунд) - одинаковое для всех
                     // НЕ используем setTimeout для краша, так как краш определяется достижением crashTarget в анимации
                     // Это обеспечивает одинаковый результат для всех игроков
                     
                     // Запускаем анимацию роста графика
+                    console.log('🎬 Запускаем анимацию графика...');
                     startCrashAnimation(ctx, canvas);
                 }
             }, 1000);
@@ -7070,14 +7099,24 @@
             const animate = () => {
                 // Всегда рисуем canvas (даже во время кулдауна будет что-то показано)
                 if (!ctx || !canvas || canvas.width === 0 || canvas.height === 0) {
-                    console.error('❌ Canvas недоступен для рисования');
+                    console.error('❌ Canvas недоступен для рисования', {
+                        ctx: !!ctx,
+                        canvas: !!canvas,
+                        width: canvas?.width,
+                        height: canvas?.height
+                    });
                     return;
                 }
                 
+                // Получаем размеры canvas с учетом devicePixelRatio
+                const dpr = window.devicePixelRatio || 1;
+                const canvasWidth = canvas.width / dpr;
+                const canvasHeight = canvas.height / dpr;
+                
                 // Очищаем canvas и рисуем фон
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+                ctx.fillStyle = 'rgba(20, 20, 30, 1)';
+                ctx.fillRect(0, 0, canvasWidth, canvasHeight);
                 
                 // Обновляем множитель только если раунд активен и график растет
                 if (crashRoundActive && crashDirection === 1) {
@@ -7111,7 +7150,7 @@
                         ctx.lineWidth = 3;
                         ctx.beginPath();
                         ctx.moveTo(lastX, lastY);
-                        ctx.lineTo(lastX, canvas.height - 50);
+                        ctx.lineTo(lastX, canvasHeight - 50);
                         ctx.stroke();
                         
                         // Обновляем множитель на экране
@@ -7136,18 +7175,19 @@
                     }
                     
                     // Добавляем точку на график во время роста
-                    const x = crashGraphPoints.length * 2;
+                    const x = 10 + (crashGraphPoints.length * 3); // Начинаем с 10px отступа, шаг 3px
                     // Преобразуем множитель в Y координату (1.0 = низ, выше = выше на графике)
                     const multiplierPercent = ((crashMultiplier - 1.0) / 9.0) * 100;
-                    const y = canvas.height - 50 - (multiplierPercent / 100) * (canvas.height - 100);
+                    const y = canvasHeight - 50 - (multiplierPercent / 100) * (canvasHeight - 100);
                     
                     crashGraphPoints.push({ x, y, multiplier: crashMultiplier });
                     
-                    // Ограничиваем количество точек
-                    if (crashGraphPoints.length > canvas.width / 2) {
-                        crashGraphPoints = crashGraphPoints.slice(-Math.floor(canvas.width / 2));
+                    // Ограничиваем количество точек чтобы не перегружать график
+                    const maxPoints = Math.floor((canvasWidth - 20) / 3);
+                    if (crashGraphPoints.length > maxPoints) {
+                        crashGraphPoints = crashGraphPoints.slice(-maxPoints);
                         crashGraphPoints.forEach((point, i) => {
-                            point.x = i * 2;
+                            point.x = 10 + (i * 3);
                         });
                     }
                     
