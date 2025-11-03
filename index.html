@@ -133,7 +133,7 @@
             align-items: center;
             justify-content: center;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            margin: 15px 20px;
+            margin: 15px auto;
             padding: 20px;
             border-radius: 16px;
             border: none;
@@ -142,6 +142,8 @@
             gap: 15px;
             box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
             transition: all 0.3s;
+            max-width: 90%;
+            width: 100%;
         }
 
         .subscribe-btn:active {
@@ -4425,7 +4427,7 @@
 
             // Адрес получателя (ЗАМЕНИТЕ НА ВАШ РЕАЛЬНЫЙ АДРЕС КОШЕЛЬКА)
             // Получите адрес вашего кошелька TON и вставьте его здесь
-            const recipientAddress = 'EQD___________________________'; // TODO: Замените на реальный адрес
+            const recipientAddress = 'UQCC14SVH6ANPso6cwi6vABF_woZP1bo2u1q4KQN3eyADL0t'; // TODO: Замените на реальный адрес
             
             // Конвертируем TON в nanotons (1 TON = 1,000,000,000 nanotons)
             const amountInNano = (amount * 1000000000).toString();
