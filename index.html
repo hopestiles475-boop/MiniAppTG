@@ -2732,9 +2732,9 @@
                 <div class="mines-count-control">
                     <label>Количество мин:</label>
                     <div class="mines-count-buttons">
-                        <button class="mines-count-btn" data-count="3" onclick="try{if(typeof minesGameState !== 'undefined'){minesGameState.minesCount=3;document.querySelectorAll('.mines-count-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.mines-count-btn')?.classList.add('active');}else{alert('Игра не инициализирована');}}catch(e){console.error(e);}">3</button>
-                        <button class="mines-count-btn active" data-count="5" onclick="try{if(typeof minesGameState !== 'undefined'){minesGameState.minesCount=5;document.querySelectorAll('.mines-count-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.mines-count-btn')?.classList.add('active');}else{alert('Игра не инициализирована');}}catch(e){console.error(e);}">5</button>
-                        <button class="mines-count-btn" data-count="10" onclick="try{if(typeof minesGameState !== 'undefined'){minesGameState.minesCount=10;document.querySelectorAll('.mines-count-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.mines-count-btn')?.classList.add('active');}else{alert('Игра не инициализирована');}}catch(e){console.error(e);}">10</button>
+                        <button class="mines-count-btn" data-count="3" onclick="try{if(typeof minesGameState !== 'undefined'){minesGameState.minesCount=3;document.querySelectorAll('.mines-count-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.mines-count-btn')?.classList.add('active');const totalCountEl=document.getElementById('minesTotalCount');if(totalCountEl){totalCountEl.textContent='3';}}else{alert('Игра не инициализирована');}}catch(e){console.error(e);}">3</button>
+                        <button class="mines-count-btn active" data-count="5" onclick="try{if(typeof minesGameState !== 'undefined'){minesGameState.minesCount=5;document.querySelectorAll('.mines-count-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.mines-count-btn')?.classList.add('active');const totalCountEl=document.getElementById('minesTotalCount');if(totalCountEl){totalCountEl.textContent='5';}}else{alert('Игра не инициализирована');}}catch(e){console.error(e);}">5</button>
+                        <button class="mines-count-btn" data-count="10" onclick="try{if(typeof minesGameState !== 'undefined'){minesGameState.minesCount=10;document.querySelectorAll('.mines-count-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.mines-count-btn')?.classList.add('active');const totalCountEl=document.getElementById('minesTotalCount');if(totalCountEl){totalCountEl.textContent='10';}}else{alert('Игра не инициализирована');}}catch(e){console.error(e);}">10</button>
                     </div>
                 </div>
                 <div class="mines-multiplier-display">
@@ -2755,8 +2755,8 @@
                     <span id="minesOpenedCount">0</span>
                 </div>
                 <div class="mines-stat-item">
-                    <span class="mines-stat-label">Мин:</span>
-                    <span id="minesTotalCount">3</span>
+                    <span class="mines-stat-label">Мины:</span>
+                    <span id="minesTotalCount">5</span>
                 </div>
                 <div class="mines-stat-item">
                     <span class="mines-stat-label">Выигрыш:</span>
@@ -5802,6 +5802,10 @@
                     minesGameState.minesCount = parseInt(newBtn.dataset.count);
                     document.querySelectorAll('.mines-count-btn').forEach(b => b.classList.remove('active'));
                     newBtn.classList.add('active');
+                    const totalCountEl = document.getElementById('minesTotalCount');
+                    if (totalCountEl) {
+                        totalCountEl.textContent = minesGameState.minesCount;
+                    }
                     updateMinesMultiplier();
                 });
             });
@@ -6059,7 +6063,10 @@
                     document.querySelectorAll('.mines-count-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     minesGameState.minesCount = parseInt(btn.dataset.count);
-                    document.getElementById('minesTotalCount').textContent = minesGameState.minesCount;
+                    const totalCountEl = document.getElementById('minesTotalCount');
+                    if (totalCountEl) {
+                        totalCountEl.textContent = minesGameState.minesCount;
+                    }
                 });
             });
         });
