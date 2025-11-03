@@ -6647,8 +6647,24 @@
             console.log('✅ canvas найден');
             
             const ctx = canvas.getContext('2d');
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
+            if (!ctx) {
+                console.error('❌ Не удалось получить контекст canvas!');
+                return;
+            }
+            
+            // Устанавливаем размеры canvas
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width || canvas.offsetWidth || 400;
+            canvas.height = rect.height || canvas.offsetHeight || 250;
+            
+            console.log('✅ Canvas размеры:', canvas.width, 'x', canvas.height);
+            
+            // Очищаем canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Рисуем фон
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             
             // НЕ очищаем список игроков при инициализации, чтобы ставки сохранялись
             // crashPlayers = []; // Убрано - сохраняем ставки между раундами
@@ -6855,17 +6871,39 @@
                     newBtn.classList.add('active');
                 };
                 
-                // Устанавливаем и onclick и addEventListener
+                // Устанавливаем обработчики - БЕЗ stopImmediatePropagation чтобы не блокировать
                 newBtn.onclick = handleMultiplierClick;
-                newBtn.addEventListener('click', handleMultiplierClick, true);
+                newBtn.addEventListener('click', handleMultiplierClick);
+                
+                // Также устанавливаем touchstart для мобильных
+                newBtn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    handleMultiplierClick(e);
+                });
+                
                 newBtn.style.cursor = 'pointer';
                 newBtn.style.pointerEvents = 'auto';
                 newBtn.style.zIndex = '100';
+                
+                console.log('✅ Обработчик установлен для кнопки:', newBtn.dataset.mult);
             });
             
             console.log('✅ Обработчики кнопок множителей и типа ставки установлены');
             
-            startNewCrashRound(ctx, canvas);
+            // Убедимся что canvas видим
+            const crashPage = document.getElementById('crashPage');
+            if (crashPage && crashPage.style.display === 'block') {
+                console.log('✅ Страница краша видна, запускаем раунд');
+                startNewCrashRound(ctx, canvas);
+            } else {
+                console.log('⚠️ Страница краша не видна, ждем...');
+                // Если страница не видна, запустим когда она станет видимой
+                setTimeout(() => {
+                    if (document.getElementById('crashPage')?.style.display === 'block') {
+                        startNewCrashRound(ctx, canvas);
+                    }
+                }, 500);
+            }
             updateCrashBetsList();
             updateBetItemSelect();
             
@@ -6919,14 +6957,30 @@
             
             const countdown = setInterval(() => {
                 // Показываем кулдаун только на canvas
-                if (ctx && canvas) {
+                if (ctx && canvas && canvas.width > 0 && canvas.height > 0) {
+                    // Очищаем canvas
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Рисуем фон
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Рисуем текст кулдауна
                     ctx.fillStyle = '#ffaa00';
                     ctx.font = 'bold 28px Arial';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillText(`Ставки принимаются`, canvas.width / 2, canvas.height / 2 - 20);
                     ctx.fillText(`${remaining}...`, canvas.width / 2, canvas.height / 2 + 20);
+                    
+                    console.log('✅ Кулдаун нарисован:', remaining);
+                } else {
+                    console.error('❌ Canvas не готов для рисования!', {
+                        ctx: !!ctx,
+                        canvas: !!canvas,
+                        width: canvas?.width,
+                        height: canvas?.height
+                    });
                 }
                 
                 // Очищаем и скрываем элемент множителя во время кулдауна (показываем только на canvas)
