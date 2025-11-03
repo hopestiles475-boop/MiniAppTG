@@ -4910,13 +4910,35 @@
                 openBtn.innerHTML = 'Открыть <span>🚀</span>';
             }
             
-            // Показываем mainPage
+            // Показываем mainPage и полностью восстанавливаем
             if (mainPage) {
-                mainPage.style.display = 'block';
-                mainPage.style.visibility = 'visible';
-                mainPage.style.opacity = '1';
-                mainPage.style.pointerEvents = 'auto';
+                // Сначала удаляем класс hidden, который может блокировать отображение
                 mainPage.classList.remove('hidden');
+                
+                // Восстанавливаем все стили с !important через setProperty для приоритета
+                mainPage.style.setProperty('display', 'block', 'important');
+                mainPage.style.setProperty('visibility', 'visible', 'important');
+                mainPage.style.setProperty('opacity', '1', 'important');
+                mainPage.style.setProperty('pointer-events', 'auto', 'important');
+                mainPage.style.position = 'relative';
+                
+                // Принудительно показываем содержимое
+                const casesCarousel = document.getElementById('casesCarousel');
+                if (casesCarousel) {
+                    casesCarousel.style.display = 'flex';
+                    casesCarousel.style.visibility = 'visible';
+                    casesCarousel.style.opacity = '1';
+                }
+                
+                // Переинициализируем кейсы после возврата
+                setTimeout(function() {
+                    if (typeof initCaseCards === 'function') {
+                        initCaseCards();
+                    }
+                    if (typeof initOpenButton === 'function') {
+                        initOpenButton();
+                    }
+                }, 100);
             }
             
             // Показываем header
