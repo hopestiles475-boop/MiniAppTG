@@ -3793,12 +3793,16 @@
         const mainBalancePlusBtn = document.querySelector('.balance-section button');
         if (mainBalancePlusBtn) {
             mainBalancePlusBtn.addEventListener('click', () => {
-                const botUsername = 'Znakomstva13_bot'; // Username без символа @
+                const botUsername = 'Znakomstva13_bot';
                 const userId = getUserId();
                 const botUrl = `https://t.me/${botUsername}?start=topup_${userId}`;
                 
                 if (tg) {
-                    tg.openLink(botUrl);
+                    if (tg.openTelegramLink) {
+                        tg.openTelegramLink(botUrl);
+                    } else {
+                        tg.openLink(botUrl);
+                    }
                     tg.HapticFeedback.impactOccurred('medium');
                 } else {
                     window.open(botUrl, '_blank');
@@ -4222,15 +4226,21 @@
 
         // Обработчики событий - Пополнение через Telegram бота
         document.getElementById('topUpBtn').addEventListener('click', () => {
-            // Замените на username вашего бота (например: @your_crypto_bot)
-            const botUsername = 'Znakomstva13_bot'; // TODO: Замените на реальный username бота
+            const botUsername = 'Znakomstva13_bot';
             const userId = getUserId();
             
-            // Открываем бота напрямую
+            // Открываем бота напрямую с параметром start
             const botUrl = `https://t.me/${botUsername}?start=topup_${userId}`;
             
+            console.log('Открываем бота для пополнения:', botUrl);
+            
             if (tg) {
-                tg.openLink(botUrl);
+                // Используем openTelegramLink для лучшей интеграции
+                if (tg.openTelegramLink) {
+                    tg.openTelegramLink(botUrl);
+                } else {
+                    tg.openLink(botUrl);
+                }
                 tg.HapticFeedback.impactOccurred('medium');
             } else {
                 window.open(botUrl, '_blank');
@@ -5572,12 +5582,16 @@
         const crashBalancePlusBtn = document.getElementById('crashBalance')?.parentElement?.querySelector('button');
         if (crashBalancePlusBtn) {
             crashBalancePlusBtn.addEventListener('click', () => {
-                const botUsername = 'Znakomstva13_bot'; // Username без символа @
+                const botUsername = 'Znakomstva13_bot';
                 const userId = getUserId();
                 const botUrl = `https://t.me/${botUsername}?start=topup_${userId}`;
                 
                 if (tg) {
-                    tg.openLink(botUrl);
+                    if (tg.openTelegramLink) {
+                        tg.openTelegramLink(botUrl);
+                    } else {
+                        tg.openLink(botUrl);
+                    }
                     tg.HapticFeedback.impactOccurred('medium');
                 } else {
                     window.open(botUrl, '_blank');
