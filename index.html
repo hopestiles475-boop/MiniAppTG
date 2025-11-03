@@ -1171,6 +1171,10 @@
         }
 
         .top-up-btn {
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            position: relative !important;
+            z-index: 10 !important;
             flex: 1;
             padding: 16px 20px;
             border-radius: 16px;
@@ -3641,43 +3645,89 @@
             try {
                 console.log('🔧 Инициализация обработчиков профиля...');
                 
-                // Кнопка "Пополнить"
+                // Кнопка "Пополнить" - устанавливаем обработчик напрямую
                 const topUpBtn = document.getElementById('topUpBtn');
                 if (topUpBtn) {
+                    // Удаляем все старые обработчики через клон
                     const newBtn = topUpBtn.cloneNode(true);
                     topUpBtn.parentNode.replaceChild(newBtn, topUpBtn);
+                    
+                    // Устанавливаем обработчик
+                    newBtn.onclick = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        console.log('✅ Клик по кнопке "Пополнить" в профиле');
+                        
+                        try {
+                            if (typeof openTopUpModal === 'function') {
+                                openTopUpModal();
+                            } else {
+                                console.error('❌ Функция openTopUpModal не найдена');
+                                alert('Ошибка: функция openTopUpModal не найдена');
+                            }
+                        } catch (err) {
+                            console.error('❌ Ошибка при вызове openTopUpModal:', err);
+                            alert('Ошибка: ' + err.message);
+                        }
+                        return false;
+                    };
+                    
+                    // Также добавляем через addEventListener для гарантии
                     newBtn.addEventListener('click', function(e) {
                         e.preventDefault();
                         e.stopPropagation();
                         e.stopImmediatePropagation();
-                        console.log('Клик по кнопке "Пополнить" в профиле');
+                        console.log('✅ Клик по кнопке "Пополнить" (addEventListener)');
                         if (typeof openTopUpModal === 'function') {
                             openTopUpModal();
-                        } else {
-                            console.error('Функция openTopUpModal не найдена');
                         }
-                    });
+                    }, { capture: true });
+                    
                     console.log('✅ Кнопка "Пополнить" в профиле инициализирована');
                 } else {
                     console.warn('⚠️ Кнопка "Пополнить" не найдена');
                 }
                 
-                // Кнопка "Вывести"
+                // Кнопка "Вывести" - устанавливаем обработчик напрямую
                 const withdrawBtn = document.getElementById('withdrawBtn');
                 if (withdrawBtn) {
+                    // Удаляем все старые обработчики через клон
                     const newBtn = withdrawBtn.cloneNode(true);
                     withdrawBtn.parentNode.replaceChild(newBtn, withdrawBtn);
+                    
+                    // Устанавливаем обработчик
+                    newBtn.onclick = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        console.log('✅ Клик по кнопке "Вывести" в профиле');
+                        
+                        try {
+                            if (typeof openWithdrawModal === 'function') {
+                                openWithdrawModal();
+                            } else {
+                                console.error('❌ Функция openWithdrawModal не найдена');
+                                alert('Ошибка: функция openWithdrawModal не найдена');
+                            }
+                        } catch (err) {
+                            console.error('❌ Ошибка при вызове openWithdrawModal:', err);
+                            alert('Ошибка: ' + err.message);
+                        }
+                        return false;
+                    };
+                    
+                    // Также добавляем через addEventListener для гарантии
                     newBtn.addEventListener('click', function(e) {
                         e.preventDefault();
                         e.stopPropagation();
                         e.stopImmediatePropagation();
-                        console.log('Клик по кнопке "Вывести" в профиле');
+                        console.log('✅ Клик по кнопке "Вывести" (addEventListener)');
                         if (typeof openWithdrawModal === 'function') {
                             openWithdrawModal();
-                        } else {
-                            console.error('Функция openWithdrawModal не найдена');
                         }
-                    });
+                    }, { capture: true });
+                    
                     console.log('✅ Кнопка "Вывести" в профиле инициализирована');
                 } else {
                     console.warn('⚠️ Кнопка "Вывести" не найдена');
@@ -4880,30 +4930,31 @@
         // Инициализация обработчиков пополнения после загрузки DOM
         function initTopUpHandlers() {
             // Обработчик кнопки "Пополнить" - открывает модальное окно выбора способа
+            // НЕ трогаем кнопку в профиле, она обрабатывается в initProfileHandlers
             const topUpBtn = document.getElementById('topUpBtn');
-            if (topUpBtn) {
+            if (topUpBtn && !topUpBtn.hasAttribute('data-handler-set')) {
                 console.log('Найдена кнопка topUpBtn, устанавливаю обработчик модального окна');
                 
-                // Удаляем старый обработчик если есть и добавляем новый
-                const newBtn = topUpBtn.cloneNode(true);
-                topUpBtn.parentNode.replaceChild(newBtn, topUpBtn);
+                // Помечаем, что обработчик уже установлен
+                topUpBtn.setAttribute('data-handler-set', 'true');
                 
-                // Явно устанавливаем обработчик с высоким приоритетом
-                newBtn.onclick = null; // Удаляем все inline обработчики
-                newBtn.removeEventListener('click', () => {}); // Пытаемся удалить если есть
-                
-                newBtn.addEventListener('click', function(e) {
+                // Добавляем обработчик только если его еще нет
+                topUpBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
                     e.stopImmediatePropagation();
-                    console.log('Клик по кнопке Пополнить - открываем модальное окно');
-                    openTopUpModal();
+                    console.log('✅ Клик по кнопке Пополнить - открываем модальное окно');
+                    if (typeof openTopUpModal === 'function') {
+                        openTopUpModal();
+                    } else {
+                        console.error('Функция openTopUpModal не найдена');
+                    }
                     return false;
-                }, true); // Используем capture phase для приоритета
+                }, { capture: true, once: false });
                 
                 console.log('Обработчик модального окна установлен');
-            } else {
-                console.error('Кнопка topUpBtn не найдена');
+            } else if (!topUpBtn) {
+                console.warn('Кнопка topUpBtn не найдена (это нормально, если она на странице профиля)');
             }
 
             // Пополнение через Telegram Wallet
