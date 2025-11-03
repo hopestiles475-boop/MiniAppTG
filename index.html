@@ -3321,6 +3321,16 @@
                 // Продолжаем обычную инициализацию
                 if (typeof initApp === 'function') {
                     initApp();
+                } else {
+                    console.warn('⚠️ Функция initApp не найдена');
+                }
+                
+                // Также вызываем initEventHandlers если она доступна
+                if (typeof initEventHandlers === 'function') {
+                    setTimeout(() => {
+                        console.log('🔄 Вызов initEventHandlers из safeInit...');
+                        initEventHandlers();
+                    }, 150);
                 }
             } catch (error) {
                 console.error('❌ Критическая ошибка инициализации:', error);
@@ -3329,64 +3339,151 @@
         }
         
         // Инициализация при загрузке DOM
+        function initializeApp() {
+            try {
+                console.log('🚀 Начинаю полную инициализацию приложения...');
+                
+                // Сначала проверяем критические элементы
+                safeInit();
+                
+                // Затем инициализируем обработчики событий
+                setTimeout(() => {
+                    if (typeof initEventHandlers === 'function') {
+                        initEventHandlers();
+                    } else {
+                        console.error('❌ Функция initEventHandlers не найдена!');
+                    }
+                }, 200);
+            } catch (error) {
+                console.error('❌ Критическая ошибка инициализации:', error);
+                alert('Ошибка загрузки: ' + error.message);
+            }
+        }
+        
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', safeInit);
+            document.addEventListener('DOMContentLoaded', initializeApp);
         } else {
             // DOM уже загружен
-            setTimeout(safeInit, 100);
+            setTimeout(initializeApp, 100);
         }
         
         // Инициализация обработчиков после загрузки DOM
         function initEventHandlers() {
             try {
                 console.log('🔧 Инициализация обработчиков событий...');
+                console.log('🔍 Проверка доступности функций:');
+                console.log('- initTabs:', typeof initTabs);
+                console.log('- initCaseCards:', typeof initCaseCards);
+                console.log('- initOpenButton:', typeof initOpenButton);
+                console.log('- initSubscribeButton:', typeof initSubscribeButton);
+                console.log('- initInventoryHandlers:', typeof initInventoryHandlers);
+                console.log('- initProfileHandlers:', typeof initProfileHandlers);
+                console.log('- initTopUpHandlers:', typeof initTopUpHandlers);
+                console.log('- initWithdrawHandlers:', typeof initWithdrawHandlers);
                 
                 // Навигация между вкладками
                 const navItems = document.querySelectorAll('.nav-item');
+                console.log(`🔍 Найдено элементов навигации: ${navItems.length}`);
                 if (navItems.length > 0) {
-                    console.log(`✅ Найдено ${navItems.length} элементов навигации`);
-                    navItems.forEach(item => {
-                        // Удаляем старые обработчики
-                        const newItem = item.cloneNode(true);
-                        item.parentNode.replaceChild(newItem, item);
-                        
-                        // Добавляем новый обработчик
-                        newItem.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('Клик по навигации:', newItem.dataset.page);
-                            handleNavClick(newItem.dataset.page, newItem);
-                        });
+                    navItems.forEach((item, index) => {
+                        try {
+                            // Удаляем старые обработчики
+                            const newItem = item.cloneNode(true);
+                            item.parentNode.replaceChild(newItem, item);
+                            
+                            // Добавляем новый обработчик
+                            newItem.onclick = function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                e.stopImmediatePropagation();
+                                console.log('✅ Клик по навигации:', newItem.dataset.page);
+                                if (typeof handleNavClick === 'function') {
+                                    handleNavClick(newItem.dataset.page, newItem);
+                                } else {
+                                    console.error('❌ Функция handleNavClick не найдена');
+                                }
+                                return false;
+                            };
+                            
+                            newItem.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                e.stopImmediatePropagation();
+                                if (typeof handleNavClick === 'function') {
+                                    handleNavClick(newItem.dataset.page, newItem);
+                                }
+                            }, { capture: true });
+                            
+                            console.log(`✅ Навигация ${index + 1} инициализирована`);
+                        } catch (err) {
+                            console.error(`❌ Ошибка инициализации навигации ${index + 1}:`, err);
+                        }
                     });
+                    console.log('✅ Навигация инициализирована');
                 } else {
                     console.warn('⚠️ Элементы навигации не найдены');
                 }
                 
                 // Обработчики табов
-                initTabs();
+                if (typeof initTabs === 'function') {
+                    initTabs();
+                } else {
+                    console.error('❌ Функция initTabs не найдена');
+                }
                 
                 // Обработчики карточек кейсов
-                initCaseCards();
+                if (typeof initCaseCards === 'function') {
+                    initCaseCards();
+                } else {
+                    console.error('❌ Функция initCaseCards не найдена');
+                }
                 
                 // Обработчик кнопки "Открыть"
-                initOpenButton();
+                if (typeof initOpenButton === 'function') {
+                    initOpenButton();
+                } else {
+                    console.error('❌ Функция initOpenButton не найдена');
+                }
                 
                 // Обработчик кнопки подписки
-                initSubscribeButton();
+                if (typeof initSubscribeButton === 'function') {
+                    initSubscribeButton();
+                } else {
+                    console.error('❌ Функция initSubscribeButton не найдена');
+                }
                 
                 // Обработчики инвентаря
-                initInventoryHandlers();
+                if (typeof initInventoryHandlers === 'function') {
+                    initInventoryHandlers();
+                } else {
+                    console.error('❌ Функция initInventoryHandlers не найдена');
+                }
                 
                 // Обработчики кнопок профиля
-                initProfileHandlers();
+                if (typeof initProfileHandlers === 'function') {
+                    initProfileHandlers();
+                } else {
+                    console.error('❌ Функция initProfileHandlers не найдена');
+                }
                 
                 // Инициализация обработчиков пополнения и вывода
-                initTopUpHandlers();
-                initWithdrawHandlers();
+                if (typeof initTopUpHandlers === 'function') {
+                    initTopUpHandlers();
+                } else {
+                    console.error('❌ Функция initTopUpHandlers не найдена');
+                }
+                
+                if (typeof initWithdrawHandlers === 'function') {
+                    initWithdrawHandlers();
+                } else {
+                    console.error('❌ Функция initWithdrawHandlers не найдена');
+                }
                 
                 console.log('✅ Обработчики событий инициализированы');
             } catch (error) {
-                console.error('❌ Ошибка инициализации обработчиков:', error);
+                console.error('❌ Критическая ошибка инициализации обработчиков:', error);
+                console.error('Stack:', error.stack);
+                alert('Критическая ошибка инициализации: ' + error.message);
             }
         }
         
@@ -3818,14 +3915,22 @@
             detailPage.classList.remove('active');
             profilePage.style.display = 'none';
             
-            // Инициализируем обработчики событий
-            initEventHandlers();
-            
-            // Дополнительная инициализация обработчиков пополнения и вывода
+            // Инициализируем обработчики событий (уже вызывается в initializeApp)
+            // Но делаем повторный вызов на случай, если что-то пропустилось
             setTimeout(() => {
-                initTopUpHandlers();
-                initWithdrawHandlers();
-            }, 200);
+                console.log('🔄 Повторная инициализация обработчиков...');
+                if (typeof initEventHandlers === 'function') {
+                    initEventHandlers();
+                }
+                
+                // Дополнительная инициализация обработчиков пополнения и вывода
+                if (typeof initTopUpHandlers === 'function') {
+                    initTopUpHandlers();
+                }
+                if (typeof initWithdrawHandlers === 'function') {
+                    initWithdrawHandlers();
+                }
+            }, 300);
             
             // Загружаем подарки с сервера или из localStorage
             fetchGlobalPrizes();
