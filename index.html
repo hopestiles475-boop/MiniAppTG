@@ -2905,6 +2905,10 @@
     <script>
         console.log('✅ JAVASCRIPT РАБОТАЕТ!');
         
+        // ПРЕДВАРИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ window.cases - чтобы была доступна сразу
+        // Полная инициализация будет после определения case1Config
+        window.cases = {};
+        
         // ГЛОБАЛЬНЫЕ ОБРАБОТЧИКИ - ОПРЕДЕЛЯЕМ СРАЗУ В НАЧАЛЕ СКРИПТА
         // Эти функции будут доступны для inline onclick
         window.handleCaseClick = function(caseNum) {
@@ -2918,11 +2922,23 @@
                     return;
                 }
                 
-                // Проверяем что cases определена
-                if (typeof window.cases === 'undefined') {
-                    console.error('window.cases не определена');
-                    alert('Ошибка: Данные кейсов не загружены. Подождите секунду и попробуйте снова.');
-                    return;
+                // Проверяем что cases определена и не пустая
+                if (typeof window.cases === 'undefined' || !window.cases || Object.keys(window.cases).length === 0) {
+                    console.error('window.cases не определена или пустая:', window.cases);
+                    // Пытаемся инициализировать заново
+                    if (typeof case1Config !== 'undefined') {
+                        window.cases = {
+                            1: {
+                                icon: case1Config.icon,
+                                price: case1Config.price,
+                                prizes: case1Config.items
+                            }
+                        };
+                        console.log('✅ cases повторно инициализирована');
+                    } else {
+                        alert('Ошибка: Данные кейсов не загружены. Перезагрузите страницу.');
+                        return;
+                    }
                 }
                 
                 console.log('window.cases:', window.cases);
@@ -4053,7 +4069,8 @@
 
         // Преобразуем конфигурацию в формат для работы приложения
         // Делаем cases глобальной переменной и инициализируем сразу
-        // Инициализируем после определения case1Config
+        // Инициализируем сразу после определения case1Config (синхронно)
+        // Если window.cases уже инициализирована как пустой объект, перезаписываем
         if (typeof case1Config !== 'undefined') {
             window.cases = {
                 1: {
@@ -4065,9 +4082,7 @@
             var cases = window.cases; // Для обратной совместимости
             console.log('✅ cases инициализирована:', window.cases);
         } else {
-            console.error('❌ case1Config не определена!');
-            window.cases = {};
-            var cases = {};
+            console.error('❌ case1Config не определена при инициализации cases!');
         }
         
 
