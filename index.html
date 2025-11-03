@@ -4034,13 +4034,15 @@
         };
 
         // Преобразуем конфигурацию в формат для работы приложения
-        const cases = {
+        // Делаем cases глобальной переменной и инициализируем сразу
+        window.cases = {
             1: {
                 icon: case1Config.icon,
                 price: case1Config.price,
                 prizes: case1Config.items
             }
         };
+        var cases = window.cases; // Для обратной совместимости
         
 
         // Инициализируем приложение безопасно
@@ -4556,7 +4558,15 @@
             window.showCaseDetail = showCaseDetail; // Делаем глобальной
             if (isOpening) return;
             
-            currentCase = cases[caseNum];
+            // Проверяем что cases определена
+            var casesObj = window.cases || cases;
+            if (!casesObj || !casesObj[caseNum]) {
+                console.error('cases не определена или кейс не найден, caseNum:', caseNum);
+                alert('Ошибка: Кейс не найден. Перезагрузите страницу.');
+                return;
+            }
+            
+            currentCase = casesObj[caseNum];
             if (!currentCase) return;
 
             isOpening = false;
