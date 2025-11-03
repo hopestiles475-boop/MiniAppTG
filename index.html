@@ -46,146 +46,6 @@
         })();
     </script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- ЗАГРУЗКА TONCONNECT SDK -->
-    <script>
-        // Улучшенная загрузка TonConnect с множественными CDN и fallback
-        (function() {
-            // CDN для TonConnect SDK (для GitHub Pages)
-            const tonConnectUrls = [
-                'https://cdn.jsdelivr.net/npm/@tonconnect/sdk@2/dist/tonconnect.min.js',
-                'https://unpkg.com/@tonconnect/sdk@2/dist/tonconnect.min.js',
-                'https://unpkg.com/@tonconnect/sdk@latest/dist/tonconnect.min.js',
-                'https://esm.sh/@tonconnect/sdk@2/dist/tonconnect.min.js'
-            ];
-            
-            // Для локального сервера пробуем прокси
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                tonConnectUrls.unshift(window.location.origin + '/tonconnect.min.js');
-            }
-            
-            let urlIndex = 0;
-            window.tonConnectLibLoaded = false;
-            
-            // Метод 1: Загрузка через script тег
-            function tryLoadViaScript() {
-                if (urlIndex >= tonConnectUrls.length) {
-                    console.warn('⚠️ Все CDN недоступны через script тег, пробуем fetch...');
-                    tryLoadViaFetch();
-                    return;
-                }
-                
-                const script = document.createElement('script');
-                script.src = tonConnectUrls[urlIndex];
-                script.async = false;
-                script.crossOrigin = 'anonymous';
-                
-                script.onload = function() {
-                    console.log('✅ TONCONNECT SDK ЗАГРУЖЕН через script с:', tonConnectUrls[urlIndex]);
-                    window.tonConnectLibLoaded = true;
-                    checkTonConnectAvailable();
-                };
-                
-                script.onerror = function(e) {
-                    console.warn('⚠️ Ошибка загрузки через script:', tonConnectUrls[urlIndex]);
-                    urlIndex++;
-                    setTimeout(tryLoadViaScript, 300);
-                };
-                
-                console.log('📥 Попытка загрузки через script:', tonConnectUrls[urlIndex]);
-                (document.head || document.getElementsByTagName('head')[0]).appendChild(script);
-            }
-            
-            // Метод 2: Загрузка через fetch + eval (fallback)
-            async function tryLoadViaFetch() {
-                urlIndex = 0; // Сбрасываем индекс
-                
-                for (let i = 0; i < tonConnectUrls.length; i++) {
-                    try {
-                        console.log('📥 Попытка загрузки через fetch:', tonConnectUrls[i]);
-                        const response = await fetch(tonConnectUrls[i], {
-                            mode: 'cors',
-                            cache: 'default'
-                        });
-                        
-                        if (!response.ok) {
-                            throw new Error(`HTTP ${response.status}`);
-                        }
-                        
-                        const code = await response.text();
-                        console.log('✅ Код получен через fetch, выполнение...');
-                        
-                        // Выполняем код
-                        eval(code);
-                        
-                        window.tonConnectLibLoaded = true;
-                        checkTonConnectAvailable();
-                        return;
-                    } catch (error) {
-                        console.warn('⚠️ Ошибка fetch с:', tonConnectUrls[i], error.message);
-                        if (i === tonConnectUrls.length - 1) {
-                            console.error('❌ Все методы загрузки TonConnect провалились');
-                            window.tonConnectLibLoaded = false;
-                        }
-                    }
-                }
-            }
-            
-            // Проверка доступности TonConnect класса
-            function checkTonConnectAvailable() {
-                setTimeout(() => {
-                    if (typeof TonConnect !== 'undefined') {
-                        console.log('✅ TonConnect класс доступен:', typeof TonConnect);
-                    } else {
-                        console.warn('⚠️ TonConnect загружен, но класс не доступен');
-                    }
-                }, 100);
-            }
-            
-            // Запускаем загрузку
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', tryLoadViaScript);
-            } else {
-                tryLoadViaScript();
-            }
-        })();
-    </script>
-    <script>
-        // ПРОСТАЯ ПРОВЕРКА И АЛЬТЕРНАТИВНАЯ ЗАГРУЗКА
-        console.log('🔍 Проверка TonConnect SDK...');
-        console.log('typeof TonConnect:', typeof TonConnect);
-        console.log('window.tonConnectLibLoaded:', window.tonConnectLibLoaded);
-        
-        // Если прямая загрузка не сработала, пытаемся динамически
-        if (typeof TonConnect === 'undefined') {
-            console.log('⚠️ TonConnect не найден, пытаемся динамическую загрузку...');
-            
-            function loadTonConnectDynamically() {
-                return new Promise((resolve, reject) => {
-                    const script = document.createElement('script');
-                    script.src = 'https://unpkg.com/@tonconnect/sdk@2/dist/tonconnect.min.js';
-                    script.async = false;
-                    
-                    script.onload = () => {
-                        console.log('✅ TonConnect загружен динамически');
-                        window.tonConnectLibLoaded = true;
-                        resolve();
-                    };
-                    
-                    script.onerror = () => {
-                        console.error('❌ Динамическая загрузка не удалась');
-                        reject();
-                    };
-                    
-                    (document.head || document.body).appendChild(script);
-                });
-            }
-            
-            // Пробуем загрузить
-            loadTonConnectDynamically().catch(() => {
-                console.error('❌ Все методы загрузки TonConnect провалились');
-            });
-        }
-    </script>
     <style>
         * {
             margin: 0;
@@ -1449,6 +1309,66 @@
         .tonkeeper-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+        }
+        
+        .tonkeeper-payment-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .tonkeeper-payment-info p {
+            margin: 8px 0;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .payment-instruction {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+        
+        .payment-address-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .payment-address-info p {
+            margin: 8px 0;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+        
+        .payment-address-code {
+            display: block;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            word-break: break-all;
+            color: #667eea;
+            margin: 10px 0;
+        }
+        
+        .copy-address-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 2px solid rgba(102, 126, 234, 0.5);
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .copy-address-btn:active {
+            transform: scale(0.98);
+            background: rgba(102, 126, 234, 0.3);
         }
 
         .payment-status {
@@ -4444,10 +4364,19 @@
                     
                     <!-- Контент для Tonkeeper -->
                     <div id="tonkeeperSection" class="payment-section">
-                        <button id="connectTonkeeperBtn" class="tonkeeper-btn">
-                            <span>🔗</span>
-                            <span>Подключить Tonkeeper</span>
+                        <div class="tonkeeper-payment-info">
+                            <p>Пополнение через Tonkeeper</p>
+                            <p class="payment-instruction">Нажмите кнопку для открытия Tonkeeper с готовым переводом</p>
+                        </div>
+                        <button id="sendTonkeeperPaymentBtn" class="tonkeeper-btn">
+                            <span>💰</span>
+                            <span>Открыть Tonkeeper</span>
                         </button>
+                        <div class="payment-address-info">
+                            <p><strong>Адрес получателя:</strong></p>
+                            <code id="paymentAddress" class="payment-address-code">UQCC14SVH6ANPso6cwi6vABF_woZP1bo2u1q4KQN3eyADL0t</code>
+                            <button id="copyAddressBtn" class="copy-address-btn">📋 Копировать</button>
+                        </div>
                     </div>
 
                     <!-- Контент для Telegram Bot -->
@@ -4482,216 +4411,12 @@
         document.body.appendChild(topUpModal);
         
         let selectedPaymentMethod = 'tonkeeper';
-
-        // Инициализация TonConnect
-        let tonconnect = null;
-        let wallet = null;
         
-        async function initTonConnect() {
-            try {
-                // Проверяем загрузку библиотеки
-                if (typeof TonConnect === 'undefined') {
-                    console.warn('⚠️ TonConnect класс не найден');
-                    console.log('Проверка глобальных объектов:', {
-                        TonConnect: typeof TonConnect,
-                        windowTonConnect: typeof window.TonConnect
-                    });
-                    return false;
-                }
-                
-                console.log('✅ TonConnect класс найден, инициализация...');
-                
-                // URL манифеста для GitHub Pages
-                const manifestUrl = 'https://hopestiles475-boop.github.io/MiniAppTG/tonconnect-manifest.json';
-                console.log('📍 Используемый URL манифеста:', manifestUrl);
-                
-                // Проверяем доступность манифеста
-                try {
-                    const manifestResponse = await fetch(manifestUrl);
-                    if (!manifestResponse.ok) {
-                        throw new Error(`Манифест недоступен: HTTP ${manifestResponse.status}`);
-                    }
-                    const manifest = await manifestResponse.json();
-                    console.log('✅ Манифест загружен:', manifest);
-                } catch (error) {
-                    console.error('❌ Ошибка загрузки манифеста:', error);
-                    console.log('URL манифеста:', manifestUrl);
-                    // Продолжаем инициализацию даже при ошибке манифеста
-                }
-                
-                // Инициализируем TonConnect
-                tonconnect = new TonConnect({
-                    manifestUrl: manifestUrl
-                });
-                console.log('✅ TonConnect инициализирован');
-                
-                // Проверяем, подключен ли кошелек
-                try {
-                    const walletInfo = await tonconnect.restoreConnection();
-                    if (walletInfo) {
-                        wallet = walletInfo;
-                        updateTonkeeperButton();
-                        console.log('✅ Кошелек восстановлен:', wallet.account.address);
-                    }
-                } catch (err) {
-                    console.log('Кошелек не подключен (это нормально):', err.message);
-                }
-                
-                return true;
-            } catch (error) {
-                console.error('❌ Ошибка инициализации TonConnect:', error);
-                console.error('Детали ошибки:', {
-                    message: error.message,
-                    stack: error.stack,
-                    TonConnectAvailable: typeof TonConnect !== 'undefined'
-                });
-                return false;
-            }
-        }
+        // Адрес получателя (ЗАМЕНИТЕ НА ВАШ РЕАЛЬНЫЙ АДРЕС КОШЕЛЬКА)
+        const recipientAddress = 'UQCC14SVH6ANPso6cwi6vABF_woZP1bo2u1q4KQN3eyADL0t';
         
-        // Глобальная проверка готовности TonConnect - запускаем сразу при загрузке скрипта
-        (function() {
-            window.tonConnectReady = false;
-            window.tonConnectCheckCount = 0;
-            
-            console.log('🔍 Начало проверки загрузки TonConnect SDK...');
-            console.log('Проверка скрипта:', document.querySelector('script[src*="tonconnect"]') ? '✅ Найден в DOM' : '❌ Не найден в DOM');
-            
-            // Функция проверки
-            function checkTonConnect() {
-                window.tonConnectCheckCount++;
-                
-                if (typeof TonConnect !== 'undefined') {
-                    window.tonConnectReady = true;
-                    clearInterval(checkTonConnectInterval);
-                    console.log(`✅ TonConnect SDK обнаружен! (попытка ${window.tonConnectCheckCount})`);
-                    console.log('TonConnect type:', typeof TonConnect);
-                    initTonConnect();
-                } else if (window.tonConnectCheckCount >= 50) {
-                    clearInterval(checkTonConnectInterval);
-                    console.error('❌ TonConnect SDK не загрузился за 15 секунд');
-                    console.log('Диагностика:', {
-                        scriptsInDOM: document.querySelectorAll('script[src*="tonconnect"]').length,
-                        networkStatus: navigator.onLine ? 'online' : 'offline',
-                        TonConnectType: typeof TonConnect,
-                        windowTonConnect: typeof window.TonConnect,
-                        libLoaded: window.tonConnectLibLoaded
-                    });
-                } else if (window.tonConnectCheckCount % 10 === 0) {
-                    console.log(`⏳ Ожидание TonConnect SDK... (${window.tonConnectCheckCount}/50)`);
-                }
-            }
-            
-            // Запускаем проверку сразу и затем каждые 300мс
-            checkTonConnect();
-            const checkTonConnectInterval = setInterval(checkTonConnect, 300);
-        })();
-
-        // Подключение к Tonkeeper
-        async function connectTonkeeper() {
-            // Проверяем загрузку библиотеки
-            if (typeof TonConnect === 'undefined') {
-                console.error('TonConnect не загружен');
-                if (tg) {
-                    tg.showAlert('TonConnect не загружен. Откройте консоль (F12) для диагностики.');
-                } else {
-                    alert('TonConnect не загружен. Откройте консоль (F12) для диагностики.');
-                }
-                return;
-            }
-            
-            // Если не инициализирован, инициализируем
-            if (!tonconnect) {
-                console.log('Попытка инициализации TonConnect...');
-                try {
-                    initTonConnect();
-                    // Ждем немного для инициализации
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                } catch (error) {
-                    console.error('Ошибка инициализации:', error);
-                }
-            }
-            
-            if (!tonconnect) {
-                console.error('TonConnect не инициализирован после попытки');
-                if (tg) {
-                    tg.showAlert('Ошибка инициализации TonConnect. Проверьте манифест.');
-                } else {
-                    alert('Ошибка инициализации TonConnect. Проверьте манифест.');
-                }
-                return;
-            }
-
-            try {
-                const connectButton = document.getElementById('connectTonkeeperBtn');
-                connectButton.disabled = true;
-                connectButton.textContent = 'Подключение...';
-
-                const wallets = await tonconnect.getWallets();
-                if (wallets.length === 0) {
-                    throw new Error('Tonkeeper не найден. Установите Tonkeeper для продолжения.');
-                }
-
-                const walletConnectionSource = {
-                    universalLink: wallets[0].universalLink,
-                    bridgeUrl: wallets[0].bridgeUrl
-                };
-
-                wallet = await tonconnect.connect(walletConnectionSource);
-                updateTonkeeperButton();
-                
-                if (tg) {
-                    tg.showAlert('Кошелек подключен!');
-                    tg.HapticFeedback.notificationOccurred('success');
-                }
-            } catch (error) {
-                console.error('Ошибка подключения к Tonkeeper:', error);
-                if (tg) {
-                    tg.showAlert('Ошибка подключения: ' + error.message);
-                    tg.HapticFeedback.notificationOccurred('error');
-                } else {
-                    alert('Ошибка подключения: ' + error.message);
-                }
-                
-                const connectButton = document.getElementById('connectTonkeeperBtn');
-                if (connectButton) {
-                    connectButton.disabled = false;
-                    connectButton.innerHTML = '<span>🔗</span><span>Подключить Tonkeeper</span>';
-                }
-            }
-        }
-
-        // Обновление кнопки Tonkeeper
-        function updateTonkeeperButton() {
-            const connectButton = document.getElementById('connectTonkeeperBtn');
-            if (!connectButton) return;
-
-            if (wallet) {
-                connectButton.innerHTML = `
-                    <span>✅</span>
-                    <span>Подключен: ${wallet.account.address.slice(0, 6)}...${wallet.account.address.slice(-4)}</span>
-                `;
-                connectButton.onclick = sendPayment;
-            } else {
-                connectButton.innerHTML = `
-                    <span>🔗</span>
-                    <span>Подключить Tonkeeper</span>
-                `;
-                connectButton.onclick = connectTonkeeper;
-            }
-        }
-
-        // Отправка платежа
-        async function sendPayment() {
-            if (!wallet || !tonconnect) {
-                if (tg) {
-                    tg.showAlert('Сначала подключите кошелек');
-                } else {
-                    alert('Сначала подключите кошелек');
-                }
-                return;
-            }
-
+        // Открытие Tonkeeper через deep link (БЕЗ SDK)
+        function openTonkeeperPayment() {
             const amountInput = document.getElementById('topUpAmount');
             const amount = parseFloat(amountInput.value) || 0.1;
             
@@ -4703,110 +4428,147 @@
                 }
                 return;
             }
-
-            // Адрес получателя (ЗАМЕНИТЕ НА ВАШ РЕАЛЬНЫЙ АДРЕС КОШЕЛЬКА)
-            // Получите адрес вашего кошелька TON и вставьте его здесь
-            const recipientAddress = 'UQCC14SVH6ANPso6cwi6vABF_woZP1bo2u1q4KQN3eyADL0t'; // TODO: Замените на реальный адрес
             
-            // Конвертируем TON в nanotons (1 TON = 1,000,000,000 nanotons)
-            const amountInNano = (amount * 1000000000).toString();
-
-            try {
-                const statusDiv = document.getElementById('paymentStatus');
-                statusDiv.style.display = 'block';
-                statusDiv.innerHTML = '<p>Отправка транзакции...</p>';
-                statusDiv.style.color = '#667eea';
-
-                const transaction = {
-                    validUntil: Math.floor(Date.now() / 1000) + 360,
-                    messages: [
-                        {
-                            address: recipientAddress,
-                            amount: amountInNano
-                        }
-                    ]
-                };
-
-                const result = await tonconnect.sendTransaction(transaction);
-                
-                statusDiv.innerHTML = '<p>✅ Транзакция отправлена! Ожидание подтверждения...</p>';
-                statusDiv.style.color = '#00ff00';
-
-                // Проверяем транзакцию на сервере
-                checkPaymentStatus(result.boc, amount);
-
-            } catch (error) {
-                console.error('Ошибка отправки транзакции:', error);
-                const statusDiv = document.getElementById('paymentStatus');
-                statusDiv.style.display = 'block';
-                statusDiv.innerHTML = '<p>❌ Ошибка: ' + error.message + '</p>';
-                statusDiv.style.color = '#ff0000';
-                
-                if (tg) {
-                    tg.showAlert('Ошибка отправки транзакции: ' + error.message);
-                    tg.HapticFeedback.notificationOccurred('error');
+            // Конвертируем адрес в правильный формат (user-friendly)
+            const userFriendlyAddress = recipientAddress;
+            
+            // Создаём deep link для Tonkeeper
+            // Формат: ton://transfer/<address>?amount=<nano>
+            const amountInNano = Math.floor(amount * 1000000000);
+            
+            // Пробуем разные форматы deep links
+            const tonkeeperLinks = [
+                `ton://transfer/${userFriendlyAddress}?amount=${amountInNano}`,
+                `https://app.tonkeeper.com/transfer/${userFriendlyAddress}?amount=${amountInNano}`,
+                `tonkeeper://transfer/${userFriendlyAddress}?amount=${amountInNano}`
+            ];
+            
+            // Пробуем открыть Tonkeeper
+            let opened = false;
+            for (const link of tonkeeperLinks) {
+                try {
+                    window.location.href = link;
+                    opened = true;
+                    break;
+                } catch (e) {
+                    console.log('Не удалось открыть:', link);
                 }
             }
+            
+            if (!opened) {
+                // Если deep link не сработал, показываем инструкцию
+                const statusDiv = document.getElementById('paymentStatus');
+                statusDiv.style.display = 'block';
+                statusDiv.innerHTML = `
+                    <p><strong>Инструкция:</strong></p>
+                    <p>1. Откройте Tonkeeper</p>
+                    <p>2. Отправьте перевод на адрес:</p>
+                    <p style="word-break: break-all; font-size: 12px;">${userFriendlyAddress}</p>
+                    <p>3. Сумма: <strong>${amount.toFixed(2)} TON</strong></p>
+                    <p>4. После отправки нажмите "Проверить платеж"</p>
+                `;
+                statusDiv.style.color = '#ffffff';
+            } else {
+                // Deep link открыт, запускаем проверку платежа
+                const statusDiv = document.getElementById('paymentStatus');
+                statusDiv.style.display = 'block';
+                statusDiv.innerHTML = '<p>⏳ Откройте Tonkeeper и подтвердите перевод</p>';
+                statusDiv.style.color = '#667eea';
+                
+                // Показываем кнопку проверки платежа
+                const tonkeeperSection = document.getElementById('tonkeeperSection');
+                if (tonkeeperSection) {
+                    const checkBtn = tonkeeperSection.querySelector('.check-payment-btn');
+                    if (checkBtn) {
+                        checkBtn.style.display = 'block';
+                    }
+                }
+                
+                // Автоматически начинаем проверку через 10 секунд
+                setTimeout(() => {
+                    checkTonkeeperPayment(amount, userFriendlyAddress);
+                }, 10000);
+            }
+            
+            if (tg) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
         }
-
-        // Проверка статуса платежа на сервере
-        async function checkPaymentStatus(boc, amount) {
+        
+        // Проверка платежа через Tonkeeper (проверка транзакции на блокчейне)
+        async function checkTonkeeperPayment(amount, address) {
+            const statusDiv = document.getElementById('paymentStatus');
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = '<p>⏳ Проверка платежа...</p>';
+            statusDiv.style.color = '#667eea';
+            
             try {
                 const userId = getUserId();
                 if (!userId) {
                     throw new Error('Пользователь не определен');
                 }
-
-                const response = await fetch(`${API_BASE_URL}/payments/verify`, {
+                
+                // Проверяем на сервере
+                const response = await fetch(`${API_BASE_URL}/payments/check-tonkeeper`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
                         userId: userId,
-                        boc: boc,
                         amount: amount,
+                        address: address,
                         timestamp: Date.now()
                     })
                 });
-
+                
                 if (!response.ok) {
                     throw new Error('Ошибка проверки платежа');
                 }
-
+                
                 const data = await response.json();
                 
                 if (data.verified) {
                     // Пополняем баланс
                     balance += amount;
                     document.getElementById('balance').textContent = balance.toFixed(2);
+                    if (document.getElementById('crashBalance')) {
+                        document.getElementById('crashBalance').textContent = balance.toFixed(2);
+                    }
                     saveInventory();
+                    saveUserData();
                     
-                    const statusDiv = document.getElementById('paymentStatus');
                     statusDiv.innerHTML = '<p>✅ Платеж подтвержден! Баланс пополнен.</p>';
                     statusDiv.style.color = '#00ff00';
-
+                    
                     if (tg) {
                         tg.showAlert(`Баланс пополнен на ${amount.toFixed(2)} TON!`);
                         tg.HapticFeedback.notificationOccurred('success');
                     }
-
+                    
                     setTimeout(() => {
                         topUpModal.style.display = 'none';
                         statusDiv.style.display = 'none';
                     }, 2000);
                 } else {
-                    // Повторная проверка через 5 секунд
-                    setTimeout(() => checkPaymentStatus(boc, amount), 5000);
+                    statusDiv.innerHTML = '<p>⏳ Платеж еще не найден. Нажмите "Проверить платеж"</p>';
+                    statusDiv.style.color = '#ffaa00';
+                    // Показываем кнопку проверки
+                    const tonkeeperSection = document.getElementById('tonkeeperSection');
+                    if (tonkeeperSection) {
+                        const checkBtn = tonkeeperSection.querySelector('.check-payment-btn');
+                        if (checkBtn) {
+                            checkBtn.style.display = 'block';
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('Ошибка проверки платежа:', error);
-                const statusDiv = document.getElementById('paymentStatus');
-                statusDiv.innerHTML = '<p>⏳ Проверка платежа...</p>';
-                statusDiv.style.color = '#667eea';
-                setTimeout(() => checkPaymentStatus(boc, amount), 5000);
+                statusDiv.innerHTML = '<p>⚠️ Ошибка проверки. Попробуйте еще раз.</p>';
+                statusDiv.style.color = '#ffaa00';
             }
         }
+
 
         // Переключение между методами оплаты
         document.getElementById('methodTonkeeper').addEventListener('click', () => {
@@ -4934,7 +4696,50 @@
             document.getElementById('telegramAmount').textContent = amount.toFixed(2);
         });
 
-        document.getElementById('connectTonkeeperBtn').addEventListener('click', connectTonkeeper);
+        // Обработчик для кнопки отправки платежа через Tonkeeper (deep link)
+        const sendTonkeeperPaymentBtn = document.getElementById('sendTonkeeperPaymentBtn');
+        if (sendTonkeeperPaymentBtn) {
+            sendTonkeeperPaymentBtn.addEventListener('click', openTonkeeperPayment);
+        }
+        
+        // Обработчик для кнопки копирования адреса
+        const copyAddressBtn = document.getElementById('copyAddressBtn');
+        if (copyAddressBtn) {
+            copyAddressBtn.addEventListener('click', () => {
+                const addressCode = document.getElementById('paymentAddress');
+                if (addressCode) {
+                    navigator.clipboard.writeText(recipientAddress).then(() => {
+                        if (tg) {
+                            tg.showAlert('Адрес скопирован в буфер обмена!');
+                            tg.HapticFeedback.impactOccurred('light');
+                        } else {
+                            alert('Адрес скопирован!');
+                        }
+                        copyAddressBtn.textContent = '✅ Скопировано';
+                        setTimeout(() => {
+                            copyAddressBtn.textContent = '📋 Копировать';
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Ошибка копирования:', err);
+                    });
+                }
+            });
+        }
+        
+        // Кнопка для ручной проверки платежа Tonkeeper
+        const checkTonkeeperPaymentBtn = document.createElement('button');
+        checkTonkeeperPaymentBtn.className = 'check-payment-btn';
+        checkTonkeeperPaymentBtn.innerHTML = '<span>✓</span><span>Проверить платеж</span>';
+        checkTonkeeperPaymentBtn.style.display = 'none';
+        checkTonkeeperPaymentBtn.addEventListener('click', () => {
+            const amountInput = document.getElementById('topUpAmount');
+            const amount = parseFloat(amountInput.value) || 0.1;
+            checkTonkeeperPayment(amount, recipientAddress);
+        });
+        const tonkeeperSection = document.getElementById('tonkeeperSection');
+        if (tonkeeperSection) {
+            tonkeeperSection.appendChild(checkTonkeeperPaymentBtn);
+        }
         document.getElementById('checkTelegramPaymentBtn').addEventListener('click', checkTelegramPayment);
         
         // Обработчик кнопки "Продать все"
