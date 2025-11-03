@@ -2905,9 +2905,59 @@
     <script>
         console.log('✅ JAVASCRIPT РАБОТАЕТ!');
         
-        // ПРЕДВАРИТЕЛЬНАЯ ИНИЦИАЛИЗАЦИЯ window.cases - чтобы была доступна сразу
-        // Полная инициализация будет после определения case1Config
-        window.cases = {};
+        // ===== ПЕРЕМЕННЫЕ И КОНФИГУРАЦИИ - ИНИЦИАЛИЗИРУЕМ СРАЗУ =====
+        // Делаем все переменные глобальными и доступными сразу
+        
+        // КОНФИГУРАЦИЯ КЕЙСА #1
+        const case1Config = {
+            icon: 'IconCase/2c0JGQXrElCDlaNGbYHwgipHo2-yq00qIxcU39IganVzrqDys2-no-bg-preview%20%28carve.photos%29.png',
+            price: 0.1,
+            items: [
+                { icon: 'ItemCase1/_Jne2Jf3nM6erEUU5TEnvU7PWFOiElGs2WJc0zQ250JHxRd6md_v1huDDCpZRSesDCZP53pWDPEnqfojbzsYqjbD.png', name: 'Лоли поп', value: 82.17 },
+                { icon: 'ItemCase1/4dOUEOHs9WSNk5pRBkEnCptGIs16lB5xe4E7mh3sWF6XAkHcwQvINscw7cXwhK5IUXv5eOdct9_vxDZtoaMTm8GJ.png', name: 'Бабочка', value: 75.66 },
+                { icon: 'ItemCase1/GsJZ-oPiqQHoyerbmc-z_L_NTi8cBWgKmS9ueEOwk5_PHeYbWeRwn6Jxic2d1Yhl8IZwt0rBUg5ZfvrkYkYp0UrO.png', name: 'Зелье', value: 69.30 },
+                { icon: 'ItemCase1/qlq8mJd7J1-60XWhd29rLbtjBfzeXSPLMVgzkcBDTNfHL50TBMHG2B0h2jB1bAd-rJWlHO1NtkI0zAsWF4BgcVHn.png', name: 'Шлем', value: 25.27 },
+                { icon: 'ItemCase1/QrKwYOzBzIX1ilzkfuCuiFdyCRU9jBm5pASbp_z2Sb6ATFNaaB1Zr1XfNGehXeHTYhldZNO8x4_l0ueW2t4MZ62W.png', name: 'Сигара', value: 23.50 },
+                { icon: 'ItemCase1/R1v8ymGGn2ZBo6cI96QvcWu5Yh2FsyiAmDW_WTGMfz7CMvELAOFCf7I7Ns2XGdKv1AxHTvrioJ6h-ALjrzjxb7Ra.png', name: 'Кольцо', value: 17.00 },
+                { icon: 'ItemCase1/XQTRb7Jx7OBjYfqnitHsZGV9pmln2Nhr9n5oYkJvZsF_dtkAYxPHS8Npi_qa6Pxcx0o368YwkcY9uRHmabTE5-LS.png', name: 'Бабочка', value: 11.40 },
+                { icon: 'ItemCase1/Y6HIRzDSCdUNCqWtHRsCpePjILr5QyrOnOD0T9PtrYjgu3Ff3XVbLGxLT1snsWyNNMzfDvTlhms0y1_Wwev6tz9-.png', name: 'Зелье', value: 8.64 },
+                { icon: 'ItemCase1/YLHOesDBQxjSVcanvj-iKz2mgFXRfweB38vb951G5LvwfJ8ytmlfe3PFUk3k_AgekpyW9A3uIpzEjM87k6_aUVS1.png', name: 'Цветок', value: 7.90 }
+            ]
+        };
+        
+        // Инициализируем window.cases сразу
+        window.cases = {
+            1: {
+                icon: case1Config.icon,
+                price: case1Config.price,
+                prizes: case1Config.items
+            }
+        };
+        var cases = window.cases; // Для обратной совместимости
+        
+        // Состояние игры Мины
+        let minesGameState = {
+            grid: [],
+            mines: [],
+            opened: [],
+            gameActive: false,
+            betAmount: 0.1,
+            currentMultiplier: 1.0,
+            minesCount: 5,
+            gridSize: 25
+        };
+        
+        // Состояние игры Dice
+        let diceGameState = {
+            betAmount: 0.1,
+            threshold: 50,
+            rollType: 'under',
+            autoPlay: false,
+            autoPlayInterval: null,
+            isRolling: false
+        };
+        
+        console.log('✅ Все переменные инициализированы');
         
         // ГЛОБАЛЬНЫЕ ОБРАБОТЧИКИ - ОПРЕДЕЛЯЕМ СРАЗУ В НАЧАЛЕ СКРИПТА
         // Эти функции будут доступны для inline onclick
@@ -2925,20 +2975,8 @@
                 // Проверяем что cases определена и не пустая
                 if (typeof window.cases === 'undefined' || !window.cases || Object.keys(window.cases).length === 0) {
                     console.error('window.cases не определена или пустая:', window.cases);
-                    // Пытаемся инициализировать заново
-                    if (typeof case1Config !== 'undefined') {
-                        window.cases = {
-                            1: {
-                                icon: case1Config.icon,
-                                price: case1Config.price,
-                                prizes: case1Config.items
-                            }
-                        };
-                        console.log('✅ cases повторно инициализирована');
-                    } else {
-                        alert('Ошибка: Данные кейсов не загружены. Перезагрузите страницу.');
-                        return;
-                    }
+                    alert('Ошибка: Данные кейсов не загружены. Перезагрузите страницу.');
+                    return;
                 }
                 
                 console.log('window.cases:', window.cases);
@@ -2962,11 +3000,25 @@
         window.handleCrashBetClick = function(e) {
             console.log('🔵 Клик по кнопке краша');
             try {
-                const btn = document.getElementById('makeBetBtn');
-                if (btn && btn.onclick) {
-                    btn.onclick();
-                } else if (btn) {
-                    btn.click();
+                // Ищем функцию makeBet, которая должна быть определена для краша
+                if (typeof window.makeBet === 'function') {
+                    window.makeBet();
+                } else if (typeof makeBet === 'function') {
+                    makeBet();
+                } else {
+                    console.error('makeBet не найдена, пытаемся через кнопку...');
+                    const btn = document.getElementById('makeBetBtn');
+                    if (btn) {
+                        // Создаем событие и отправляем его
+                        const clickEvent = new MouseEvent('click', {
+                            bubbles: true,
+                            cancelable: true,
+                            view: window
+                        });
+                        btn.dispatchEvent(clickEvent);
+                    } else {
+                        alert('Ошибка: Кнопка ставки не найдена');
+                    }
                 }
             } catch(err) {
                 console.error('Ошибка handleCrashBetClick:', err);
@@ -4044,47 +4096,6 @@
                 }
             });
         });
-
-
-        // КОНФИГУРАЦИЯ КЕЙСА #1
-        const case1Config = {
-            // Иконка кейса (путь к изображению)
-            icon: 'IconCase/2c0JGQXrElCDlaNGbYHwgipHo2-yq00qIxcU39IganVzrqDys2-no-bg-preview%20%28carve.photos%29.png',
-            // Цена открытия кейса
-            price: 0.1,
-            // Список предметов в кейсе
-            // Формат: { icon: 'путь к изображению', name: 'Название предмета', value: цена }
-            items: [
-                { icon: 'ItemCase1/_Jne2Jf3nM6erEUU5TEnvU7PWFOiElGs2WJc0zQ250JHxRd6md_v1huDDCpZRSesDCZP53pWDPEnqfojbzsYqjbD.png', name: 'Лоли поп', value: 82.17 },
-                { icon: 'ItemCase1/4dOUEOHs9WSNk5pRBkEnCptGIs16lB5xe4E7mh3sWF6XAkHcwQvINscw7cXwhK5IUXv5eOdct9_vxDZtoaMTm8GJ.png', name: 'Бабочка', value: 75.66 },
-                { icon: 'ItemCase1/GsJZ-oPiqQHoyerbmc-z_L_NTi8cBWgKmS9ueEOwk5_PHeYbWeRwn6Jxic2d1Yhl8IZwt0rBUg5ZfvrkYkYp0UrO.png', name: 'Зелье', value: 69.30 },
-                { icon: 'ItemCase1/qlq8mJd7J1-60XWhd29rLbtjBfzeXSPLMVgzkcBDTNfHL50TBMHG2B0h2jB1bAd-rJWlHO1NtkI0zAsWF4BgcVHn.png', name: 'Шлем', value: 25.27 },
-                { icon: 'ItemCase1/QrKwYOzBzIX1ilzkfuCuiFdyCRU9jBm5pASbp_z2Sb6ATFNaaB1Zr1XfNGehXeHTYhldZNO8x4_l0ueW2t4MZ62W.png', name: 'Сигара', value: 23.50 },
-                { icon: 'ItemCase1/R1v8ymGGn2ZBo6cI96QvcWu5Yh2FsyiAmDW_WTGMfz7CMvELAOFCf7I7Ns2XGdKv1AxHTvrioJ6h-ALjrzjxb7Ra.png', name: 'Кольцо', value: 17.00 },
-                { icon: 'ItemCase1/XQTRb7Jx7OBjYfqnitHsZGV9pmln2Nhr9n5oYkJvZsF_dtkAYxPHS8Npi_qa6Pxcx0o368YwkcY9uRHmabTE5-LS.png', name: 'Бабочка', value: 11.40 },
-                { icon: 'ItemCase1/Y6HIRzDSCdUNCqWtHRsCpePjILr5QyrOnOD0T9PtrYjgu3Ff3XVbLGxLT1snsWyNNMzfDvTlhms0y1_Wwev6tz9-.png', name: 'Зелье', value: 8.64 },
-                { icon: 'ItemCase1/YLHOesDBQxjSVcanvj-iKz2mgFXRfweB38vb951G5LvwfJ8ytmlfe3PFUk3k_AgekpyW9A3uIpzEjM87k6_aUVS1.png', name: 'Цветок', value: 7.90 }
-            ]
-        };
-
-        // Преобразуем конфигурацию в формат для работы приложения
-        // Делаем cases глобальной переменной и инициализируем сразу
-        // Инициализируем сразу после определения case1Config (синхронно)
-        // Если window.cases уже инициализирована как пустой объект, перезаписываем
-        if (typeof case1Config !== 'undefined') {
-            window.cases = {
-                1: {
-                    icon: case1Config.icon,
-                    price: case1Config.price,
-                    prizes: case1Config.items
-                }
-            };
-            var cases = window.cases; // Для обратной совместимости
-            console.log('✅ cases инициализирована:', window.cases);
-        } else {
-            console.error('❌ case1Config не определена при инициализации cases!');
-        }
-        
 
         // Инициализируем приложение безопасно
         function initApp() {
@@ -5582,17 +5593,8 @@
         window.closeInventoryModal = closeInventoryModal;
 
         // ИГРА МИНЫ
-        let minesGameState = {
-            grid: [],
-            mines: [],
-            opened: [],
-            gameActive: false,
-            betAmount: 0.1,
-            currentMultiplier: 1.0,
-            minesCount: 5,
-            gridSize: 25
-        };
-
+        // minesGameState уже определена в начале скрипта
+        
         function initMinesGame() {
             const grid = document.getElementById('minesGrid');
             if (!grid) return;
@@ -5927,15 +5929,8 @@
         });
         
         // ИГРА DICE
-        let diceGameState = {
-            betAmount: 0.1,
-            threshold: 50,
-            rollType: 'under', // 'under' или 'over'
-            autoPlay: false,
-            autoPlayInterval: null,
-            isRolling: false
-        };
-
+        // diceGameState уже определена в начале скрипта
+        
         function initDiceGame() {
             const thresholdSlider = document.getElementById('diceThreshold');
             const thresholdValue = document.getElementById('diceThresholdValue');
@@ -6313,8 +6308,8 @@
                 const newBtn = makeBetBtn.cloneNode(true);
                 makeBetBtn.parentNode.replaceChild(newBtn, makeBetBtn);
                 
-                // Создаем обработчик функции
-                const betHandler = function() {
+                // Создаем обработчик функции (делаем глобальным)
+                window.makeBet = function() {
                     // Если есть активная ставка и раунд идет (график растет), можно забрать
                     if (userBet && crashRoundActive && crashDirection === 1 && !userBet.cashedOut) {
                         cashOutPlayer(userBet.id);
@@ -6406,8 +6401,8 @@
                 };
                 
                 // Устанавливаем обработчик
-                newBtn.onclick = betHandler;
-                newBtn.addEventListener('click', betHandler);
+                newBtn.onclick = window.makeBet;
+                newBtn.addEventListener('click', window.makeBet);
                 
                 // Обновляем глобальный обработчик
                 window.handleCrashBetClick = function(e) {
@@ -6415,7 +6410,9 @@
                         e.preventDefault();
                         e.stopPropagation();
                     }
-                    betHandler();
+                    if (typeof window.makeBet === 'function') {
+                        window.makeBet();
+                    }
                 };
             }
             
