@@ -623,16 +623,24 @@
             height: 100%;
             overflow-y: auto;
             z-index: 1000;
+            background: var(--tg-theme-bg-color, #0a0a0a);
+            display: none;
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #caseDetailPage.active,
+        #caseDetailPage[style*="block"] {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
         }
 
         .case-detail-page {
-            display: none !important;
             padding: 20px;
             padding-bottom: 120px;
-        }
-
-        .case-detail-page.active {
-            display: block !important;
         }
 
         .case-detail-page.active ~ .open-btn,
@@ -4663,14 +4671,67 @@
             const profilePage = document.getElementById('profilePage');
             
             // Скрываем все страницы кроме деталей кейса
-            mainPage.style.display = 'none';
-            mainPage.classList.add('hidden');
-            if (profilePage) {
-                profilePage.style.display = 'none';
+            // Скрываем mainPage
+            if (mainPage) {
+                mainPage.style.display = 'none';
+                mainPage.style.visibility = 'hidden';
+                mainPage.style.opacity = '0';
+                mainPage.style.pointerEvents = 'none';
+                mainPage.classList.add('hidden');
             }
             
-            detailPage.style.display = 'block';
-            detailPage.classList.add('active');
+            // Скрываем profilePage
+            if (profilePage) {
+                profilePage.style.display = 'none';
+                profilePage.style.visibility = 'hidden';
+                profilePage.style.opacity = '0';
+                profilePage.style.pointerEvents = 'none';
+            }
+            
+            // Скрываем другие страницы игр
+            const crashPage = document.getElementById('crashPage');
+            const minesPage = document.getElementById('minesPage');
+            const dicePage = document.getElementById('dicePage');
+            
+            if (crashPage) {
+                crashPage.style.display = 'none';
+                crashPage.style.visibility = 'hidden';
+                crashPage.style.opacity = '0';
+                crashPage.style.pointerEvents = 'none';
+            }
+            if (minesPage) {
+                minesPage.style.display = 'none';
+                minesPage.style.visibility = 'hidden';
+                minesPage.style.opacity = '0';
+                minesPage.style.pointerEvents = 'none';
+            }
+            if (dicePage) {
+                dicePage.style.display = 'none';
+                dicePage.style.visibility = 'hidden';
+                dicePage.style.opacity = '0';
+                dicePage.style.pointerEvents = 'none';
+            }
+            
+            // Скрываем header
+            const header = document.querySelector('.header');
+            if (header) {
+                header.style.display = 'none';
+            }
+            
+            // Показываем detailPage
+            if (detailPage) {
+                detailPage.style.display = 'block';
+                detailPage.style.visibility = 'visible';
+                detailPage.style.opacity = '1';
+                detailPage.style.pointerEvents = 'auto';
+                detailPage.classList.add('active');
+                detailPage.style.position = 'fixed';
+                detailPage.style.top = '0';
+                detailPage.style.left = '0';
+                detailPage.style.right = '0';
+                detailPage.style.bottom = '0';
+                detailPage.style.zIndex = '1000';
+            }
             
             modal.style.display = 'none';
             modal.classList.remove('active');
@@ -4828,25 +4889,47 @@
             const modal = document.getElementById('prizeModal');
             const openBtn = document.getElementById('openBtn');
             
-            detailPage.style.display = 'none';
-            detailPage.classList.remove('active');
+            // Скрываем detailPage
+            if (detailPage) {
+                detailPage.style.display = 'none';
+                detailPage.style.visibility = 'hidden';
+                detailPage.style.opacity = '0';
+                detailPage.style.pointerEvents = 'none';
+                detailPage.classList.remove('active');
+                detailPage.style.zIndex = '-1';
+            }
             
             // Обязательно скрываем кнопку "Открыть" при возврате назад
             if (openBtn) {
                 openBtn.classList.remove('show');
-                openBtn.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important;';
-                openBtn.disabled = true;
-                openBtn.style.pointerEvents = 'none';
+                openBtn.style.display = 'none';
+                openBtn.style.visibility = 'hidden';
                 openBtn.style.opacity = '0';
-                openBtn.style.cursor = 'default';
+                openBtn.style.pointerEvents = 'none';
+                openBtn.disabled = true;
                 openBtn.innerHTML = 'Открыть <span>🚀</span>';
             }
             
-            mainPage.style.display = 'block';
-            mainPage.classList.remove('hidden');
+            // Показываем mainPage
+            if (mainPage) {
+                mainPage.style.display = 'block';
+                mainPage.style.visibility = 'visible';
+                mainPage.style.opacity = '1';
+                mainPage.style.pointerEvents = 'auto';
+                mainPage.classList.remove('hidden');
+            }
             
-            modal.style.display = 'none';
-            modal.classList.remove('active');
+            // Показываем header
+            const header = document.querySelector('.header');
+            if (header) {
+                header.style.display = 'flex';
+            }
+            
+            // Скрываем modal
+            if (modal) {
+                modal.style.display = 'none';
+                modal.classList.remove('active');
+            }
             
             document.querySelectorAll('.prize-item').forEach(item => {
                 item.classList.remove('win', 'spinning-prizes');
