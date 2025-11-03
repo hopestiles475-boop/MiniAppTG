@@ -2908,13 +2908,31 @@
         // ГЛОБАЛЬНЫЕ ОБРАБОТЧИКИ - ОПРЕДЕЛЯЕМ СРАЗУ В НАЧАЛЕ СКРИПТА
         // Эти функции будут доступны для inline onclick
         window.handleCaseClick = function(caseNum) {
-            console.log('🔵 Клик по кейсу:', caseNum);
+            console.log('🔵 Клик по кейсу:', caseNum, 'тип:', typeof caseNum);
             try {
+                // Преобразуем в число если нужно
+                var num = parseInt(caseNum);
+                if (isNaN(num)) {
+                    console.error('caseNum не является числом:', caseNum);
+                    alert('Ошибка: Неверный номер кейса');
+                    return;
+                }
+                
+                // Проверяем что cases определена
+                if (typeof window.cases === 'undefined') {
+                    console.error('window.cases не определена');
+                    alert('Ошибка: Данные кейсов не загружены. Подождите секунду и попробуйте снова.');
+                    return;
+                }
+                
+                console.log('window.cases:', window.cases);
+                console.log('Ищем кейс с номером:', num);
+                
                 // Проверяем что функция определена
                 if (typeof window.showCaseDetail === 'function') {
-                    window.showCaseDetail(caseNum);
+                    window.showCaseDetail(num);
                 } else if (typeof showCaseDetail === 'function') {
-                    showCaseDetail(caseNum);
+                    showCaseDetail(num);
                 } else {
                     alert('Ошибка: showCaseDetail не найдена. Перезагрузите страницу.');
                     console.error('showCaseDetail не определена');
@@ -4035,14 +4053,22 @@
 
         // Преобразуем конфигурацию в формат для работы приложения
         // Делаем cases глобальной переменной и инициализируем сразу
-        window.cases = {
-            1: {
-                icon: case1Config.icon,
-                price: case1Config.price,
-                prizes: case1Config.items
-            }
-        };
-        var cases = window.cases; // Для обратной совместимости
+        // Инициализируем после определения case1Config
+        if (typeof case1Config !== 'undefined') {
+            window.cases = {
+                1: {
+                    icon: case1Config.icon,
+                    price: case1Config.price,
+                    prizes: case1Config.items
+                }
+            };
+            var cases = window.cases; // Для обратной совместимости
+            console.log('✅ cases инициализирована:', window.cases);
+        } else {
+            console.error('❌ case1Config не определена!');
+            window.cases = {};
+            var cases = {};
+        }
         
 
         // Инициализируем приложение безопасно
@@ -4560,13 +4586,26 @@
             
             // Проверяем что cases определена
             var casesObj = window.cases || cases;
-            if (!casesObj || !casesObj[caseNum]) {
-                console.error('cases не определена или кейс не найден, caseNum:', caseNum);
-                alert('Ошибка: Кейс не найден. Перезагрузите страницу.');
+            console.log('showCaseDetail вызвана, caseNum:', caseNum, 'тип:', typeof caseNum);
+            console.log('casesObj:', casesObj);
+            console.log('casesObj доступные ключи:', casesObj ? Object.keys(casesObj) : 'undefined');
+            
+            if (!casesObj) {
+                console.error('cases не определена');
+                alert('Ошибка: Данные кейсов не загружены. Подождите секунду и попробуйте снова.');
                 return;
             }
             
-            currentCase = casesObj[caseNum];
+            // Пробуем и как число, и как строку
+            var caseData = casesObj[caseNum] || casesObj[String(caseNum)] || casesObj[parseInt(caseNum)];
+            
+            if (!caseData) {
+                console.error('Кейс не найден, caseNum:', caseNum, 'доступные ключи:', Object.keys(casesObj));
+                alert('Ошибка: Кейс ' + caseNum + ' не найден. Доступные: ' + Object.keys(casesObj).join(', '));
+                return;
+            }
+            
+            currentCase = caseData;
             if (!currentCase) return;
 
             isOpening = false;
