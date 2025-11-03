@@ -2800,7 +2800,7 @@
 
         <div class="crash-controls">
             <div class="multiplier-buttons" id="multiplierButtons">
-                <button class="multiplier-btn" data-mult="auto" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('auto', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=null;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">Вру</button>
+                <button class="multiplier-btn" data-mult="auto" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('auto', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=null;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">Вручную</button>
                 <button class="multiplier-btn active" data-mult="1.5" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('1.5', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=1.5;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x1.5</button>
                 <button class="multiplier-btn" data-mult="2.0" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('2.0', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=2.0;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x2.0</button>
                 <button class="multiplier-btn" data-mult="3.0" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('3.0', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=3.0;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x3.0</button>
@@ -6637,44 +6637,30 @@
             sellItemBtn.addEventListener('click', sellSelectedItem);
         }
 
-        // ========== КРАШ ИГРА ==========
+        // ========== КРАШ ИГРА - ПОЛНАЯ ПЕРЕПИСКА ==========
         let crashMultiplier = 1.00;
         let crashAnimationId = null;
-        let crashGameRunning = false;
         let crashPlayers = [];
         let crashGraphPoints = [];
-        // Объявляем переменные для краш-игры глобально
-        if (typeof selectedMultiplier === 'undefined') {
-            var selectedMultiplier = null;
-        }
-        if (typeof betType === 'undefined') {
-            var betType = 'balance';
-        }
+        let selectedMultiplier = null;
+        let betType = 'balance';
         let userBet = null;
         let crashRoundActive = false;
-        let crashTarget = 1.00;
-        let crashDirection = 1; // 1 = вверх, -1 = вниз (краш)
+        let crashTarget = 2.50;
+        let crashIsAnimating = false;
 
         
         // Глобальная делегация событий для кнопок множителей и типа ставки
         // УБРАНО - используем только inline onclick и обработчики в initCrashGame
         // Глобальный обработчик блокировал inline onclick
         
-        // Инициализация игры Краш
+        // Инициализация игры Краш - НОВАЯ ВЕРСИЯ
         function initCrashGame() {
-            console.log('🔧 initCrashGame вызвана');
             const canvas = document.getElementById('crashCanvas');
-            if (!canvas) {
-                console.error('❌ canvas не найден!');
-                return;
-            }
-            console.log('✅ canvas найден');
+            if (!canvas) return;
             
             const ctx = canvas.getContext('2d');
-            if (!ctx) {
-                console.error('❌ Не удалось получить контекст canvas!');
-                return;
-            }
+            if (!ctx) return;
             
             // Устанавливаем размеры canvas - используем CSS размеры
             const container = canvas.parentElement;
@@ -6734,7 +6720,7 @@
                 // Создаем обработчик функции (делаем глобальным)
                 window.makeBet = function() {
                     // Если есть активная ставка и раунд идет (график растет), можно забрать
-                    if (userBet && crashRoundActive && crashDirection === 1 && !userBet.cashedOut) {
+                    if (userBet && crashRoundActive && !userBet.cashedOut) {
                         cashOutPlayer(userBet.id);
                         return;
                     }
@@ -7085,56 +7071,35 @@
                         makeBetBtn.disabled = false;
                     }
                     
-                    // Начинаем раунд
-                    crashRoundActive = true;
-                    crashMultiplier = 1.00;
-                    crashDirection = 1;
-                    
-                    console.log('🚀 НАЧИНАЕМ НОВЫЙ РАУНД!');
-                    console.log('🚀 crashRoundActive =', crashRoundActive);
-                    console.log('🚀 crashDirection =', crashDirection);
-                    console.log('🚀 crashMultiplier =', crashMultiplier);
-                    
-                    // Получаем актуальные размеры canvas для инициализации точек графика
+                    // НОВЫЙ РАУНД - НОВАЯ ЛОГИКА
                     const dpr = window.devicePixelRatio || 1;
-                    const canvasWidth = canvas.width / dpr;
-                    const canvasHeight = canvas.height / dpr;
+                    const cw = canvas.width / dpr;
+                    const ch = canvas.height / dpr;
                     
-                    // Инициализируем график с начальной точкой
-                    crashGraphPoints = [{ x: 10, y: canvasHeight - 50, multiplier: 1.00 }];
+                    // Сбрасываем все
+                    crashMultiplier = 1.00;
+                    crashGraphPoints = [{ x: 10, y: ch - 50, multiplier: 1.00 }];
                     
-                    console.log('📊 Canvas размеры:', canvasWidth, 'x', canvasHeight);
-                    console.log('📈 Начальная точка графика:', crashGraphPoints[0]);
+                    // Генерируем цель краша (от 1.5 до 10.0)
+                    const seed = Date.now() % 1000000;
+                    crashTarget = 1.5 + (seed / 1000000) * 8.5;
                     
-                    // Одинаковый краш для всех игроков (на основе времени начала раунда)
-                    const roundStartTime = Date.now();
-                    const seed = roundStartTime % 1000000; // Используем остаток от времени как seed
-                    const random = seed / 1000000; // Преобразуем в 0-1
+                    // Включаем раунд
+                    crashRoundActive = true;
                     
-                    // Момент краша (от 1.01 до 10.0) - одинаковый для всех
-                    crashTarget = 1.01 + random * 9.0;
+                    // Обновляем множитель
+                    const multEl = document.getElementById('currentMultiplier');
+                    if (multEl) {
+                        multEl.textContent = 'x1.00';
+                        multEl.style.color = '#00ff00';
+                        multEl.style.borderColor = '#00ff00';
+                        multEl.style.display = 'block';
+                    }
                     
-                    console.log('🎯 Цель краша установлена:', crashTarget.toFixed(2));
-                    console.log('✅ ВСЕ ПАРАМЕТРЫ УСТАНОВЛЕНЫ!');
-                    
-                    // Время до краша (от 3 до 20 секунд) - одинаковое для всех
-                    // НЕ используем setTimeout для краша, так как краш определяется достижением crashTarget в анимации
-                    // Это обеспечивает одинаковый результат для всех игроков
-                    
-                    // Запускаем анимацию роста графика
-                    console.log('🎬 Запускаем анимацию графика...');
-                    startCrashAnimation(ctx, canvas);
-                    
-                    // Проверяем через 100мс что все правильно установилось
-                    setTimeout(() => {
-                        console.log('⏱️ Проверка через 100мс:', {
-                            crashRoundActive,
-                            crashDirection,
-                            crashMultiplier,
-                            crashTarget,
-                            точек: crashGraphPoints.length
-                        });
-                    }, 100);
+                    // Запускаем анимацию
+                    if (!crashIsAnimating) {
+                        startCrashAnimation(ctx, canvas);
+                    }
                 }
             }, 1000);
         }
@@ -7168,14 +7133,13 @@
                 ctx.fillRect(0, 0, canvasWidth, canvasHeight);
                 
                 // ЕСЛИ РАУНД АКТИВЕН - РАСТЕМ
-                if (crashRoundActive && crashDirection === 1) {
+                if (crashRoundActive) {
                     // Увеличиваем множитель
                     crashMultiplier += speed;
                     
                     // Если достигли цели - КРАШ
                     if (crashMultiplier >= crashTarget) {
                         crashRoundActive = false;
-                        crashDirection = -1;
                         
                         // Вибрация
                         if (tg) {
@@ -7247,7 +7211,7 @@
                 
                 // РИСУЕМ ГРАФИК - ВСЕГДА
                 if (crashGraphPoints.length >= 2) {
-                    ctx.strokeStyle = crashRoundActive && crashDirection === 1 ? '#00ff00' : '#888888';
+                    ctx.strokeStyle = crashRoundActive ? '#00ff00' : '#888888';
                     ctx.lineWidth = 3;
                     ctx.beginPath();
                     ctx.moveTo(crashGraphPoints[0].x, crashGraphPoints[0].y);
@@ -7258,13 +7222,13 @@
                     
                     // Последняя точка
                     const lastPoint = crashGraphPoints[crashGraphPoints.length - 1];
-                    ctx.fillStyle = crashRoundActive && crashDirection === 1 ? '#00ff00' : '#888888';
+                    ctx.fillStyle = crashRoundActive ? '#00ff00' : '#888888';
                     ctx.beginPath();
                     ctx.arc(lastPoint.x, lastPoint.y, 4, 0, Math.PI * 2);
                     ctx.fill();
                 } else if (crashGraphPoints.length === 1) {
                     const point = crashGraphPoints[0];
-                    ctx.fillStyle = crashRoundActive && crashDirection === 1 ? '#00ff00' : '#888888';
+                    ctx.fillStyle = crashRoundActive ? '#00ff00' : '#888888';
                     ctx.beginPath();
                     ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
                     ctx.fill();
@@ -7518,7 +7482,7 @@
             makeBetBtn.setAttribute('data-handler-set', 'true');
             makeBetBtn.addEventListener('click', () => {
                 // Если есть активная ставка и раунд идет (график растет), можно забрать
-                if (userBet && crashRoundActive && crashDirection === 1 && !userBet.cashedOut) {
+                if (userBet && crashRoundActive && !userBet.cashedOut) {
                     cashOutPlayer(userBet.id);
                     return;
                 }
