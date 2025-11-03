@@ -46,90 +46,46 @@
         })();
     </script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- ЗАГРУЗКА TONCONNECT SDK - ПРЯМАЯ ЗАГРУЗКА -->
+    <script src="https://cdn.jsdelivr.net/npm/@tonconnect/sdk@2/dist/tonconnect.min.js" 
+            onload="console.log('✅ TONCONNECT SDK ЗАГРУЖЕН (прямая загрузка)'); window.tonConnectLibLoaded = true;" 
+            onerror="console.error('❌ ОШИБКА ПРЯМОЙ ЗАГРУЗКИ TONCONNECT'); window.tonConnectLibLoaded = false;"></script>
     <script>
-        // Динамическая загрузка TonConnect SDK с резервными CDN
-        console.log('🔍 Начало загрузки TonConnect SDK...');
-        window.tonConnectLibLoaded = false;
-        window.tonConnectCheckStarted = Date.now();
+        // ПРОСТАЯ ПРОВЕРКА И АЛЬТЕРНАТИВНАЯ ЗАГРУЗКА
+        console.log('🔍 Проверка TonConnect SDK...');
+        console.log('typeof TonConnect:', typeof TonConnect);
+        console.log('window.tonConnectLibLoaded:', window.tonConnectLibLoaded);
         
-        // Список CDN для TonConnect SDK
-        const tonConnectCDNs = [
-            'https://cdn.jsdelivr.net/npm/@tonconnect/sdk@2/dist/tonconnect.min.js',
-            'https://unpkg.com/@tonconnect/sdk@2/dist/tonconnect.min.js',
-            'https://cdnjs.cloudflare.com/ajax/libs/tonconnect/2.0.0/tonconnect.min.js'
-        ];
-        
-        let currentCDNIndex = 0;
-        
-        function loadTonConnectFromCDN(cdnUrl) {
-            return new Promise((resolve, reject) => {
-                console.log(`📥 Попытка загрузки с: ${cdnUrl}`);
-                console.log('📥 document.head:', document.head ? 'существует' : 'НЕ существует');
-                console.log('📥 document.readyState:', document.readyState);
-                
-                try {
+        // Если прямая загрузка не сработала, пытаемся динамически
+        if (typeof TonConnect === 'undefined') {
+            console.log('⚠️ TonConnect не найден, пытаемся динамическую загрузку...');
+            
+            function loadTonConnectDynamically() {
+                return new Promise((resolve, reject) => {
                     const script = document.createElement('script');
-                    script.src = cdnUrl;
+                    script.src = 'https://unpkg.com/@tonconnect/sdk@2/dist/tonconnect.min.js';
                     script.async = false;
-                    script.crossOrigin = 'anonymous';
-                    
-                    // Добавляем ID для отслеживания
-                    script.id = 'tonconnect-sdk-loader';
                     
                     script.onload = () => {
-                        console.log(`✅ TonConnect SDK загружен с: ${cdnUrl}`);
+                        console.log('✅ TonConnect загружен динамически');
                         window.tonConnectLibLoaded = true;
                         resolve();
                     };
                     
-                    script.onerror = (e) => {
-                        console.error(`❌ Ошибка загрузки с: ${cdnUrl}`);
-                        console.error('Детали ошибки:', e);
-                        reject(new Error(`Не удалось загрузить с ${cdnUrl}`));
+                    script.onerror = () => {
+                        console.error('❌ Динамическая загрузка не удалась');
+                        reject();
                     };
                     
-                    console.log('📥 Добавляем script в DOM...');
-                    if (!document.head) {
-                        console.error('❌ document.head не существует!');
-                        reject(new Error('document.head не существует'));
-                        return;
-                    }
-                    
-                    document.head.appendChild(script);
-                    console.log('✅ Script добавлен в DOM. Проверьте Network tab.');
-                } catch(err) {
-                    console.error('❌ Исключение при создании script:', err);
-                    reject(err);
-                }
+                    (document.head || document.body).appendChild(script);
+                });
+            }
+            
+            // Пробуем загрузить
+            loadTonConnectDynamically().catch(() => {
+                console.error('❌ Все методы загрузки TonConnect провалились');
             });
         }
-        
-        // Пробуем загрузить с первого CDN
-        loadTonConnectFromCDN(tonConnectCDNs[0])
-            .catch(() => {
-                console.log('🔄 Пробуем резервный CDN...');
-                return loadTonConnectFromCDN(tonConnectCDNs[1]);
-            })
-            .catch(() => {
-                console.log('🔄 Пробуем третий CDN...');
-                return loadTonConnectFromCDN(tonConnectCDNs[2]);
-            })
-            .catch(() => {
-                console.error('❌ Все CDN недоступны. TonConnect SDK не загружен.');
-                window.tonConnectLibLoaded = false;
-            });
-        
-        // Проверка через 500мс после загрузки страницы
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                console.log('🔍 Проверка TonConnect после загрузки страницы:');
-                console.log('- typeof TonConnect:', typeof TonConnect);
-                console.log('- window.tonConnectLibLoaded:', window.tonConnectLibLoaded);
-                if (typeof TonConnect === 'undefined') {
-                    console.error('❌ TonConnect всё ещё не доступен');
-                }
-            }, 500);
-        });
     </script>
     <style>
         * {
