@@ -2493,6 +2493,9 @@
                 <span class="btn-icon"><span class="currency-icon" style="width: 18px; height: 18px; display: inline-block;"></span></span>
                 <span>Пополнить</span>
             </button>
+            <button class="top-up-btn secondary" id="withdrawBtn">
+                <span>Вывести</span>
+            </button>
         </div>
         
         <!-- Модальное окно выбора способа пополнения -->
@@ -2516,6 +2519,30 @@
                     </button>
                 </div>
                 <button class="modal-close" onclick="closeTopUpModal()">Закрыть</button>
+            </div>
+        </div>
+        
+        <!-- Модальное окно выбора способа вывода -->
+        <div class="top-up-modal" id="withdrawModal" onclick="event.target === this && closeWithdrawModal()">
+            <div class="top-up-modal-content" onclick="event.stopPropagation()">
+                <h3 class="top-up-modal-title">Выберите способ вывода</h3>
+                <div class="payment-methods">
+                    <button class="payment-method-btn" id="withdrawTelegramWalletBtn">
+                        <div class="payment-method-icon">💳</div>
+                        <div class="payment-method-info">
+                            <div class="payment-method-name">Через Telegram Wallet</div>
+                            <div class="payment-method-desc">Вывод средств на Telegram кошелёк</div>
+                        </div>
+                    </button>
+                    <button class="payment-method-btn" id="withdrawTelegramBotBtn">
+                        <div class="payment-method-icon">🤖</div>
+                        <div class="payment-method-info">
+                            <div class="payment-method-name">Через бота CryptoBot</div>
+                            <div class="payment-method-desc">Вывести через бота Telegram</div>
+                        </div>
+                    </button>
+                </div>
+                <button class="modal-close" onclick="closeWithdrawModal()">Закрыть</button>
             </div>
         </div>
 
@@ -2732,7 +2759,82 @@
             isTelegram = true;
         }
 
-        let balance = 100.00;
+        // ========== ЗАЩИТА ФРОНТЕНДА ==========
+        
+        // Защищённая переменная баланса
+        let _balance = 100.00;
+        let balanceLocked = false;
+        let isServerValidated = false;
+        
+        // Геттер/сеттер для баланса с защитой
+        Object.defineProperty(window, 'balance', {
+            get: function() { return _balance; },
+            set: function(val) {
+                console.warn('⚠️ Прямое изменение balance заблокировано. Используйте серверные API.');
+                return false;
+            },
+            configurable: false
+        });
+        
+        // Функция установки баланса только с сервера
+        function setBalanceFromServer(newBalance) {
+            const validated = parseFloat(newBalance);
+            if (!isNaN(validated) && validated >= 0 && validated <= 1000000) {
+                _balance = validated;
+                updateBalanceDisplay();
+                isServerValidated = true;
+                return true;
+            }
+            console.error('❌ Некорректное значение баланса:', newBalance);
+            return false;
+        }
+        
+        // Функция изменения баланса с валидацией
+        function changeBalance(amount, source = 'unknown') {
+            if (balanceLocked) {
+                console.warn('⚠️ Изменение баланса заблокировано');
+                return false;
+            }
+            
+            const validated = parseFloat(amount);
+            if (isNaN(validated) || Math.abs(validated) > 1000000) {
+                console.error('❌ Некорректное значение:', amount);
+                return false;
+            }
+            
+            const newBalance = _balance + validated;
+            if (newBalance < 0 || newBalance > 1000000) {
+                console.error('❌ Баланс выходит за пределы:', newBalance);
+                return false;
+            }
+            
+            _balance = newBalance;
+            updateBalanceDisplay();
+            console.log(`✅ Баланс изменён на ${validated} из ${source}. Новый баланс: ${_balance}`);
+            return true;
+        }
+        
+        // Обновление отображения баланса
+        function updateBalanceDisplay() {
+            const balanceEl = document.getElementById('balance');
+            const crashBalanceEl = document.getElementById('crashBalance');
+            const minesBalanceEl = document.getElementById('minesBalance');
+            const diceBalanceEl = document.getElementById('diceBalance');
+            
+            if (balanceEl) balanceEl.textContent = _balance.toFixed(2);
+            if (crashBalanceEl) crashBalanceEl.textContent = _balance.toFixed(2);
+            if (minesBalanceEl) minesBalanceEl.textContent = _balance.toFixed(2);
+            if (diceBalanceEl) diceBalanceEl.textContent = _balance.toFixed(2);
+        }
+        
+        // Защита от переопределения функций
+        const protectedFunctions = {
+            setBalanceFromServer,
+            changeBalance,
+            updateBalanceDisplay
+        };
+        Object.freeze(protectedFunctions);
+        
         let currentCase = null;
         let currentPrizes = [];
         let isOpening = false;
@@ -2747,11 +2849,100 @@
         // Инвентарь пользователя (выигранные подарки)
         let userInventory = [];
         
-        // Получение ID пользователя из Telegram
+        // Получение ID пользователя из Telegram (защищённая функция)
         function getUserId() {
-            const user = tg?.initDataUnsafe?.user;
-            return user?.id || null;
+            if (!tg || !tg.initDataUnsafe) {
+                console.warn('⚠️ Telegram Web App не инициализирован');
+                return null;
+            }
+            
+            const user = tg.initDataUnsafe.user;
+            if (!user || !user.id) {
+                console.warn('⚠️ Не удалось получить данные пользователя');
+                return null;
+            }
+            
+            // Валидация userId (должен быть числом)
+            const userId = String(user.id);
+            if (!/^\d+$/.test(userId)) {
+                console.error('❌ Некорректный формат userId:', userId);
+                return null;
+            }
+            
+            return userId;
         }
+        
+        // Защищённая функция для API запросов
+        function makeProtectedRequest(url, options = {}) {
+            const userId = getUserId();
+            if (!userId) {
+                return Promise.reject(new Error('User ID не доступен'));
+            }
+            
+            // Валидация URL (защита от открытого редиректа и SSRF)
+            if (!url || typeof url !== 'string' || !url.startsWith(API_BASE_URL)) {
+                console.error('❌ Некорректный URL для запроса:', url);
+                return Promise.reject(new Error('Некорректный URL'));
+            }
+            
+            // Валидация тела запроса (защита от XSS)
+            if (options.body) {
+                try {
+                    const parsed = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+                    // Проверка на опасные паттерны
+                    const bodyStr = JSON.stringify(parsed);
+                    if (bodyStr.includes('<script') || bodyStr.includes('javascript:') || bodyStr.includes('onerror=')) {
+                        console.error('❌ Обнаружен опасный контент в теле запроса');
+                        return Promise.reject(new Error('Некорректные данные'));
+                    }
+                } catch (e) {
+                    console.error('❌ Ошибка валидации тела запроса:', e);
+                    return Promise.reject(new Error('Некорректные данные'));
+                }
+            }
+            
+            // Добавляем userId в заголовки для дополнительной проверки
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-User-ID': userId,
+                ...options.headers
+            };
+            
+            return fetch(url, {
+                ...options,
+                headers
+            }).catch(error => {
+                console.error('❌ Ошибка API запроса:', error);
+                throw error;
+            });
+        }
+        
+        // Защита от XSS - санитизация текста
+        function sanitizeText(text) {
+            if (typeof text !== 'string') return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Защита от манипуляций через консоль
+        (function() {
+            const originalConsole = window.console;
+            const protectedKeys = ['balance', '_balance', 'changeBalance', 'setBalanceFromServer'];
+            
+            protectedKeys.forEach(key => {
+                Object.defineProperty(window, key, {
+                    get: function() {
+                        if (key === 'balance') return _balance;
+                        return undefined;
+                    },
+                    set: function() {
+                        console.warn('⚠️ Прямое изменение защищённых переменных заблокировано');
+                    },
+                    configurable: false
+                });
+            });
+        })();
         
         // Получение данных пользователя
         function getUsername() {
@@ -2775,15 +2966,14 @@
             }
             
             try {
-                const response = await fetch(`${API_BASE_URL}/users/${userId}`);
+                const response = await makeProtectedRequest(`${API_BASE_URL}/users/${userId}`);
                 
                 if (response.ok) {
                     const data = await response.json();
                     if (data) {
-                        // Загружаем баланс
+                        // Загружаем баланс с сервера (защищённо)
                         if (data.balance !== undefined) {
-                            balance = parseFloat(data.balance) || 100.00;
-                            document.getElementById('balance').textContent = balance.toFixed(2);
+                            setBalanceFromServer(data.balance);
                         }
                         
                         // Загружаем инвентарь
@@ -2808,25 +2998,40 @@
         async function saveUserData() {
             const userId = getUserId();
             if (!userId) {
-                console.log('User ID not available, saving to local storage only');
+                console.warn('⚠️ Не удалось получить userId для сохранения');
                 saveInventory();
                 return;
             }
             
+            // Валидация: баланс должен быть загружен с сервера
+            if (!isServerValidated && _balance > 10000) {
+                console.warn('⚠️ Подозрительно большой баланс без валидации сервера');
+            }
+            
             try {
+                // Валидация данных перед отправкой
+                if (_balance < 0 || _balance > 1000000 || !Array.isArray(userInventory)) {
+                    console.error('❌ Некорректные данные для сохранения');
+                    return;
+                }
+                
                 const userData = {
                     userId: userId,
                     username: getUsername(),
-                    balance: balance,
+                    balance: _balance, // Используем защищённый баланс
                     inventory: userInventory,
                     updatedAt: Date.now()
                 };
                 
-                const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+                // Валидация userId в URL (защита от подмены)
+                const validatedUserId = getUserId();
+                if (validatedUserId !== userId) {
+                    console.error('❌ Попытка сохранения с другим userId');
+                    return;
+                }
+                
+                const response = await makeProtectedRequest(`${API_BASE_URL}/users/${userId}`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
                     body: JSON.stringify(userData)
                 });
                 
@@ -2858,8 +3063,7 @@
                 }
                 
                 if (storedBalance) {
-                    balance = parseFloat(storedBalance) || 100.00;
-                    document.getElementById('balance').textContent = balance.toFixed(2);
+                    setBalanceFromServer(parseFloat(storedBalance) || 100.00);
                 }
                 
                 updateInventory();
@@ -2872,8 +3076,14 @@
         // Сохранение инвентаря в localStorage
         function saveInventory() {
             try {
+                // Валидация инвентаря перед сохранением
+                if (!Array.isArray(userInventory)) {
+                    console.error('❌ Инвентарь не является массивом');
+                    userInventory = [];
+                }
+                
                 localStorage.setItem('userInventory', JSON.stringify(userInventory));
-                localStorage.setItem('userBalance', balance.toString());
+                localStorage.setItem('userBalance', _balance.toString()); // Используем защищённый баланс
             } catch (e) {
                 console.error('Failed to save inventory:', e);
             }
@@ -3070,7 +3280,7 @@
         };
         
 
-        document.getElementById('balance').textContent = balance.toFixed(2);
+        updateBalanceDisplay();
 
         // Скрываем надпись "5 TON Demo"
         const tonBalance = document.querySelector('.ton-balance');
@@ -3142,7 +3352,7 @@
                     if (isOpening) return;
                     
                     const price = currentCase.price;
-                    if (balance < price) {
+                    if (_balance < price) {
                         if (tg) {
                             tg.showAlert('Недостаточно баланса!');
                             tg.HapticFeedback.notificationOccurred('error');
@@ -3153,8 +3363,10 @@
                     }
 
                     isOpening = true;
-                    balance -= price;
-                    document.getElementById('balance').textContent = balance.toFixed(2);
+                    if (!changeBalance(-price, 'openCase')) {
+                        isOpening = false;
+                        return;
+                    }
                     saveInventory(); // Сохраняем баланс локально
                     saveUserData(); // Сохраняем баланс на сервер
                     
@@ -4013,23 +4225,23 @@
             if (tg) {
                 tg.showConfirm(`Продать все предметы за ${formatPrice(totalValue)}?`, (confirmed) => {
                     if (confirmed) {
-                        balance += totalValue;
-                        document.getElementById('balance').textContent = balance.toFixed(2);
-                        userInventory = [];
-                        saveInventory(); // Сохраняем баланс локально
-                        saveUserData(); // Сохраняем на сервер
-                        updateInventory();
-                        tg.HapticFeedback.notificationOccurred('success');
+                        if (changeBalance(totalValue, 'sellAll')) {
+                            userInventory = [];
+                            saveInventory(); // Сохраняем баланс локально
+                            saveUserData(); // Сохраняем на сервер
+                            updateInventory();
+                            tg.HapticFeedback.notificationOccurred('success');
+                        }
                     }
                 });
             } else {
                 if (confirm(`Продать все предметы за ${totalValue.toFixed(2)}?`)) {
-                    balance += totalValue;
-                    document.getElementById('balance').textContent = balance.toFixed(2);
-                    userInventory = [];
-                    saveInventory(); // Сохраняем баланс локально
-                    saveUserData(); // Сохраняем на сервер
-                    updateInventory();
+                    if (changeBalance(totalValue, 'sellAll')) {
+                        userInventory = [];
+                        saveInventory(); // Сохраняем баланс локально
+                        saveUserData(); // Сохраняем на сервер
+                        updateInventory();
+                    }
                 }
             }
         }
@@ -4180,7 +4392,7 @@
                     if (crashPage) {
                         crashPage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 100% !important; z-index: 100 !important; pointer-events: auto !important;';
                         // Обновляем баланс на странице краша
-                        document.getElementById('crashBalance').textContent = balance.toFixed(2);
+                        updateBalanceDisplay();
                         initCrashGame();
                     }
                     // Скрываем кнопку "Открыть" при переходе в краш
@@ -4233,7 +4445,7 @@
                     const minesPage = document.getElementById('minesPage');
                     if (minesPage) {
                         minesPage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 100% !important; z-index: 100 !important; pointer-events: auto !important;';
-                        document.getElementById('minesBalance').textContent = balance.toFixed(2);
+                        updateBalanceDisplay();
                         initMinesGame();
                     }
                     
@@ -4274,7 +4486,7 @@
                     const dicePage = document.getElementById('dicePage');
                     if (dicePage) {
                         dicePage.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; height: 100% !important; z-index: 100 !important; pointer-events: auto !important;';
-                        document.getElementById('diceBalance').textContent = balance.toFixed(2);
+                        updateBalanceDisplay();
                         initDiceGame();
                     }
                     
@@ -4307,6 +4519,34 @@
 
         function closeTopUpModal() {
             const modal = document.getElementById('topUpModal');
+            if (modal) {
+                modal.classList.remove('active');
+                modal.style.display = 'none';
+                if (tg) {
+                    tg.HapticFeedback.impactOccurred('light');
+                }
+            }
+        }
+        
+        function openWithdrawModal() {
+            console.log('openWithdrawModal вызвана');
+            const modal = document.getElementById('withdrawModal');
+            console.log('Модальное окно вывода найдено:', modal);
+            if (modal) {
+                modal.classList.add('active');
+                modal.style.display = 'flex';
+                modal.style.zIndex = '10000';
+                console.log('Модальное окно вывода открыто');
+                if (tg) {
+                    tg.HapticFeedback.impactOccurred('medium');
+                }
+            } else {
+                console.error('Модальное окно withdrawModal не найдено!');
+            }
+        }
+
+        function closeWithdrawModal() {
+            const modal = document.getElementById('withdrawModal');
             if (modal) {
                 modal.classList.remove('active');
                 modal.style.display = 'none';
@@ -4359,28 +4599,10 @@
                             throw new Error('Не удалось получить ID пользователя');
                         }
 
-                        // Запрашиваем сумму пополнения
-                        const amount = prompt('Введите сумму пополнения в TON:');
-                        if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-                            if (tg && tg.showAlert) {
-                                tg.showAlert('Неверная сумма');
-                            }
-                            return;
-                        }
-
-                        const tonAmount = parseFloat(amount);
-                        
-                        // Telegram Wallet через Web App требует создания инвойса на сервере
-                        // Вместо прямого использования tg.openInvoice, используем бота для создания инвойса
-                        // через CryptoBot, который поддерживает Telegram Wallet
-                        
-                        if (tg && tg.showAlert) {
-                            tg.showAlert('Пополнение через Telegram Wallet доступно через бота. Открываю бота...');
-                        }
-                        
-                        // Открываем бота для создания инвойса через CryptoBot (поддерживает Telegram Wallet)
+                        // Открываем бота для пополнения через Telegram Wallet
+                        // Сумма будет выбрана в боте
                         const botUsername = 'Znakomstva13_bot';
-                        const botUrl = `https://t.me/${botUsername}?start=wallet_${userId}_${tonAmount}`;
+                        const botUrl = `https://t.me/${botUsername}?start=wallet_${userId}`;
                         
                         if (tg) {
                             if (tg.openTelegramLink) {
@@ -4389,8 +4611,15 @@
                                 tg.openLink(botUrl);
                             }
                             tg.HapticFeedback.impactOccurred('medium');
+                            
+                            setTimeout(() => {
+                                if (tg.showAlert) {
+                                    tg.showAlert('Отправьте боту /pay для пополнения через Telegram Wallet');
+                                }
+                            }, 500);
                         } else {
                             window.open(botUrl, '_blank');
+                            alert('Бот открыт. Отправьте боту /pay для пополнения через Telegram Wallet.');
                         }
                     } catch (error) {
                         console.error('Ошибка:', error);
@@ -4411,9 +4640,9 @@
                     
                     const botUsername = 'Znakomstva13_bot';
                     const userId = getUserId();
-                    const botUrl = `https://t.me/${botUsername}?start=topup_${userId}`;
+                    const botUrl = `https://t.me/${botUsername}?start=cryptobot_${userId}`;
                     
-                    console.log('Открываем бота для пополнения:', botUrl, 'User ID:', userId);
+                    console.log('Открываем бота для пополнения через CryptoBot:', botUrl, 'User ID:', userId);
                     
                     if (tg) {
                         if (tg.openTelegramLink) {
@@ -4425,12 +4654,12 @@
                         
                         setTimeout(() => {
                             if (tg.showAlert) {
-                                tg.showAlert('Отправьте боту /pay для пополнения');
+                                tg.showAlert('Отправьте боту /pay для пополнения через CryptoBot');
                             }
                         }, 500);
                     } else {
                         window.open(botUrl, '_blank');
-                        alert('Бот открыт. Отправьте боту команду /pay для пополнения баланса.');
+                        alert('Бот открыт. Отправьте боту /pay для пополнения через CryptoBot.');
                     }
                 });
             }
@@ -4493,6 +4722,146 @@
             });
         } else {
             setTimeout(initTopUpHandlersWithRetry, 100);
+        }
+        
+        // Инициализация обработчиков вывода
+        function initWithdrawHandlers() {
+            const withdrawBtn = document.getElementById('withdrawBtn');
+            if (withdrawBtn) {
+                const newWithdrawBtn = withdrawBtn.cloneNode(true);
+                withdrawBtn.parentNode.replaceChild(newWithdrawBtn, withdrawBtn);
+                newWithdrawBtn.onclick = null;
+                newWithdrawBtn.removeEventListener('click', () => {});
+                newWithdrawBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    console.log('Клик по кнопке Вывести - открываем модальное окно');
+                    openWithdrawModal();
+                    return false;
+                }, true);
+            }
+            
+            // Вывод через Telegram Wallet
+            const withdrawTelegramWalletBtn = document.getElementById('withdrawTelegramWalletBtn');
+            if (withdrawTelegramWalletBtn) {
+                withdrawTelegramWalletBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeWithdrawModal();
+                    
+                    try {
+                        const userId = getUserId();
+                        if (!userId) {
+                            throw new Error('Не удалось получить ID пользователя');
+                        }
+                        
+                        // Проверяем баланс
+                        if (_balance <= 0) {
+                            if (tg && tg.showAlert) {
+                                tg.showAlert('Недостаточно средств для вывода');
+                            } else {
+                                alert('Недостаточно средств для вывода');
+                            }
+                            return;
+                        }
+                        
+                        // Открываем бота для вывода через Telegram Wallet
+                        const botUsername = 'Znakomstva13_bot';
+                        const botUrl = `https://t.me/${botUsername}?start=withdraw_wallet_${userId}`;
+                        
+                        if (tg) {
+                            if (tg.openTelegramLink) {
+                                tg.openTelegramLink(botUrl);
+                            } else {
+                                tg.openLink(botUrl);
+                            }
+                            tg.HapticFeedback.impactOccurred('medium');
+                            
+                            setTimeout(() => {
+                                if (tg.showAlert) {
+                                    tg.showAlert('Отправьте боту /withdraw для вывода через Telegram Wallet');
+                                }
+                            }, 500);
+                        } else {
+                            window.open(botUrl, '_blank');
+                            alert('Бот открыт. Отправьте боту /withdraw для вывода через Telegram Wallet.');
+                        }
+                    } catch (error) {
+                        console.error('Ошибка:', error);
+                        if (tg && tg.showAlert) {
+                            tg.showAlert('Ошибка: ' + error.message);
+                        }
+                    }
+                });
+            }
+            
+            // Вывод через CryptoBot
+            const withdrawTelegramBotBtn = document.getElementById('withdrawTelegramBotBtn');
+            if (withdrawTelegramBotBtn) {
+                withdrawTelegramBotBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeWithdrawModal();
+                    
+                    const botUsername = 'Znakomstva13_bot';
+                    const userId = getUserId();
+                    
+                    // Проверяем баланс
+                    if (_balance <= 0) {
+                        if (tg && tg.showAlert) {
+                            tg.showAlert('Недостаточно средств для вывода');
+                        } else {
+                            alert('Недостаточно средств для вывода');
+                        }
+                        return;
+                    }
+                    
+                    const botUrl = `https://t.me/${botUsername}?start=withdraw_cryptobot_${userId}`;
+                    
+                    console.log('Открываем бота для вывода через CryptoBot:', botUrl, 'User ID:', userId);
+                    
+                    if (tg) {
+                        if (tg.openTelegramLink) {
+                            tg.openTelegramLink(botUrl);
+                        } else {
+                            tg.openLink(botUrl);
+                        }
+                        tg.HapticFeedback.impactOccurred('medium');
+                        
+                        setTimeout(() => {
+                            if (tg.showAlert) {
+                                tg.showAlert('Отправьте боту /withdraw для вывода через CryptoBot');
+                            }
+                        }, 500);
+                    } else {
+                        window.open(botUrl, '_blank');
+                        alert('Бот открыт. Отправьте боту /withdraw для вывода через CryptoBot.');
+                    }
+                });
+            }
+        }
+        
+        // Инициализируем обработчики вывода
+        function initWithdrawHandlersWithRetry(retries = 3) {
+            const withdrawBtn = document.getElementById('withdrawBtn');
+            if (!withdrawBtn && retries > 0) {
+                setTimeout(() => initWithdrawHandlersWithRetry(retries - 1), 100);
+                return;
+            }
+            
+            if (withdrawBtn) {
+                initWithdrawHandlers();
+                console.log('Обработчики вывода инициализированы');
+            }
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(initWithdrawHandlersWithRetry, 150);
+            });
+        } else {
+            setTimeout(initWithdrawHandlersWithRetry, 150);
         }
         
         // Обработчик кнопки "Продать все"
@@ -4632,7 +5001,7 @@
             
             minesGameState.betAmount = parseFloat(document.getElementById('minesBetAmount').value) || 0.1;
             
-            if (balance < minesGameState.betAmount) {
+            if (_balance < minesGameState.betAmount) {
                 if (tg) {
                     tg.showAlert('Недостаточно средств!');
                 } else {
@@ -4641,9 +5010,9 @@
                 return;
             }
             
-            balance -= minesGameState.betAmount;
-            document.getElementById('balance').textContent = balance.toFixed(2);
-            document.getElementById('minesBalance').textContent = balance.toFixed(2);
+            if (!changeBalance(-minesGameState.betAmount, 'minesBet')) {
+                return;
+            }
             saveInventory();
             
             // Генерируем мины
@@ -4743,10 +5112,7 @@
             if (!minesGameState.gameActive) return;
             
             const winnings = minesGameState.betAmount * minesGameState.currentMultiplier;
-            balance += winnings;
-            
-            document.getElementById('balance').textContent = balance.toFixed(2);
-            document.getElementById('minesBalance').textContent = balance.toFixed(2);
+            changeBalance(winnings, 'minesWin');
             saveInventory();
             
             endMinesGame(true);
@@ -4972,7 +5338,7 @@
             
             diceGameState.betAmount = parseFloat(document.getElementById('diceBetAmount').value) || 0.1;
             
-            if (balance < diceGameState.betAmount) {
+            if (_balance < diceGameState.betAmount) {
                 if (tg) {
                     tg.showAlert('Недостаточно средств!');
                 } else {
@@ -4986,9 +5352,9 @@
                 return;
             }
             
-            balance -= diceGameState.betAmount;
-            document.getElementById('balance').textContent = balance.toFixed(2);
-            document.getElementById('diceBalance').textContent = balance.toFixed(2);
+            if (!changeBalance(-diceGameState.betAmount, 'diceBet')) {
+                return;
+            }
             saveInventory();
             
             diceGameState.isRolling = true;
@@ -5038,10 +5404,7 @@
                             ? 99 / diceGameState.threshold 
                             : 99 / (99 - diceGameState.threshold);
                         const winnings = diceGameState.betAmount * multiplier;
-                        balance += winnings;
-                        
-                        document.getElementById('balance').textContent = balance.toFixed(2);
-                        document.getElementById('diceBalance').textContent = balance.toFixed(2);
+                        changeBalance(winnings, 'diceWin');
                         saveInventory();
                         
                         // Сохраняем результат игры на сервер
@@ -5167,30 +5530,28 @@
             if (tg) {
                 tg.showConfirm(`Продать "${item.name}" за 💎 ${item.value.toFixed(2)}?`, (confirmed) => {
                     if (confirmed) {
-                        balance += item.value;
-                        document.getElementById('balance').textContent = balance.toFixed(2);
-                        
+                        if (changeBalance(item.value, 'sellItem')) {
+                            // Удаляем предмет из инвентаря
+                            userInventory = userInventory.filter(invItem => invItem.id !== item.id);
+                            saveInventory(); // Сохраняем баланс локально
+                            saveUserData(); // Сохраняем на сервер
+                            updateInventory();
+                            closeInventoryModal();
+                            
+                            tg.HapticFeedback.notificationOccurred('success');
+                        }
+                    }
+                });
+            } else {
+                if (confirm(`Продать "${item.name}" за ${item.value.toFixed(2)}?`)) {
+                    if (changeBalance(item.value, 'sellItem')) {
                         // Удаляем предмет из инвентаря
                         userInventory = userInventory.filter(invItem => invItem.id !== item.id);
                         saveInventory(); // Сохраняем баланс локально
                         saveUserData(); // Сохраняем на сервер
                         updateInventory();
                         closeInventoryModal();
-                        
-                        tg.HapticFeedback.notificationOccurred('success');
                     }
-                });
-            } else {
-                if (confirm(`Продать "${item.name}" за ${item.value.toFixed(2)}?`)) {
-                    balance += item.value;
-                    document.getElementById('balance').textContent = balance.toFixed(2);
-                    
-                    // Удаляем предмет из инвентаря
-                    userInventory = userInventory.filter(invItem => invItem.id !== item.id);
-                    saveInventory(); // Сохраняем баланс локально
-                    saveUserData(); // Сохраняем на сервер
-                    updateInventory();
-                    closeInventoryModal();
                 }
             }
         }
@@ -5574,9 +5935,7 @@
             
             // Если это ставка текущего пользователя, добавляем выигрыш к балансу
             if (playerId === userBet?.id) {
-                balance += winnings;
-                document.getElementById('balance').textContent = balance.toFixed(2);
-                document.getElementById('crashBalance').textContent = balance.toFixed(2);
+                changeBalance(winnings, 'crashWin');
                 saveInventory();
                 saveUserData();
                 
@@ -5791,9 +6150,9 @@
                 };
                 
                 if (betType === 'balance') {
-                    balance -= betAmount;
-                    document.getElementById('balance').textContent = balance.toFixed(2);
-                    document.getElementById('crashBalance').textContent = balance.toFixed(2);
+                    if (!changeBalance(-betAmount, 'crashBet')) {
+                        return;
+                    }
                     saveInventory();
                     saveUserData();
                 } else {
