@@ -5,9 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>NFT Cases</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        // Встроенная диагностика загрузки TonConnect - выполняется ДО загрузки библиотеки
+        console.log('🔍 Скрипт начал загружаться...');
+        window.tonConnectLibLoaded = false;
+        window.tonConnectCheckStarted = Date.now();
+    </script>
     <script src="https://unpkg.com/@tonconnect/sdk@2/dist/tonconnect.min.js" 
-            onload="console.log('✅ TonConnect SDK загружен'); window.tonConnectLibLoaded = true;" 
-            onerror="console.error('❌ Ошибка загрузки TonConnect SDK'); window.tonConnectLibLoaded = false;"></script>
+            onload="console.log('✅ TonConnect SDK загружен (onload)'); window.tonConnectLibLoaded = true;" 
+            onerror="console.error('❌ Ошибка загрузки TonConnect SDK (onerror)'); window.tonConnectLibLoaded = false;"></script>
+    <script>
+        // Проверка сразу после загрузки скрипта
+        console.log('📦 Скрипт tonconnect.min.js добавлен в DOM');
+        console.log('Проверка через 100мс...');
+        setTimeout(() => {
+            console.log('🔍 Первая проверка TonConnect:', typeof TonConnect !== 'undefined' ? '✅ Найден!' : '❌ Не найден');
+            console.log('window.tonConnectLibLoaded:', window.tonConnectLibLoaded);
+        }, 100);
+    </script>
     <style>
         * {
             margin: 0;
