@@ -1827,6 +1827,66 @@
             cursor: not-allowed;
         }
 
+        .crash-history-container {
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 15px;
+        }
+
+        .crash-history-header {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .crash-history-list {
+            max-height: 200px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .crash-history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .crash-history-item.win {
+            border-left: 3px solid #00ff00;
+        }
+
+        .crash-history-item.loss {
+            border-left: 3px solid #ff0000;
+        }
+
+        .crash-history-bet {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .crash-history-multiplier {
+            color: #00ff00;
+            font-weight: 600;
+        }
+
+        .crash-history-winnings {
+            color: #00ff00;
+            font-weight: 700;
+        }
+
+        .crash-history-loss {
+            color: #ff0000;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
         .dice-page {
             padding: 20px;
             padding-bottom: 120px;
@@ -2996,6 +3056,11 @@
             </div>
             <button id="crashBetBtn" class="crash-bet-btn" onclick="try{console.log('🔵 Клик по кнопке краш, hasBet:', typeof crashGameState !== 'undefined' ? crashGameState.hasBet : 'undefined');window.handleCrashBet(event);}catch(e){alert('Ошибка: '+e.message);console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 999 !important;">Сделать ставку</button>
         </div>
+        
+        <div class="crash-history-container">
+            <div class="crash-history-header">История ставок</div>
+            <div id="crashHistory" class="crash-history-list"></div>
+        </div>
     </div>
 
     <div class="bottom-nav" id="bottomNav">
@@ -3078,7 +3143,8 @@
             graphPoints: [],
             cooldownRemaining: 0,
             cooldownInterval: null,
-            speedVariation: 0.02
+            speedVariation: 0.02,
+            history: [] // История ставок
         };
 
         // Состояние игры Dice
@@ -6650,6 +6716,9 @@
             // Обновляем баланс
             updateCrashBalance();
             
+            // Обновляем историю
+            updateCrashHistoryDisplay();
+            
             // Если игра не запущена и нет кулдауна, показываем начальный кулдаун
             if (!crashGameState.isRunning && !crashGameState.isCooldown) {
                 // Показываем начальный кулдаун для возможности сделать ставку
@@ -6666,13 +6735,25 @@
             // НЕ сбрасываем hasBet - ставка должна сохраняться до начала раунда
             // crashGameState.hasBet = false; // УБРАНО - ставка сохраняется
             
-            // Генерируем более случайную цель (от 1.0 до 30.0)
-            // Используем несколько источников случайности для более непредсказуемого результата
-            const seed1 = Date.now() % 1000000;
-            const seed2 = Math.random() * 1000000;
-            const seed3 = (Date.now() * Math.random()) % 1000000;
-            const combinedSeed = (seed1 + seed2 + seed3) % 1000000;
-            crashGameState.targetMultiplier = 1.0 + (combinedSeed / 1000000) * 29.0;
+            // Генерируем цель с приоритетом на диапазон 1.0-7.0 (70% вероятность)
+            // Остальные 30% - от 7.0 до 30.0
+            const random = Math.random();
+            
+            if (random < 0.7) {
+                // 70% вероятность - диапазон 1.0-7.0
+                const seed1 = Date.now() % 1000000;
+                const seed2 = Math.random() * 1000000;
+                const seed3 = (Date.now() * Math.random()) % 1000000;
+                const combinedSeed = (seed1 + seed2 + seed3) % 1000000;
+                crashGameState.targetMultiplier = 1.0 + (combinedSeed / 1000000) * 6.0; // 1.0-7.0
+            } else {
+                // 30% вероятность - диапазон 7.0-30.0
+                const seed1 = Date.now() % 1000000;
+                const seed2 = Math.random() * 1000000;
+                const seed3 = (Date.now() * Math.random()) % 1000000;
+                const combinedSeed = (seed1 + seed2 + seed3) % 1000000;
+                crashGameState.targetMultiplier = 7.0 + (combinedSeed / 1000000) * 23.0; // 7.0-30.0
+            }
             
             // Добавляем случайную вариацию скорости для более рандомного графика (уменьшено для более медленного роста)
             crashGameState.speedVariation = 0.005 + Math.random() * 0.008; // От 0.005 до 0.013 (было 0.015-0.03)
@@ -6928,6 +7009,14 @@
             const winnings = crashGameState.betAmount * crashGameState.multiplier;
             changeBalance(winnings, 'crashWin');
             
+            // Добавляем в историю (выигрыш)
+            addToCrashHistory({
+                betAmount: crashGameState.betAmount,
+                multiplier: crashGameState.multiplier,
+                winnings: winnings,
+                isWin: true
+            });
+            
             crashGameState.hasBet = false;
             crashGameState.betAmount = 0;
             
@@ -6962,6 +7051,16 @@
         function processCrashResult() {
             // Если была ставка и не забрали - теряем
             if (crashGameState.hasBet) {
+                const lostAmount = crashGameState.betAmount;
+                
+                // Добавляем в историю (проигрыш)
+                addToCrashHistory({
+                    betAmount: lostAmount,
+                    multiplier: crashGameState.targetMultiplier,
+                    winnings: 0,
+                    isWin: false
+                });
+                
                 crashGameState.hasBet = false;
                 crashGameState.betAmount = 0;
                 
@@ -6982,6 +7081,75 @@
             if (balanceEl) {
                 balanceEl.textContent = _balance.toFixed(2);
             }
+        }
+        
+        function addToCrashHistory(record) {
+            // Добавляем запись в начало истории
+            crashGameState.history.unshift(record);
+            
+            // Ограничиваем историю до 20 записей
+            if (crashGameState.history.length > 20) {
+                crashGameState.history = crashGameState.history.slice(0, 20);
+            }
+            
+            // Обновляем отображение истории
+            updateCrashHistoryDisplay();
+        }
+        
+        function updateCrashHistoryDisplay() {
+            const historyList = document.getElementById('crashHistory');
+            if (!historyList) return;
+            
+            // Очищаем список
+            historyList.innerHTML = '';
+            
+            // Если история пуста, показываем сообщение
+            if (crashGameState.history.length === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'crash-history-item';
+                emptyMsg.style.color = 'rgba(255, 255, 255, 0.5)';
+                emptyMsg.style.textAlign = 'center';
+                emptyMsg.textContent = 'История ставок пуста';
+                historyList.appendChild(emptyMsg);
+                return;
+            }
+            
+            // Добавляем каждую запись
+            crashGameState.history.forEach(record => {
+                const item = document.createElement('div');
+                item.className = `crash-history-item ${record.isWin ? 'win' : 'loss'}`;
+                
+                // Левая часть: ставка
+                const betPart = document.createElement('span');
+                betPart.className = 'crash-history-bet';
+                betPart.textContent = `${record.betAmount.toFixed(2)}`;
+                
+                // Средняя часть: множитель или крестик
+                const multPart = document.createElement('span');
+                if (record.isWin) {
+                    multPart.className = 'crash-history-multiplier';
+                    multPart.textContent = `x${record.multiplier.toFixed(2)}`;
+                } else {
+                    multPart.className = 'crash-history-loss';
+                    multPart.textContent = '✕';
+                }
+                
+                // Правая часть: выигрыш или проигрыш
+                const winPart = document.createElement('span');
+                if (record.isWin) {
+                    winPart.className = 'crash-history-winnings';
+                    winPart.textContent = `+${record.winnings.toFixed(2)}`;
+                } else {
+                    winPart.className = 'crash-history-loss';
+                    winPart.textContent = `-${record.betAmount.toFixed(2)}`;
+                }
+                
+                item.appendChild(betPart);
+                item.appendChild(multPart);
+                item.appendChild(winPart);
+                
+                historyList.appendChild(item);
+            });
         }
         
         function showCrashCooldown(ctx, canvas) {
