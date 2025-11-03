@@ -3793,7 +3793,7 @@
         const mainBalancePlusBtn = document.querySelector('.balance-section button');
         if (mainBalancePlusBtn) {
             mainBalancePlusBtn.addEventListener('click', () => {
-                const botUsername = '@Znakomstva13_bot'; // TODO: Замените на реальный username бота
+                const botUsername = 'Znakomstva13_bot'; // Username без символа @
                 const userId = getUserId();
                 const botUrl = `https://t.me/${botUsername}?start=topup_${userId}`;
                 
@@ -4223,7 +4223,7 @@
         // Обработчики событий - Пополнение через Telegram бота
         document.getElementById('topUpBtn').addEventListener('click', () => {
             // Замените на username вашего бота (например: @your_crypto_bot)
-            const botUsername = '@Znakomstva13_bot'; // TODO: Замените на реальный username бота
+            const botUsername = 'Znakomstva13_bot'; // TODO: Замените на реальный username бота
             const userId = getUserId();
             
             // Открываем бота напрямую
@@ -5572,7 +5572,7 @@
         const crashBalancePlusBtn = document.getElementById('crashBalance')?.parentElement?.querySelector('button');
         if (crashBalancePlusBtn) {
             crashBalancePlusBtn.addEventListener('click', () => {
-                const botUsername = '@Znakomstva13_bot'; // TODO: Замените на реальный username бота
+                const botUsername = 'Znakomstva13_bot'; // Username без символа @
                 const userId = getUserId();
                 const botUrl = `https://t.me/${botUsername}?start=topup_${userId}`;
                 
