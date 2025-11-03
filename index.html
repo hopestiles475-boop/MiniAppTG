@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>NFT Cases</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://unpkg.com/@tonconnect/sdk@latest/dist/tonconnect.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tonconnect/sdk@2/dist/tonconnect.min.js" onerror="this.src='https://unpkg.com/@tonconnect/sdk@2/dist/tonconnect.min.js'; this.onerror=null;"></script>
     <style>
         * {
             margin: 0;
@@ -3006,9 +3006,6 @@
             }
         };
         
-        // ==========================================
-        // КОНЕЦ КОНФИГУРАЦИИ
-        // ==========================================
 
         document.getElementById('balance').textContent = balance.toFixed(2);
 
@@ -4312,22 +4309,35 @@
         
         function initTonConnect() {
             try {
-                // Ждем загрузки библиотеки
+                // Проверяем загрузку библиотеки несколько раз
                 if (typeof TonConnect === 'undefined') {
-                    console.log('TonConnect не загружен, повторная попытка через 1 секунду...');
-                    setTimeout(initTonConnect, 1000);
+                    console.log('TonConnect не загружен, повторная попытка...');
+                    let attempts = 0;
+                    const checkInterval = setInterval(() => {
+                        attempts++;
+                        if (typeof TonConnect !== 'undefined') {
+                            clearInterval(checkInterval);
+                            initTonConnect();
+                        } else if (attempts >= 10) {
+                            clearInterval(checkInterval);
+                            console.error('TonConnect не удалось загрузить после 10 попыток');
+                        }
+                    }, 500);
                     return;
                 }
                 
+                console.log('Инициализация TonConnect...');
                 tonconnect = new TonConnect({
                     manifestUrl: 'https://hopestiles475-boop.github.io/MiniAppTG/tonconnect-manifest.json'
                 });
+                console.log('TonConnect инициализирован');
                 
                 // Проверяем, подключен ли кошелек
                 tonconnect.restoreConnection().then(walletInfo => {
                     if (walletInfo) {
                         wallet = walletInfo;
                         updateTonkeeperButton();
+                        console.log('Кошелек восстановлен:', wallet.account.address);
                     }
                 }).catch(err => {
                     console.log('Wallet not connected:', err);
@@ -4337,24 +4347,35 @@
             }
         }
         
-        // Ждем полной загрузки страницы
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(initTonConnect, 500);
-            });
-        } else {
-            setTimeout(initTonConnect, 500);
-        }
+        // Ждем загрузки скрипта TonConnect
+        window.addEventListener('load', function() {
+            setTimeout(initTonConnect, 1000);
+        });
 
         // Подключение к Tonkeeper
         async function connectTonkeeper() {
-            if (!tonconnect) {
+            // Проверяем еще раз перед подключением
+            if (typeof TonConnect === 'undefined') {
                 if (tg) {
-                    tg.showAlert('TonConnect не загружен. Проверьте подключение к интернету.');
+                    tg.showAlert('Библиотека TonConnect не загружена. Проверьте интернет и перезагрузите страницу.');
                 } else {
-                    alert('TonConnect не загружен. Проверьте подключение к интернету.');
+                    alert('Библиотека TonConnect не загружена. Проверьте интернет и перезагрузите страницу.');
                 }
                 return;
+            }
+            
+            if (!tonconnect) {
+                // Пытаемся инициализировать еще раз
+                initTonConnect();
+                
+                if (!tonconnect) {
+                    if (tg) {
+                        tg.showAlert('TonConnect не инициализирован. Проверьте подключение к интернету.');
+                    } else {
+                        alert('TonConnect не инициализирован. Проверьте подключение к интернету.');
+                    }
+                    return;
+                }
             }
 
             try {
