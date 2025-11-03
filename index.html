@@ -2800,7 +2800,7 @@
 
         <div class="crash-controls">
             <div class="multiplier-buttons" id="multiplierButtons">
-                <button class="multiplier-btn" data-mult="auto" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('auto', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=null;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">Вручну</button>
+                <button class="multiplier-btn" data-mult="auto" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('auto', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=null;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">Вручн</button>
                 <button class="multiplier-btn active" data-mult="1.5" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('1.5', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=1.5;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x1.5</button>
                 <button class="multiplier-btn" data-mult="2.0" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('2.0', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=2.0;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x2.0</button>
                 <button class="multiplier-btn" data-mult="3.0" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('3.0', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=3.0;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x3.0</button>
@@ -7090,6 +7090,11 @@
                     crashMultiplier = 1.00;
                     crashDirection = 1;
                     
+                    console.log('🚀 НАЧИНАЕМ НОВЫЙ РАУНД!');
+                    console.log('🚀 crashRoundActive =', crashRoundActive);
+                    console.log('🚀 crashDirection =', crashDirection);
+                    console.log('🚀 crashMultiplier =', crashMultiplier);
+                    
                     // Получаем актуальные размеры canvas для инициализации точек графика
                     const dpr = window.devicePixelRatio || 1;
                     const canvasWidth = canvas.width / dpr;
@@ -7098,7 +7103,6 @@
                     // Инициализируем график с начальной точкой
                     crashGraphPoints = [{ x: 10, y: canvasHeight - 50, multiplier: 1.00 }];
                     
-                    console.log('🚀 Начинаем новый раунд краша');
                     console.log('📊 Canvas размеры:', canvasWidth, 'x', canvasHeight);
                     console.log('📈 Начальная точка графика:', crashGraphPoints[0]);
                     
@@ -7111,7 +7115,7 @@
                     crashTarget = 1.01 + random * 9.0;
                     
                     console.log('🎯 Цель краша установлена:', crashTarget.toFixed(2));
-                    console.log('✅ crashRoundActive установлен:', crashRoundActive);
+                    console.log('✅ ВСЕ ПАРАМЕТРЫ УСТАНОВЛЕНЫ!');
                     
                     // Время до краша (от 3 до 20 секунд) - одинаковое для всех
                     // НЕ используем setTimeout для краша, так как краш определяется достижением crashTarget в анимации
@@ -7120,20 +7124,41 @@
                     // Запускаем анимацию роста графика
                     console.log('🎬 Запускаем анимацию графика...');
                     startCrashAnimation(ctx, canvas);
+                    
+                    // Проверяем через 100мс что все правильно установилось
+                    setTimeout(() => {
+                        console.log('⏱️ Проверка через 100мс:', {
+                            crashRoundActive,
+                            crashDirection,
+                            crashMultiplier,
+                            crashTarget,
+                            точек: crashGraphPoints.length
+                        });
+                    }, 100);
                 }
             }, 1000);
         }
 
         // Анимация графика краша
         function startCrashAnimation(ctx, canvas) {
+            console.log('🎬 startCrashAnimation вызвана');
+            
+            // Отменяем предыдущую анимацию если была
             if (crashAnimationId) {
+                console.log('🛑 Отменяем предыдущую анимацию');
                 cancelAnimationFrame(crashAnimationId);
+                crashAnimationId = null;
             }
             
             // Одинаковая скорость для всех (на основе crashTarget для синхронизации)
             let speed = 0.012; // Фиксированная скорость роста для всех игроков
             
+            // Счетчик кадров для отладки
+            let frameCount = 0;
+            
             const animate = () => {
+                frameCount++;
+                
                 // Всегда рисуем canvas (даже во время кулдауна будет что-то показано)
                 if (!ctx || !canvas || canvas.width === 0 || canvas.height === 0) {
                     console.error('❌ Canvas недоступен для рисования', {
@@ -7161,8 +7186,8 @@
                     // Движение вверх (рост)
                     crashMultiplier += speed;
                     
-                    // Логируем первые 10 кадров для отладки
-                    if (frameCount <= 10 || crashGraphPoints.length <= 10) {
+                    // Логируем каждые 60 кадров (примерно раз в секунду) или первые 20 кадров
+                    if (frameCount <= 20 || frameCount % 60 === 0) {
                         console.log(`📊 Кадр #${frameCount}:`, {
                             множитель: crashMultiplier.toFixed(3),
                             точек: crashGraphPoints.length,
@@ -7221,7 +7246,7 @@
                         return; // Выходим из блока if, но анимация продолжается
                     }
                     
-                    // Добавляем точку на график во время роста - добавляем точку КАЖДЫЙ КАДР
+                    // КРИТИЧЕСКИ ВАЖНО: Добавляем точку на график во время роста - добавляем точку КАЖДЫЙ КАДР
                     // Вычисляем координаты новой точки ПЕРЕД добавлением
                     const currentLength = crashGraphPoints.length;
                     const x = 10 + (currentLength * 3); // Начинаем с 10px отступа, шаг 3px
@@ -7229,12 +7254,24 @@
                     const multiplierPercent = ((crashMultiplier - 1.0) / 9.0) * 100;
                     const y = canvasHeight - 50 - (multiplierPercent / 100) * (canvasHeight - 100);
                     
-                    // ВАЖНО: Добавляем точку каждый кадр, только если раунд активен
+                    // ВАЖНО: Добавляем точку каждый кадр
                     crashGraphPoints.push({ x, y, multiplier: crashMultiplier });
                     
-                    // Логируем первые несколько точек для отладки
-                    if (crashGraphPoints.length <= 5 || frameCount % 60 === 0) {
-                        console.log(`📈 Кадр ${frameCount}: Добавлена точка #${crashGraphPoints.length}: x=${x.toFixed(1)}, y=${y.toFixed(1)}, mult=${crashMultiplier.toFixed(3)}`);
+                    // Логируем добавление точек для отладки
+                    if (crashGraphPoints.length <= 10 || frameCount % 30 === 0) {
+                        console.log(`📈 Кадр ${frameCount}: Добавлена точка #${crashGraphPoints.length}: x=${x.toFixed(1)}, y=${y.toFixed(1)}, mult=${crashMultiplier.toFixed(3)}, roundActive=${crashRoundActive}`);
+                    }
+                    
+                    // КРИТИЧЕСКАЯ ПРОВЕРКА: Если точки не добавляются, логируем
+                    if (crashGraphPoints.length === 1 && frameCount > 5) {
+                        console.error('⚠️ ПРОБЛЕМА: Точки не добавляются!', {
+                            frameCount,
+                            crashRoundActive,
+                            crashDirection,
+                            crashMultiplier,
+                            crashTarget,
+                            точек: crashGraphPoints.length
+                        });
                     }
                     
                     // Ограничиваем количество точек чтобы не перегружать график
@@ -7305,6 +7342,12 @@
                 
                 // ВАЖНО: Продолжаем анимацию ВСЕГДА (для отображения графика даже во время кулдауна)
                 // Анимация остановится только если явно отменена через cancelAnimationFrame
+                
+                // Логируем каждые 60 кадров что анимация продолжается
+                if (frameCount % 60 === 0) {
+                    console.log(`🔄 Анимация работает: кадр ${frameCount}, точек: ${crashGraphPoints.length}, roundActive: ${crashRoundActive}`);
+                }
+                
                 try {
                     crashAnimationId = requestAnimationFrame(animate);
                 } catch (error) {
@@ -7320,6 +7363,8 @@
             console.log('🎬 Запускаем функцию animate, crashRoundActive:', crashRoundActive);
             console.log('🎬 crashGraphPoints при запуске:', crashGraphPoints.length);
             console.log('🎬 crashTarget:', crashTarget);
+            console.log('🎬 crashMultiplier:', crashMultiplier);
+            console.log('🎬 crashDirection:', crashDirection);
             console.log('🎬 Canvas готов:', {
                 width: canvas?.width,
                 height: canvas?.height,
@@ -7330,6 +7375,11 @@
             animate();
             
             console.log('✅ Анимация запущена, crashAnimationId:', crashAnimationId);
+            
+            // Проверяем через 1 секунду что анимация все еще работает
+            setTimeout(() => {
+                console.log('⏱️ Через 1 сек: crashAnimationId:', crashAnimationId, 'точек:', crashGraphPoints.length, 'roundActive:', crashRoundActive);
+            }, 1000);
         }
         
         // Обработка завершения раунда краша
