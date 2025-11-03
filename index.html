@@ -3373,24 +3373,56 @@
         // Инициализация обработчиков после загрузки DOM
         function initEventHandlers() {
             try {
+                console.log('🔧 initEventHandlers вызвана');
+                
                 // Навигация между вкладками - простая инициализация
                 const navItems = document.querySelectorAll('.nav-item');
+                console.log(`🔍 Найдено элементов навигации: ${navItems.length}`);
                 
-                navItems.forEach((item) => {
+                if (navItems.length === 0) {
+                    console.error('❌ Элементы навигации не найдены!');
+                    return;
+                }
+                
+                navItems.forEach((item, index) => {
                     const page = item.dataset.page || item.getAttribute('data-page');
+                    console.log(`🔧 Устанавливаю обработчик для навигации ${index + 1}: ${page}`);
+                    
+                    // Проверяем, что handleNavClick существует
+                    if (typeof handleNavClick !== 'function') {
+                        console.error('❌ Функция handleNavClick не найдена!');
+                        return;
+                    }
+                    
+                    // Убеждаемся, что элемент кликабелен
+                    item.style.cursor = 'pointer';
+                    item.style.pointerEvents = 'auto';
                     
                     // Простой обработчик клика
                     item.onclick = function(e) {
+                        console.log(`🔥 Клик по навигации: ${this.dataset.page || page}`);
                         e.preventDefault();
                         e.stopPropagation();
                         
                         const targetPage = this.dataset.page || page || this.getAttribute('data-page');
+                        console.log(`📄 Целевая страница: ${targetPage}`);
+                        
                         if (targetPage && typeof handleNavClick === 'function') {
+                            console.log('✅ Вызываю handleNavClick');
                             handleNavClick(targetPage, this);
+                        } else {
+                            console.error('❌ Не могу вызвать handleNavClick:', {
+                                targetPage: targetPage,
+                                handleNavClick: typeof handleNavClick
+                            });
                         }
                         return false;
                     };
+                    
+                    console.log(`✅ Обработчик установлен для: ${page}`);
                 });
+                
+                console.log('✅ Навигация инициализирована');
                 
                 // Обработчики табов
                 if (typeof initTabs === 'function') {
@@ -3425,20 +3457,30 @@
                 // Инициализация обработчиков пополнения и вывода
                 if (typeof initTopUpHandlers === 'function') {
                     initTopUpHandlers();
+                } else {
+                    console.error('❌ Функция initTopUpHandlers не найдена');
                 }
                 
                 if (typeof initWithdrawHandlers === 'function') {
                     initWithdrawHandlers();
+                } else {
+                    console.error('❌ Функция initWithdrawHandlers не найдена');
                 }
+                
+                console.log('✅ initEventHandlers завершена успешно');
             } catch (error) {
                 console.error('❌ Критическая ошибка инициализации обработчиков:', error);
+                console.error('Stack:', error.stack);
             }
         }
         
         // Функция обработки клика по навигации
         function handleNavClick(page, clickedItem) {
             try {
+                console.log('🔄 handleNavClick вызвана:', page);
+                
                 if (!page) {
+                    console.error('❌ Страница не указана в handleNavClick');
                     return;
                 }
                 
@@ -3939,8 +3981,13 @@
             
             // Инициализируем обработчики событий
             setTimeout(() => {
+                console.log('⏰ DOMContentLoaded: Вызываю initEventHandlers');
+                console.log('🔍 Проверка наличия элементов навигации:', document.querySelectorAll('.nav-item').length);
+                
                 if (typeof initEventHandlers === 'function') {
                     initEventHandlers();
+                } else {
+                    console.error('❌ Функция initEventHandlers не найдена в DOMContentLoaded!');
                 }
                 
                 // Дополнительная инициализация обработчиков пополнения и вывода
@@ -3950,7 +3997,7 @@
                 if (typeof initWithdrawHandlers === 'function') {
                     initWithdrawHandlers();
                 }
-            }, 300);
+            }, 500);
             
             // Загружаем подарки с сервера или из localStorage
             fetchGlobalPrizes();
