@@ -2779,15 +2779,21 @@
                 
                 isTelegram = true;
                 console.log('✅ Telegram Web App инициализирован');
+                
+                // Вызываем обновление аватарки после инициализации
+                if (typeof updateHeaderAvatar === 'function') {
+                    setTimeout(updateHeaderAvatar, 500);
+                }
             } else {
                 console.warn('⚠️ Telegram Web App API не найден - приложение будет работать в режиме браузера');
-                // Создаём заглушку для работы в браузере
+                console.log('ℹ️ Если вы тестируете в браузере, это нормально. В Telegram Mini App данные пользователя будут загружены автоматически.');
+                // Создаём заглушку для работы в браузере (не используем реальные данные)
                 tg = {
                     initDataUnsafe: {
                         user: {
                             id: Math.floor(Math.random() * 1000000),
-                            first_name: 'Test',
-                            username: 'testuser',
+                            first_name: null, // Не используем заглушку, чтобы было видно, что данные не загружены
+                            username: null,
                             photo_url: null
                         }
                     },
@@ -2808,8 +2814,8 @@
                 initDataUnsafe: {
                     user: {
                         id: Math.floor(Math.random() * 1000000),
-                        first_name: 'Test',
-                        username: 'testuser',
+                        first_name: null, // Не используем заглушку
+                        username: null,
                         photo_url: null
                     }
                 },
@@ -3641,6 +3647,13 @@
             // Обновляем информацию профиля
             updateProfileInfo();
             
+            // Обновляем аватарку и имя пользователя в хедере (с задержкой для гарантии загрузки Telegram API)
+            setTimeout(() => {
+                updateHeaderAvatar();
+                // Повторная попытка через 1 секунду на случай, если API еще не загружен
+                setTimeout(updateHeaderAvatar, 1000);
+            }, 100);
+            
             // Обновляем список подарков каждые 3 секунды
             setInterval(() => {
                 fetchGlobalPrizes();
@@ -3725,37 +3738,81 @@
 
         // Обновление аватарки и имени в шапке
         function updateHeaderAvatar() {
-        const user = tg?.initDataUnsafe?.user;
-            const usernameEl = document.getElementById('username');
-            const avatarEl = document.querySelector('.avatar');
-            
-        if (user) {
-                if (usernameEl) {
-                    usernameEl.textContent = user.first_name || user.username || 'User';
+            try {
+                console.log('🔄 Обновление аватарки и имени пользователя...');
+                
+                // Пробуем получить данные пользователя из Telegram
+                let user = null;
+                
+                if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                    user = tg.initDataUnsafe.user;
+                    console.log('✅ Данные пользователя из Telegram:', user);
+                } else {
+                    console.warn('⚠️ Telegram Web App API не предоставил данные пользователя');
+                    console.log('tg:', tg);
+                    console.log('tg?.initDataUnsafe:', tg?.initDataUnsafe);
                 }
                 
-                if (avatarEl && user.photo_url) {
-                    // Создаем img элемент для аватарки
-                    const img = document.createElement('img');
-                    img.src = user.photo_url;
-                    img.style.width = '100%';
-                    img.style.height = '100%';
-                    img.style.objectFit = 'cover';
-                    img.style.borderRadius = '50%';
-                    img.onerror = function() {
-                        // Если фото не загрузилось, показываем эмодзи
+                const usernameEl = document.getElementById('username');
+                const avatarEl = document.querySelector('.avatar');
+                
+                if (user) {
+                    // Обновляем имя пользователя
+                    if (usernameEl) {
+                        const displayName = user.first_name || user.username || user.last_name || 'Пользователь';
+                        usernameEl.textContent = displayName;
+                        console.log('✅ Имя пользователя обновлено:', displayName);
+                    }
+                    
+                    // Обновляем аватарку
+                    if (avatarEl) {
+                        if (user.photo_url) {
+                            // Создаем img элемент для аватарки
+                            const img = document.createElement('img');
+                            img.src = user.photo_url;
+                            img.style.width = '100%';
+                            img.style.height = '100%';
+                            img.style.objectFit = 'cover';
+                            img.style.borderRadius = '50%';
+                            img.onerror = function() {
+                                console.warn('⚠️ Не удалось загрузить фото пользователя');
+                                avatarEl.innerHTML = '👤';
+                            };
+                            img.onload = function() {
+                                console.log('✅ Фото пользователя загружено');
+                            };
+                            avatarEl.innerHTML = '';
+                            avatarEl.appendChild(img);
+                        } else {
+                            // Если фото недоступно, показываем эмодзи
+                            avatarEl.innerHTML = '👤';
+                            console.log('ℹ️ Фото пользователя недоступно, используется эмодзи');
+                        }
+                    }
+                } else {
+                    // Если данные пользователя недоступны, оставляем значение по умолчанию
+                    if (usernameEl) {
+                        usernameEl.textContent = 'Пользователь';
+                    }
+                    if (avatarEl && !avatarEl.querySelector('img')) {
                         avatarEl.innerHTML = '👤';
-                    };
-                    avatarEl.innerHTML = '';
-                    avatarEl.appendChild(img);
-                } else if (avatarEl && !avatarEl.querySelector('img')) {
-                    // Если фото недоступно, показываем эмодзи
-                    avatarEl.innerHTML = '👤';
+                    }
+                    console.warn('⚠️ Данные пользователя недоступны, используется значение по умолчанию');
                 }
+                
+                // Также обновляем имя в профиле
+                const profileUsernameEl = document.getElementById('profileUsername');
+                if (profileUsernameEl && user) {
+                    const displayName = user.first_name || user.username || user.last_name || 'Пользователь';
+                    profileUsernameEl.textContent = displayName;
+                }
+            } catch (error) {
+                console.error('❌ Ошибка обновления аватарки:', error);
             }
         }
         
-        updateHeaderAvatar();
+        // Вызываем после полной инициализации
+        // updateHeaderAvatar будет вызвана в DOMContentLoaded
 
         // Инициализация табов (уже обрабатывается в initEventHandlers)
         // Обработчики карточек кейсов также инициализируются в initCaseCards
