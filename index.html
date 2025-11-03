@@ -6831,8 +6831,26 @@
         }
         
         function makeCrashBet() {
-            // Если уже есть ставка - забираем выигрыш (можно в любой момент, даже во время раунда)
+            // Если уже есть ставка - забираем выигрыш (НО только во время раунда, не во время кулдауна)
             if (crashGameState.hasBet) {
+                // Нельзя забирать во время кулдауна - это эксплойт
+                if (crashGameState.isCooldown) {
+                    if (tg) {
+                        tg.showAlert('Забрать ставку можно только во время раунда, когда график растет!');
+                    } else {
+                        alert('Забрать ставку можно только во время раунда, когда график растет!');
+                    }
+                    return;
+                }
+                // Можно забирать только во время активного раунда
+                if (!crashGameState.isRunning) {
+                    if (tg) {
+                        tg.showAlert('Дождитесь начала раунда, чтобы забрать ставку!');
+                    } else {
+                        alert('Дождитесь начала раунда, чтобы забрать ставку!');
+                    }
+                    return;
+                }
                 console.log('✅ Забираем ставку, множитель:', crashGameState.multiplier);
                 cashOutCrash();
                 return;
@@ -6983,10 +7001,10 @@
                     betBtn.style.cursor = 'pointer';
                     betBtn.style.pointerEvents = 'auto';
                 } else {
-                    // Если есть ставка, можно забрать (но лучше забрать во время раунда)
-                    betBtn.disabled = false;
-                    betBtn.textContent = 'Забрать';
-                    betBtn.style.cursor = 'pointer';
+                    // Если есть ставка во время кулдауна - кнопка показывает, что нужно дождаться раунда
+                    betBtn.disabled = true;
+                    betBtn.textContent = 'Дождитесь раунда';
+                    betBtn.style.cursor = 'not-allowed';
                     betBtn.style.pointerEvents = 'auto';
                 }
             }
