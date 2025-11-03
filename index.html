@@ -2644,11 +2644,11 @@
         </div>
 
         <div class="top-up-buttons">
-            <button class="top-up-btn primary" id="topUpBtn" onclick="window.handleTopUp && window.handleTopUp(event)">
+            <button class="top-up-btn primary" id="topUpBtn" onclick="if(window.handleTopUp){window.handleTopUp(event);}">
                 <span class="btn-icon"><span class="currency-icon" style="width: 18px; height: 18px; display: inline-block;"></span></span>
                 <span>Пополнить</span>
             </button>
-            <button class="top-up-btn secondary" id="withdrawBtn" onclick="window.handleWithdraw && window.handleWithdraw(event)">
+            <button class="top-up-btn secondary" id="withdrawBtn" onclick="if(window.handleWithdraw){window.handleWithdraw(event);}">
                 <span>Вывести</span>
             </button>
         </div>
@@ -2753,7 +2753,7 @@
             <select class="bet-item-select" id="betItemSelect" style="display: none;">
                 <option value="">Выберите предмет</option>
             </select>
-            <button class="make-bet-btn" id="makeBetBtn" onclick="window.handleCrashBetClick && window.handleCrashBetClick(event)">Сделать ставку</button>
+            <button class="make-bet-btn" id="makeBetBtn" onclick="if(window.handleCrashBetClick){window.handleCrashBetClick(event);}">Сделать ставку</button>
         </div>
 
         <div class="bets-list" id="betsList">
@@ -2788,7 +2788,7 @@
                     <div class="mines-multiplier-value" id="minesMultiplier">x1.00</div>
                 </div>
                 <button id="minesCashOutBtn" class="mines-cash-out-btn" disabled>Забрать</button>
-                <button id="minesStartBtn" class="mines-start-btn" onclick="window.handleMinesStart && window.handleMinesStart(event)">Начать игру</button>
+                <button id="minesStartBtn" class="mines-start-btn" onclick="if(window.handleMinesStart){window.handleMinesStart(event);}">Начать игру</button>
             </div>
             
             <div class="mines-grid-container">
@@ -2856,7 +2856,7 @@
                     <span class="dice-auto-status" id="diceAutoStatus">OFF</span>
                 </div>
                 
-                <button id="diceStartBtn" class="dice-start-btn" onclick="window.handleDiceStart && window.handleDiceStart(event)">START</button>
+                <button id="diceStartBtn" class="dice-start-btn" onclick="if(window.handleDiceStart){window.handleDiceStart(event);}">START</button>
             </div>
             
             <div class="dice-result-container">
@@ -3836,6 +3836,14 @@
                     initEventHandlers();
                 }
                 
+                // Инициализируем кейсы при первой загрузке
+                if (typeof initCaseCards === 'function') {
+                    initCaseCards();
+                }
+                if (typeof initOpenButton === 'function') {
+                    initOpenButton();
+                }
+                
                 // Дополнительная инициализация обработчиков пополнения и вывода
                 if (typeof initTopUpHandlers === 'function') {
                     initTopUpHandlers();
@@ -3843,6 +3851,28 @@
                 if (typeof initWithdrawHandlers === 'function') {
                     initWithdrawHandlers();
                 }
+                
+                // Инициализируем игры заранее (на случай если пользователь сразу переключится)
+                setTimeout(function() {
+                    if (typeof initCrashGame === 'function') {
+                        const crashPage = document.getElementById('crashPage');
+                        if (crashPage && crashPage.style.display === 'block') {
+                            initCrashGame();
+                        }
+                    }
+                    if (typeof initMinesGame === 'function') {
+                        const minesPage = document.getElementById('minesPage');
+                        if (minesPage && minesPage.style.display === 'block') {
+                            initMinesGame();
+                        }
+                    }
+                    if (typeof initDiceGame === 'function') {
+                        const dicePage = document.getElementById('dicePage');
+                        if (dicePage && dicePage.style.display === 'block') {
+                            initDiceGame();
+                        }
+                    }
+                }, 100);
             }, 300);
             
             // Загружаем подарки с сервера или из localStorage
@@ -6090,62 +6120,96 @@
         let crashTarget = 1.00;
         let crashDirection = 1; // 1 = вверх, -1 = вниз (краш)
 
-        // Глобальные обработчики для inline onclick
+        // Глобальные обработчики для inline onclick - максимально простые
         window.handleCrashBetClick = function(e) {
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            const makeBetBtn = document.getElementById('makeBetBtn');
-            if (makeBetBtn && makeBetBtn.onclick) {
-                makeBetBtn.onclick();
-            } else {
-                const btn = makeBetBtn || document.getElementById('makeBetBtn');
-                if (btn) {
+            try {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                const btn = document.getElementById('makeBetBtn');
+                if (btn && btn.onclick) {
+                    btn.onclick();
+                } else if (btn) {
                     btn.click();
                 }
+            } catch(err) {
+                console.error('Ошибка handleCrashBetClick:', err);
             }
         };
         
         window.handleMinesStart = function(e) {
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            if (typeof startMinesGame === 'function') {
-                startMinesGame();
+            try {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                if (typeof startMinesGame === 'function') {
+                    startMinesGame();
+                } else {
+                    console.error('startMinesGame не определена');
+                }
+            } catch(err) {
+                console.error('Ошибка handleMinesStart:', err);
             }
         };
         
         window.handleDiceStart = function(e) {
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            if (typeof startDiceGame === 'function') {
-                startDiceGame();
+            try {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                if (typeof startDiceGame === 'function') {
+                    startDiceGame();
+                } else {
+                    console.error('startDiceGame не определена');
+                }
+            } catch(err) {
+                console.error('Ошибка handleDiceStart:', err);
             }
         };
         
         window.handleTopUp = function(e) {
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            if (typeof openTopUpModal === 'function') {
-                openTopUpModal();
+            try {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                if (typeof openTopUpModal === 'function') {
+                    openTopUpModal();
+                } else {
+                    console.error('openTopUpModal не определена');
+                }
+            } catch(err) {
+                console.error('Ошибка handleTopUp:', err);
             }
         };
         
         window.handleWithdraw = function(e) {
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            if (typeof openWithdrawModal === 'function') {
-                openWithdrawModal();
+            try {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                if (typeof openWithdrawModal === 'function') {
+                    openWithdrawModal();
+                } else {
+                    console.error('openWithdrawModal не определена');
+                }
+            } catch(err) {
+                console.error('Ошибка handleWithdraw:', err);
             }
         };
+        
+        // Вызываем инициализацию сразу после определения функций
+        setTimeout(function() {
+            console.log('🔧 Проверяю доступность функций...');
+            console.log('startMinesGame:', typeof startMinesGame);
+            console.log('startDiceGame:', typeof startDiceGame);
+            console.log('openTopUpModal:', typeof openTopUpModal);
+            console.log('openWithdrawModal:', typeof openWithdrawModal);
+        }, 1000);
         
         // Инициализация игры Краш
         function initCrashGame() {
