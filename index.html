@@ -2800,7 +2800,7 @@
 
         <div class="crash-controls">
             <div class="multiplier-buttons" id="multiplierButtons">
-                <button class="multiplier-btn" data-mult="auto" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('auto', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=null;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">Вручную</button>
+                <button class="multiplier-btn" data-mult="auto" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('auto', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=null;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">Вручну</button>
                 <button class="multiplier-btn active" data-mult="1.5" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('1.5', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=1.5;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x1.5</button>
                 <button class="multiplier-btn" data-mult="2.0" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('2.0', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=2.0;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x2.0</button>
                 <button class="multiplier-btn" data-mult="3.0" onclick="try{if(typeof window.handleMultiplierClick === 'function'){window.handleMultiplierClick('3.0', event);}else if(typeof selectedMultiplier !== 'undefined'){selectedMultiplier=3.0;document.querySelectorAll('.multiplier-btn').forEach(b=>b.classList.remove('active'));event.target.closest('.multiplier-btn')?.classList.add('active');}}catch(e){console.error(e);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 100 !important;">x3.0</button>
@@ -7156,36 +7156,19 @@
                 ctx.fillStyle = 'rgba(20, 20, 30, 1)';
                 ctx.fillRect(0, 0, canvasWidth, canvasHeight);
                 
-                // Если есть точки графика, рисуем их даже если раунд не активен (история)
-                if (crashGraphPoints.length > 1) {
-                    ctx.strokeStyle = '#00ff00';
-                    ctx.lineWidth = 3;
-                    ctx.beginPath();
-                    ctx.moveTo(crashGraphPoints[0].x, crashGraphPoints[0].y);
-                    for (let i = 1; i < crashGraphPoints.length; i++) {
-                        ctx.lineTo(crashGraphPoints[i].x, crashGraphPoints[i].y);
-                    }
-                    ctx.stroke();
-                } else if (crashGraphPoints.length === 1) {
-                    // Рисуем начальную точку
-                    const point = crashGraphPoints[0];
-                    ctx.fillStyle = '#00ff00';
-                    ctx.beginPath();
-                    ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                
                 // Обновляем множитель только если раунд активен и график растет
                 if (crashRoundActive && crashDirection === 1) {
                     // Движение вверх (рост)
                     crashMultiplier += speed;
                     
-                    // Логируем первые несколько кадров для отладки
-                    if (crashGraphPoints.length < 5) {
-                        console.log('📊 Кадр анимации:', {
+                    // Логируем первые 10 кадров для отладки
+                    if (frameCount <= 10 || crashGraphPoints.length <= 10) {
+                        console.log(`📊 Кадр #${frameCount}:`, {
                             множитель: crashMultiplier.toFixed(3),
                             точек: crashGraphPoints.length,
-                            цель: crashTarget.toFixed(2)
+                            цель: crashTarget.toFixed(2),
+                            roundActive: crashRoundActive,
+                            direction: crashDirection
                         });
                     }
                     
@@ -7239,7 +7222,7 @@
                     }
                     
                     // Добавляем точку на график во время роста - добавляем точку КАЖДЫЙ КАДР
-                    // Вычисляем координаты новой точки
+                    // Вычисляем координаты новой точки ПЕРЕД добавлением
                     const currentLength = crashGraphPoints.length;
                     const x = 10 + (currentLength * 3); // Начинаем с 10px отступа, шаг 3px
                     // Преобразуем множитель в Y координату (1.0 = низ, выше = выше на графике)
@@ -7249,7 +7232,10 @@
                     // ВАЖНО: Добавляем точку каждый кадр, только если раунд активен
                     crashGraphPoints.push({ x, y, multiplier: crashMultiplier });
                     
-                    console.log(`📈 Добавлена точка #${crashGraphPoints.length}: x=${x.toFixed(1)}, y=${y.toFixed(1)}, mult=${crashMultiplier.toFixed(3)}`);
+                    // Логируем первые несколько точек для отладки
+                    if (crashGraphPoints.length <= 5 || frameCount % 60 === 0) {
+                        console.log(`📈 Кадр ${frameCount}: Добавлена точка #${crashGraphPoints.length}: x=${x.toFixed(1)}, y=${y.toFixed(1)}, mult=${crashMultiplier.toFixed(3)}`);
+                    }
                     
                     // Ограничиваем количество точек чтобы не перегружать график
                     const maxPoints = Math.floor((canvasWidth - 20) / 3);
@@ -7259,47 +7245,54 @@
                             point.x = 10 + (i * 3);
                         });
                     }
+                }
+                
+                // ВАЖНО: РИСУЕМ ГРАФИК ВСЕГДА (даже если раунд не активен) - ВНЕ БЛОКА if
+                // Это гарантирует что график отображается каждый кадр
+                if (crashGraphPoints.length >= 2) {
+                    // Рисуем зеленый график роста
+                    ctx.strokeStyle = crashRoundActive && crashDirection === 1 ? '#00ff00' : '#888888';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
                     
-                    // ВСЕГДА перерисовываем весь график заново с новыми точками
-                    if (crashGraphPoints.length >= 2) {
-                        // Рисуем зеленый график роста
-                        ctx.strokeStyle = '#00ff00';
-                        ctx.lineWidth = 3;
-                        ctx.beginPath();
-                        
-                        // Начинаем с первой точки
-                        ctx.moveTo(crashGraphPoints[0].x, crashGraphPoints[0].y);
-                        
-                        // Соединяем все точки линией
-                        for (let i = 1; i < crashGraphPoints.length; i++) {
-                            ctx.lineTo(crashGraphPoints[i].x, crashGraphPoints[i].y);
-                        }
-                        ctx.stroke();
-                        
-                        // Рисуем последнюю точку крупнее для видимости
-                        const lastPoint = crashGraphPoints[crashGraphPoints.length - 1];
-                        ctx.fillStyle = '#00ff00';
-                        ctx.beginPath();
-                        ctx.arc(lastPoint.x, lastPoint.y, 4, 0, Math.PI * 2);
-                        ctx.fill();
-                    } else if (crashGraphPoints.length === 1) {
-                        // Рисуем только одну точку
-                        const point = crashGraphPoints[0];
-                        ctx.fillStyle = '#00ff00';
-                        ctx.beginPath();
-                        ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
-                        ctx.fill();
+                    // Начинаем с первой точки
+                    ctx.moveTo(crashGraphPoints[0].x, crashGraphPoints[0].y);
+                    
+                    // Соединяем все точки линией
+                    for (let i = 1; i < crashGraphPoints.length; i++) {
+                        ctx.lineTo(crashGraphPoints[i].x, crashGraphPoints[i].y);
                     }
+                    ctx.stroke();
                     
-                    // Обновляем отображение множителя
-                    const multiplierElement = document.getElementById('currentMultiplier');
-                    if (multiplierElement) {
+                    // Рисуем последнюю точку крупнее для видимости
+                    const lastPoint = crashGraphPoints[crashGraphPoints.length - 1];
+                    ctx.fillStyle = crashRoundActive && crashDirection === 1 ? '#00ff00' : '#888888';
+                    ctx.beginPath();
+                    ctx.arc(lastPoint.x, lastPoint.y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (crashGraphPoints.length === 1) {
+                    // Рисуем только одну точку
+                    const point = crashGraphPoints[0];
+                    ctx.fillStyle = crashRoundActive && crashDirection === 1 ? '#00ff00' : '#888888';
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Обновляем отображение множителя
+                const multiplierElement = document.getElementById('currentMultiplier');
+                if (multiplierElement) {
+                    if (crashRoundActive && crashDirection === 1) {
                         multiplierElement.textContent = `x${crashMultiplier.toFixed(2)}`;
                         multiplierElement.style.color = '#00ff00';
                         multiplierElement.style.borderColor = '#00ff00';
+                    } else if (!crashRoundActive && crashMultiplier > 1.00) {
+                        multiplierElement.textContent = `x${crashMultiplier.toFixed(2)}`;
                     }
-                    
-                    // Обновляем кнопку "Забрать" если есть активная ставка
+                }
+                
+                // Обновляем кнопку "Забрать" если есть активная ставка
+                if (crashRoundActive && crashDirection === 1) {
                     const makeBetBtn = document.getElementById('makeBetBtn');
                     if (makeBetBtn && userBet && !userBet.cashedOut) {
                         makeBetBtn.textContent = 'Забрать';
@@ -7312,15 +7305,31 @@
                 
                 // ВАЖНО: Продолжаем анимацию ВСЕГДА (для отображения графика даже во время кулдауна)
                 // Анимация остановится только если явно отменена через cancelAnimationFrame
-                crashAnimationId = requestAnimationFrame(animate);
+                try {
+                    crashAnimationId = requestAnimationFrame(animate);
+                } catch (error) {
+                    console.error('❌ Ошибка requestAnimationFrame:', error);
+                    // Пробуем снова через небольшую задержку
+                    setTimeout(() => {
+                        crashAnimationId = requestAnimationFrame(animate);
+                    }, 16); // ~60 FPS
+                }
             };
             
             // Запускаем анимацию сразу - она будет проверять crashRoundActive внутри
             console.log('🎬 Запускаем функцию animate, crashRoundActive:', crashRoundActive);
             console.log('🎬 crashGraphPoints при запуске:', crashGraphPoints.length);
+            console.log('🎬 crashTarget:', crashTarget);
+            console.log('🎬 Canvas готов:', {
+                width: canvas?.width,
+                height: canvas?.height,
+                ctx: !!ctx
+            });
             
             // Убедимся что анимация запустится даже если crashRoundActive false
             animate();
+            
+            console.log('✅ Анимация запущена, crashAnimationId:', crashAnimationId);
         }
         
         // Обработка завершения раунда краша
