@@ -3162,48 +3162,57 @@
         };
         
         // Обработчики для кнопок множителей
+        // Глобальные обработчики для inline onclick - ПРОСТЫЕ И НАДЕЖНЫЕ
         window.handleMultiplierClick = function(mult, e) {
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            console.log('🔵 Клик по множителю:', mult);
             try {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                
                 if (mult === 'auto') {
                     selectedMultiplier = null;
                 } else {
                     selectedMultiplier = parseFloat(mult);
                 }
-                document.querySelectorAll('.multiplier-btn').forEach(b => b.classList.remove('active'));
-                const btn = e?.target?.closest('.multiplier-btn');
-                if (btn) {
-                    btn.classList.add('active');
-                }
-                console.log('✅ selectedMultiplier установлен:', selectedMultiplier);
+                
+                // Обновляем активную кнопку
+                document.querySelectorAll('.multiplier-btn').forEach(b => {
+                    b.classList.remove('active');
+                    if (b.dataset.mult === mult) {
+                        b.classList.add('active');
+                    }
+                });
+                
+                console.log('✅ Множитель выбран:', selectedMultiplier);
             } catch(err) {
-                console.error('Ошибка handleMultiplierClick:', err);
+                console.error('❌ Ошибка handleMultiplierClick:', err);
+                alert('Ошибка: ' + err.message);
             }
         };
         
-        // Обработчики для кнопок типа ставки
         window.handleBetTypeClick = function(type, e) {
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            console.log('🔵 Клик по типу ставки:', type);
             try {
-                betType = type;
-                document.querySelectorAll('.bet-type-btn').forEach(b => b.classList.remove('active'));
-                const btn = e?.target?.closest('.bet-type-btn');
-                if (btn) {
-                    btn.classList.add('active');
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
                 }
                 
+                betType = type;
+                
+                // Обновляем активную кнопку
+                document.querySelectorAll('.bet-type-btn').forEach(b => {
+                    b.classList.remove('active');
+                    if (b.dataset.type === type) {
+                        b.classList.add('active');
+                    }
+                });
+                
+                // Показываем/скрываем поля
                 const amountInput = document.getElementById('betAmountInput');
                 const itemSelect = document.getElementById('betItemSelect');
                 
-                if (betType === 'balance') {
+                if (type === 'balance') {
                     if (amountInput) {
                         amountInput.style.display = 'block';
                         amountInput.style.visibility = 'visible';
@@ -3225,9 +3234,11 @@
                         }
                     }
                 }
-                console.log('✅ betType установлен:', betType);
+                
+                console.log('✅ Тип ставки выбран:', betType);
             } catch(err) {
-                console.error('Ошибка handleBetTypeClick:', err);
+                console.error('❌ Ошибка handleBetTypeClick:', err);
+                alert('Ошибка: ' + err.message);
             }
         };
         
@@ -6647,7 +6658,8 @@
         let userBet = null;
         let crashRoundActive = false;
         let crashTarget = 2.50;
-        let crashIsAnimating = false;
+        let cooldownRemaining = 0;
+        let cooldownInterval = null;
 
         
         // Глобальная делегация событий для кнопок множителей и типа ставки
@@ -6825,85 +6837,19 @@
                 };
             }
             
-            // Переустанавливаем обработчики кнопок типа ставки - НЕ КЛОНИРУЕМ!
+            // УБРАНО - используем только inline onclick из HTML
+            // Глобальные функции window.handleMultiplierClick и window.handleBetTypeClick уже определены выше
+            // Просто убеждаемся что кнопки кликабельны
             const betTypeButtons = document.querySelectorAll('.bet-type-btn');
-            betTypeButtons.forEach(btn => {
-                // НЕ клонируем - просто устанавливаем обработчики на существующие кнопки
-                // Inline onclick уже есть в HTML - они будут работать
-                
-                // Дополнительный обработчик через addEventListener
-                btn.addEventListener('click', function(e) {
-                    if (e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                    }
-                    
-                    document.querySelectorAll('.bet-type-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    betType = btn.dataset.type;
-                    
-                    const amountInput = document.getElementById('betAmountInput');
-                    const itemSelect = document.getElementById('betItemSelect');
-                    
-                    if (betType === 'balance') {
-                        if (amountInput) {
-                            amountInput.style.display = 'block';
-                            amountInput.style.visibility = 'visible';
-                        }
-                        if (itemSelect) {
-                            itemSelect.style.display = 'none';
-                            itemSelect.style.visibility = 'hidden';
-                        }
-                    } else {
-                        if (amountInput) {
-                            amountInput.style.display = 'none';
-                            amountInput.style.visibility = 'hidden';
-                        }
-                        if (itemSelect) {
-                            itemSelect.style.display = 'block';
-                            itemSelect.style.visibility = 'visible';
-                            if (typeof updateBetItemSelect === 'function') {
-                                updateBetItemSelect();
-                            }
-                        }
-                    }
-                });
-                
-                btn.style.cursor = 'pointer';
-                btn.style.pointerEvents = 'auto';
-                btn.style.zIndex = '100';
-            });
-            
-            // Переустанавливаем обработчики кнопок множителя - НЕ КЛОНИРУЕМ!
             const multiplierButtons = document.querySelectorAll('.multiplier-btn');
-            multiplierButtons.forEach(btn => {
-                // НЕ клонируем - просто устанавливаем обработчики на существующие кнопки
-                // Inline onclick уже есть в HTML - они будут работать
-                
-                // Дополнительный обработчик через addEventListener
-                btn.addEventListener('click', function(e) {
-                    if (e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                    }
-                    
-                    const mult = btn.dataset.mult;
-                    if (mult === 'auto') {
-                        selectedMultiplier = null;
-                    } else {
-                        selectedMultiplier = parseFloat(mult);
-                    }
-                    
-                    document.querySelectorAll('.multiplier-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                });
-                
+            
+            [...betTypeButtons, ...multiplierButtons].forEach(btn => {
                 btn.style.cursor = 'pointer';
                 btn.style.pointerEvents = 'auto';
                 btn.style.zIndex = '100';
             });
             
-            console.log('✅ Обработчики кнопок множителей и типа ставки установлены');
+            console.log('✅ Кнопки настроены, используются inline onclick');
             
             // Убедимся что canvas видим
             const crashPage = document.getElementById('crashPage');
@@ -6950,88 +6896,52 @@
             const makeBetBtn = document.getElementById('makeBetBtn');
             
             // Разрешаем ставки во время кулдауна
-            crashRoundActive = false; // Раунд еще не начался
+            crashRoundActive = false;
             crashMultiplier = 1.00;
-            
-            // Очищаем график и показываем кулдаун
-            // НЕ очищаем crashGraphPoints полностью - оставляем пустым для нового раунда
             crashGraphPoints = [];
             
-            // Убедимся что анимация запущена (если еще не запущена)
-            if (!crashAnimationId || crashAnimationId === null) {
-                console.log('🔄 Перезапускаем анимацию после очистки графика');
-                startCrashAnimation(ctx, canvas);
-            }
+            // Запускаем анимацию (она будет показывать кулдаун)
+            startCrashAnimation(ctx, canvas);
             
-            // Удаляем только завершенные ставки прошлого раунда (старше 30 секунд)
+            // Удаляем старые ставки
             const now = Date.now();
             crashPlayers = crashPlayers.filter(player => {
-                // Оставляем активные ставки (не завершенные)
-                if (!player.cashedOut) {
-                    return true;
-                }
-                // Оставляем завершенные ставки, которые недавно завершились (меньше 30 секунд назад)
+                if (!player.cashedOut) return true;
                 const timeSinceCashout = now - (player.cashOutTime || player.timestamp || 0);
-                return timeSinceCashout < 30000; // Показываем завершенные ставки 30 секунд
+                return timeSinceCashout < 30000;
             });
             
-            let remaining = seconds;
+            // Устанавливаем кулдаун
+            cooldownRemaining = seconds;
             
-            const countdown = setInterval(() => {
-                // Показываем кулдаун только на canvas
-                if (ctx && canvas && canvas.width > 0 && canvas.height > 0) {
-                    // Получаем размеры canvas с учетом devicePixelRatio
-                    const dpr = window.devicePixelRatio || 1;
-                    const canvasWidth = canvas.width / dpr;
-                    const canvasHeight = canvas.height / dpr;
-                    
-                    // Очищаем canvas
-                    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-                    
-                    // Рисуем фон
-                    ctx.fillStyle = 'rgba(20, 20, 30, 1)';
-                    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-                    
-                    // Рисуем текст кулдауна
-                    ctx.fillStyle = '#ffaa00';
-                    ctx.font = 'bold 28px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(`Ставки принимаются`, canvasWidth / 2, canvasHeight / 2 - 20);
-                    ctx.fillText(`${remaining}...`, canvasWidth / 2, canvasHeight / 2 + 20);
-                    
-                    console.log('✅ Кулдаун нарисован:', remaining);
-                } else {
-                    console.error('❌ Canvas не готов для рисования!', {
-                        ctx: !!ctx,
-                        canvas: !!canvas,
-                        width: canvas?.width,
-                        height: canvas?.height
-                    });
-                }
+            // Скрываем множитель
+            if (multiplierElement) {
+                multiplierElement.textContent = '';
+                multiplierElement.style.display = 'none';
+            }
+            
+            // Обновляем кнопку
+            if (makeBetBtn && userBet && !userBet.cashedOut) {
+                makeBetBtn.textContent = 'Ставка активна';
+                makeBetBtn.disabled = true;
+            } else if (makeBetBtn && !userBet) {
+                makeBetBtn.textContent = 'Сделать ставку';
+                makeBetBtn.disabled = false;
+            }
+            
+            // Таймер кулдауна
+            if (cooldownInterval) {
+                clearInterval(cooldownInterval);
+            }
+            
+            cooldownInterval = setInterval(() => {
+                cooldownRemaining--;
                 
-                // Очищаем и скрываем элемент множителя во время кулдауна (показываем только на canvas)
-                if (multiplierElement) {
-                    multiplierElement.textContent = '';
-                    multiplierElement.style.display = 'none';
-                }
-                
-                // Обновляем текст кнопки для активных ставок
-                const makeBetBtn = document.getElementById('makeBetBtn');
-                if (makeBetBtn && userBet && !userBet.cashedOut) {
-                    makeBetBtn.textContent = 'Ставка активна';
-                    makeBetBtn.disabled = true;
-                } else if (makeBetBtn && !userBet) {
-                    makeBetBtn.textContent = 'Сделать ставку';
-                    makeBetBtn.disabled = false;
-                }
-                
-                remaining--;
-                
-                if (remaining < 0) {
-                    clearInterval(countdown);
+                if (cooldownRemaining <= 0) {
+                    clearInterval(cooldownInterval);
+                    cooldownRemaining = 0;
                     
-                    // Показываем элемент множителя обратно
+                    // Показываем множитель
                     if (multiplierElement) {
                         multiplierElement.style.display = 'block';
                         multiplierElement.textContent = 'x1.00';
@@ -7039,31 +6949,27 @@
                         multiplierElement.style.borderColor = '#00ff00';
                     }
                     
-                    // Обновляем кнопку для активных ставок
-                    if (makeBetBtn && userBet && !userBet.cashedOut && crashRoundActive === false) {
+                    // Обновляем кнопку
+                    if (makeBetBtn && userBet && !userBet.cashedOut) {
                         makeBetBtn.textContent = 'Забрать';
                         makeBetBtn.disabled = false;
                     }
                     
-                    // НОВЫЙ РАУНД - НОВАЯ ЛОГИКА
+                    // НОВЫЙ РАУНД
                     const dpr = window.devicePixelRatio || 1;
                     const cw = canvas.width / dpr;
                     const ch = canvas.height / dpr;
                     
-                    // Сбрасываем все
                     crashMultiplier = 1.00;
                     crashGraphPoints = [{ x: 10, y: ch - 50, multiplier: 1.00 }];
                     
-                    // Генерируем цель краша (от 1.5 до 10.0)
                     const seed = Date.now() % 1000000;
                     crashTarget = 1.5 + (seed / 1000000) * 8.5;
                     
                     console.log('🚀 НОВЫЙ РАУНД! Target:', crashTarget.toFixed(2));
                     
-                    // Включаем раунд ПЕРЕД запуском анимации
                     crashRoundActive = true;
                     
-                    // Обновляем множитель
                     const multEl = document.getElementById('currentMultiplier');
                     if (multEl) {
                         multEl.textContent = 'x1.00';
@@ -7071,71 +6977,109 @@
                         multEl.style.borderColor = '#00ff00';
                         multEl.style.display = 'block';
                     }
-                    
-                    // Запускаем анимацию ВСЕГДА
-                    console.log('🎬 Запускаем анимацию, crashRoundActive:', crashRoundActive);
-                    startCrashAnimation(ctx, canvas);
                 }
             }, 1000);
         }
 
-        // Анимация графика краша - УПРОЩЕННАЯ ВЕРСИЯ
+        // Анимация графика - МАКСИМАЛЬНО ПРОСТАЯ
         function startCrashAnimation(ctx, canvas) {
-            // Отменяем предыдущую анимацию если была
+            // Останавливаем старую
             if (crashAnimationId) {
                 cancelAnimationFrame(crashAnimationId);
                 crashAnimationId = null;
             }
             
-            // Скорость роста графика
-            const speed = 0.015; // Фиксированная скорость
+            if (cooldownInterval) {
+                clearInterval(cooldownInterval);
+                cooldownInterval = null;
+            }
             
-            // Получаем размеры canvas
+            const speed = 0.02; // Скорость
             const dpr = window.devicePixelRatio || 1;
-            const canvasWidth = canvas.width / dpr;
-            const canvasHeight = canvas.height / dpr;
+            const cw = canvas.width / dpr;
+            const ch = canvas.height / dpr;
+            
+            console.log('🎬 Анимация запущена, размеры:', cw, 'x', ch, 'crashRoundActive:', crashRoundActive);
             
             const animate = () => {
-                // Проверка canvas
                 if (!ctx || !canvas) {
                     crashAnimationId = requestAnimationFrame(animate);
                     return;
                 }
                 
-                // Очищаем и рисуем фон
-                ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+                // Очистка
+                ctx.clearRect(0, 0, cw, ch);
                 ctx.fillStyle = 'rgba(20, 20, 30, 1)';
-                ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+                ctx.fillRect(0, 0, cw, ch);
                 
-                // ЕСЛИ РАУНД АКТИВЕН - РАСТЕМ
-                if (crashRoundActive) {
-                    // Увеличиваем множитель
+                // Показываем кулдаун если он идет (останавливаем в showCrashCooldown когда остается 0)
+                if (cooldownRemaining > 0) {
+                    ctx.fillStyle = '#ffaa00';
+                    ctx.font = 'bold 28px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(`Ставки принимаются`, cw / 2, ch / 2 - 20);
+                    ctx.fillText(`${cooldownRemaining}...`, cw / 2, ch / 2 + 20);
+                }
+                
+                // РАСТЕМ если раунд активен
+                if (crashRoundActive && cooldownRemaining <= 0) {
                     crashMultiplier += speed;
                     
-                    // Если достигли цели - КРАШ
+                    // Добавляем точку
+                    const x = 10 + crashGraphPoints.length * 2;
+                    const multPerc = ((crashMultiplier - 1.0) / 9.0) * 100;
+                    const y = ch - 50 - (multPerc / 100) * (ch - 100);
+                    
+                    crashGraphPoints.push({ x, y, multiplier: crashMultiplier });
+                    
+                    // Ограничение
+                    const maxP = Math.floor((cw - 20) / 2);
+                    if (crashGraphPoints.length > maxP) {
+                        crashGraphPoints.shift();
+                        crashGraphPoints.forEach((p, i) => { p.x = 10 + i * 2; });
+                    }
+                    
+                    // Множитель
+                    const multEl = document.getElementById('currentMultiplier');
+                    if (multEl) {
+                        multEl.textContent = `x${crashMultiplier.toFixed(2)}`;
+                        multEl.style.color = '#00ff00';
+                        multEl.style.borderColor = '#00ff00';
+                    }
+                    
+                    // Кнопка "Забрать"
+                    const btn = document.getElementById('makeBetBtn');
+                    if (btn && userBet && !userBet.cashedOut) {
+                        btn.textContent = 'Забрать';
+                        btn.disabled = false;
+                    }
+                    
+                    // Проверка выигрышей
+                    checkCrashWins();
+                    
+                    // КРАШ
                     if (crashMultiplier >= crashTarget) {
                         crashRoundActive = false;
+                        processCrashRound();
+                        
+                        // Красная линия
+                        if (crashGraphPoints.length > 0) {
+                            const last = crashGraphPoints[crashGraphPoints.length - 1];
+                            ctx.strokeStyle = '#ff0000';
+                            ctx.lineWidth = 3;
+                            ctx.beginPath();
+                            ctx.moveTo(last.x, last.y);
+                            ctx.lineTo(last.x, ch - 50);
+                            ctx.stroke();
+                        }
                         
                         // Вибрация
                         if (tg) {
                             try { tg.HapticFeedback.notificationOccurred('error'); } catch(e) {}
                         }
                         
-                        // Обработка краша
-                        processCrashRound();
-                        
-                        // Красная линия падения
-                        if (crashGraphPoints.length > 0) {
-                            const lastPoint = crashGraphPoints[crashGraphPoints.length - 1];
-                            ctx.strokeStyle = '#ff0000';
-                            ctx.lineWidth = 3;
-                            ctx.beginPath();
-                            ctx.moveTo(lastPoint.x, lastPoint.y);
-                            ctx.lineTo(lastPoint.x, canvasHeight - 50);
-                            ctx.stroke();
-                        }
-                        
-                        // Обновляем множитель
+                        // Множитель красный
                         const multEl = document.getElementById('currentMultiplier');
                         if (multEl) {
                             multEl.textContent = `x${crashTarget.toFixed(2)}`;
@@ -7146,45 +7090,11 @@
                         // Кулдаун
                         setTimeout(() => {
                             showCrashCooldown(10, ctx, canvas);
-                        }, 100);
-                    } else {
-                        // РАСТЕМ - добавляем точку КАЖДЫЙ КАДР
-                        const x = 10 + (crashGraphPoints.length * 3);
-                        const multiplierPercent = ((crashMultiplier - 1.0) / 9.0) * 100;
-                        const y = canvasHeight - 50 - (multiplierPercent / 100) * (canvasHeight - 100);
-                        
-                        crashGraphPoints.push({ x, y, multiplier: crashMultiplier });
-                        
-                        // Ограничение точек
-                        const maxPoints = Math.floor((canvasWidth - 20) / 3);
-                        if (crashGraphPoints.length > maxPoints) {
-                            crashGraphPoints = crashGraphPoints.slice(-maxPoints);
-                            crashGraphPoints.forEach((p, i) => {
-                                p.x = 10 + (i * 3);
-                            });
-                        }
-                        
-                        // Обновляем множитель
-                        const multEl = document.getElementById('currentMultiplier');
-                        if (multEl) {
-                            multEl.textContent = `x${crashMultiplier.toFixed(2)}`;
-                            multEl.style.color = '#00ff00';
-                            multEl.style.borderColor = '#00ff00';
-                        }
-                        
-                        // Кнопка "Забрать"
-                        const makeBetBtn = document.getElementById('makeBetBtn');
-                        if (makeBetBtn && userBet && !userBet.cashedOut) {
-                            makeBetBtn.textContent = 'Забрать';
-                            makeBetBtn.disabled = false;
-                        }
-                        
-                        // Проверка выигрышей
-                        checkCrashWins();
+                        }, 500);
                     }
                 }
                 
-                // РИСУЕМ ГРАФИК - ВСЕГДА
+                // Рисуем график
                 if (crashGraphPoints.length >= 2) {
                     ctx.strokeStyle = crashRoundActive ? '#00ff00' : '#888888';
                     ctx.lineWidth = 3;
@@ -7195,25 +7105,23 @@
                     }
                     ctx.stroke();
                     
-                    // Последняя точка
-                    const lastPoint = crashGraphPoints[crashGraphPoints.length - 1];
+                    const last = crashGraphPoints[crashGraphPoints.length - 1];
                     ctx.fillStyle = crashRoundActive ? '#00ff00' : '#888888';
                     ctx.beginPath();
-                    ctx.arc(lastPoint.x, lastPoint.y, 4, 0, Math.PI * 2);
+                    ctx.arc(last.x, last.y, 4, 0, Math.PI * 2);
                     ctx.fill();
                 } else if (crashGraphPoints.length === 1) {
-                    const point = crashGraphPoints[0];
+                    const p = crashGraphPoints[0];
                     ctx.fillStyle = crashRoundActive ? '#00ff00' : '#888888';
                     ctx.beginPath();
-                    ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
+                    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
                     ctx.fill();
                 }
                 
-                // Продолжаем анимацию
+                // Продолжаем
                 crashAnimationId = requestAnimationFrame(animate);
             };
             
-            // Запускаем
             animate();
         }
         
