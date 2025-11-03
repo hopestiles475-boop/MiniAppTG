@@ -2441,7 +2441,7 @@
         <div class="top-up-buttons">
             <button class="top-up-btn primary" id="topUpBtn">
                 <span class="btn-icon"><span class="currency-icon" style="width: 18px; height: 18px; display: inline-block;"></span></span>
-                <span>Пополнить через Tonkeeper</span>
+                <span>Пополнить</span>
             </button>
         </div>
 
@@ -3765,14 +3765,16 @@
             }
         });
 
-        document.querySelector('.balance-section button').addEventListener('click', () => {
-            if (tg) {
-                tg.showAlert('Пополнение баланса');
-                tg.HapticFeedback.impactOccurred('light');
-            } else {
-                alert('Пополнение баланса');
-            }
-        });
+        // Обработчик кнопки "+" в основном балансе
+        const mainBalancePlusBtn = document.querySelector('.balance-section button');
+        if (mainBalancePlusBtn) {
+            mainBalancePlusBtn.addEventListener('click', () => {
+                topUpModal.style.display = 'flex';
+                if (tg) {
+                    tg.HapticFeedback.impactOccurred('medium');
+                }
+            });
+        }
 
         // Обновление информации профиля
         function updateProfileInfo() {
@@ -5901,14 +5903,16 @@
         }
 
         // Обновление баланса на странице краша
-        document.getElementById('crashBalance')?.parentElement.querySelector('button')?.addEventListener('click', () => {
-            if (tg) {
-                tg.showAlert('Пополнение баланса');
-                tg.HapticFeedback.impactOccurred('light');
-            } else {
-                alert('Пополнение баланса');
-            }
-        });
+        // Обработчик кнопки "+" в балансе краша
+        const crashBalancePlusBtn = document.getElementById('crashBalance')?.parentElement?.querySelector('button');
+        if (crashBalancePlusBtn) {
+            crashBalancePlusBtn.addEventListener('click', () => {
+                topUpModal.style.display = 'flex';
+                if (tg) {
+                    tg.HapticFeedback.impactOccurred('medium');
+                }
+            });
+        }
     </script>
 </body>
 </html>
