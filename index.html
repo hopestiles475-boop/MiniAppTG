@@ -4899,60 +4899,49 @@
                 return;
             }
             
-            rouletteContainer.style.display = 'block';
+            // Принудительно показываем контейнер рулетки
+            rouletteContainer.style.cssText = `
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                width: 100% !important;
+                height: 200px !important;
+                position: relative !important;
+                overflow: hidden !important;
+                z-index: 10 !important;
+            `;
             rouletteContainer.classList.add('active');
-            
-            // Проверяем, что рулетка создана
-            setTimeout(() => {
-                const rouletteTrack = document.getElementById('rouletteTrack');
-                if (!rouletteTrack) {
-                    console.error('❌ rouletteTrack не найден после создания!');
-                    isOpening = false;
-                    return;
-                }
-                const giftItems = rouletteTrack.querySelectorAll('.gift-item');
-                if (!giftItems || giftItems.length === 0) {
-                    console.error('❌ giftItems пуст после создания рулетки!');
-                    alert('Ошибка: Рулетка не создана. Перезагрузите страницу.');
-                    isOpening = false;
-                    return;
-                }
-                console.log('✅ Рулетка создана, элементов:', giftItems.length);
-            }, 100);
 
             if (tg) {
                 tg.HapticFeedback.impactOccurred('heavy');
             }
             
-            // Даем время на отрисовку элементов перед анимацией
+            // Даем время на отрисовку элементов перед анимацией - ОДИН ТАЙМАУТ
             setTimeout(() => {
+                // Проверяем, что рулетка создана
+                const rouletteTrack = document.getElementById('rouletteTrack');
+                if (!rouletteTrack) {
+                    alert('Ошибка: Рулетка не создана');
+                    isOpening = false;
+                    return;
+                }
+                
+                const giftItems = rouletteTrack.querySelectorAll('.gift-item');
+                if (!giftItems || giftItems.length === 0) {
+                    alert('Ошибка: Элементы рулетки не созданы. Попробуйте еще раз.');
+                    isOpening = false;
+                    return;
+                }
+                
                 // Проверяем, что currentPrizes не пуст
                 if (!currentPrizes || currentPrizes.length === 0) {
-                    console.error('❌ currentPrizes пуст!');
-                    alert('Ошибка: Нет доступных призов. Перезагрузите страницу.');
+                    alert('Ошибка: Нет доступных призов');
                     isOpening = false;
                     return;
                 }
                 
                 // Сначала выбираем случайный приз из доступных
                 const randomPrize = currentPrizes[Math.floor(Math.random() * currentPrizes.length)];
-                const rouletteTrack = document.getElementById('rouletteTrack');
-                
-                if (!rouletteTrack) {
-                    console.error('❌ rouletteTrack не найден!');
-                    alert('Ошибка: Элемент рулетки не найден');
-                    isOpening = false;
-                    return;
-                }
-                
-                const giftItems = rouletteTrack.querySelectorAll('.gift-item');
-                
-                if (!giftItems || giftItems.length === 0) {
-                    console.error('❌ giftItems пуст!');
-                    alert('Ошибка: Элементы рулетки не созданы. Перезагрузите страницу.');
-                    isOpening = false;
-                    return;
-                }
                 
                 // Убеждаемся, что все элементы видны СРАЗУ
                 giftItems.forEach(item => {
@@ -5022,7 +5011,11 @@
                 rouletteTrack.style.marginBottom = '0';
                 
                 let startTime = Date.now();
+                let animationStarted = false;
                 const animateRoulette = () => {
+                    if (!animationStarted) {
+                        animationStarted = true;
+                    }
                     const elapsed = Date.now() - startTime;
                     const progress = Math.min(elapsed / spinDuration, 1);
                     
@@ -5191,8 +5184,14 @@
                     }
                 };
                 
-                requestAnimationFrame(animateRoulette);
-            }, 300);
+                // Запускаем анимацию
+                try {
+                    requestAnimationFrame(animateRoulette);
+                } catch (err) {
+                    alert('Ошибка запуска анимации: ' + err.message);
+                    isOpening = false;
+                }
+            }, 500);
         };
         
         // Убеждаемся, что функция доступна глобально
@@ -5203,22 +5202,15 @@
         }
 
         function createRoulette() {
-            console.log('🔵 createRoulette вызвана');
-            console.log('currentPrizes:', currentPrizes);
-            console.log('currentPrizes.length:', currentPrizes ? currentPrizes.length : 0);
-            
             const rouletteTrack = document.getElementById('rouletteTrack');
             if (!rouletteTrack) {
-                console.error('❌ rouletteTrack не найден в createRoulette!');
                 throw new Error('Элемент рулетки не найден');
             }
             
             // Проверяем, что currentPrizes не пуст
             if (!currentPrizes || currentPrizes.length === 0) {
-                console.error('❌ currentPrizes пуст в createRoulette!');
                 if (currentCase && currentCase.prizes) {
                     currentPrizes = currentCase.prizes;
-                    console.log('✅ Восстановили currentPrizes из currentCase');
                 } else {
                     throw new Error('Нет доступных призов для создания рулетки');
                 }
@@ -5227,14 +5219,11 @@
             rouletteTrack.innerHTML = '';
             
             // Создаем множество повторений для бесконечного эффекта прокрутки
-            // Повторяем подарки очень много раз в той же последовательности
-            const repeatCount = 50; // Увеличиваем до 50 повторений
+            const repeatCount = 50;
             const extendedPrizes = [];
             for (let i = 0; i < repeatCount; i++) {
                 extendedPrizes.push(...currentPrizes);
             }
-            
-            console.log('✅ Создано extendedPrizes, элементов:', extendedPrizes.length);
             
             extendedPrizes.forEach((prize, index) => {
                 const giftItem = document.createElement('div');
@@ -5318,11 +5307,9 @@
                 visibility: visible !important;
                 opacity: 1 !important;
             `;
-            
-            console.log('✅ createRoulette завершена, создано элементов:', extendedPrizes.length);
         }
         
-        // Делаем функцию глобальной для отладки
+        // Делаем функцию глобальной
         window.createRoulette = createRoulette;
 
         function showCaseDetail(caseNum) {
