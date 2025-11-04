@@ -4672,23 +4672,96 @@
             // Находим позицию выбранного подарка в последнем круге
             // Убеждаемся что выбранный подарок находится в последнем круге
             const lastCircleStart = scrollItems.length - prizes.length;
-            let targetIndex = lastCircleStart + selectedPrizeIndex;
             
-            // Проверяем что на этой позиции именно выбранный подарок
-            let targetPrize = scrollItems[targetIndex];
-            if (!targetPrize || targetPrize.icon !== selectedPrize.icon) {
-                console.warn('⚠️ Несоответствие подарка, ищу правильную позицию...');
-                // Ищем правильную позицию в последнем круге
-                for (let i = lastCircleStart; i < scrollItems.length; i++) {
-                    if (scrollItems[i].icon === selectedPrize.icon) {
-                        targetIndex = i;
-                        targetPrize = scrollItems[i];
-                        break;
+            // Ищем точное совпадение выбранного подарка в последнем круге (по иконке И значению)
+            let targetIndex = -1;
+            for (let i = lastCircleStart; i < scrollItems.length; i++) {
+                // Проверяем точное совпадение: и иконка, и значение должны совпадать
+                if (scrollItems[i].icon === selectedPrize.icon && scrollItems[i].value === selectedPrize.value) {
+                    targetIndex = i;
+                    break;
+                }
+            }
+            
+            // Если не нашли точное совпадение, ищем по индексу из оригинального массива
+            if (targetIndex === -1) {
+                console.warn('⚠️ Точное совпадение не найдено, использую индекс:', selectedPrizeIndex);
+                targetIndex = lastCircleStart + selectedPrizeIndex;
+                
+                // Проверяем что на этой позиции хотя бы иконка совпадает
+                const targetPrize = scrollItems[targetIndex];
+                if (!targetPrize || targetPrize.icon !== selectedPrize.icon) {
+                    console.warn('⚠️ Несоответствие подарка, ищу по иконке...');
+                    // Ищем любую позицию с такой же иконкой в последнем круге
+                    for (let i = lastCircleStart; i < scrollItems.length; i++) {
+                        if (scrollItems[i].icon === selectedPrize.icon) {
+                            targetIndex = i;
+                            break;
+                        }
                     }
                 }
             }
             
-            console.log('✅ Целевая позиция:', targetIndex, 'подарок:', selectedPrize);
+            // Если всё равно не нашли, используем индекс из оригинального массива
+            if (targetIndex === -1) {
+                targetIndex = lastCircleStart + selectedPrizeIndex;
+                console.warn('⚠️ Использую индекс из оригинального массива:', targetIndex);
+            }
+            
+            // Проверяем финальную позицию
+            let finalTargetPrize = scrollItems[targetIndex];
+            console.log('✅ Целевая позиция:', targetIndex, 'выбранный подарок:', selectedPrize, 'подарок на позиции:', finalTargetPrize);
+            
+            // Если на позиции не тот подарок, пытаемся найти правильную позицию
+            if (!finalTargetPrize || finalTargetPrize.icon !== selectedPrize.icon || finalTargetPrize.value !== selectedPrize.value) {
+                console.warn('⚠️ ВНИМАНИЕ: На позиции', targetIndex, 'другой подарок!');
+                console.warn('   Ожидалось:', selectedPrize.icon, selectedPrize.value);
+                console.warn('   Найдено:', finalTargetPrize ? (finalTargetPrize.icon + ' ' + finalTargetPrize.value) : 'undefined');
+                
+                // Ищем точное совпадение во всем последнем круге
+                let found = false;
+                for (let i = lastCircleStart; i < scrollItems.length; i++) {
+                    if (scrollItems[i].icon === selectedPrize.icon && scrollItems[i].value === selectedPrize.value) {
+                        targetIndex = i;
+                        finalTargetPrize = scrollItems[i];
+                        found = true;
+                        console.log('✅ Нашел правильную позицию:', targetIndex);
+                        break;
+                    }
+                }
+                
+                // Если не нашли точное совпадение, ищем по иконке и используем первое найденное
+                if (!found) {
+                    console.warn('⚠️ Точное совпадение не найдено, ищу по иконке...');
+                    for (let i = lastCircleStart; i < scrollItems.length; i++) {
+                        if (scrollItems[i].icon === selectedPrize.icon) {
+                            targetIndex = i;
+                            finalTargetPrize = scrollItems[i];
+                            console.warn('⚠️ Использую первое найденное по иконке:', targetIndex, 'значение:', finalTargetPrize.value);
+                            // Важно: если значение не совпадает, обновляем selectedPrize на то, что нашли
+                            if (finalTargetPrize.value !== selectedPrize.value) {
+                                console.warn('⚠️ Значение не совпадает! Обновляю selectedPrize на найденный');
+                                selectedPrize.value = finalTargetPrize.value;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Финальная проверка
+            finalTargetPrize = scrollItems[targetIndex];
+            if (finalTargetPrize.icon === selectedPrize.icon && finalTargetPrize.value === selectedPrize.value) {
+                console.log('✅ Финальная проверка: подарок на позиции совпадает с выбранным');
+            } else {
+                console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: Подарок на позиции не совпадает!');
+                console.error('   Выбранный:', selectedPrize.icon, selectedPrize.value);
+                console.error('   На позиции:', finalTargetPrize.icon, finalTargetPrize.value);
+                // Обновляем selectedPrize на то, что реально на позиции
+                selectedPrize.icon = finalTargetPrize.icon;
+                selectedPrize.value = finalTargetPrize.value;
+                console.warn('⚠️ Обновляю selectedPrize на подарок, который реально на позиции');
+            }
             
             // Анимация прокрутки
             const duration = 3000;
@@ -4697,7 +4770,7 @@
             const itemHeight = 100;
             const targetPosition = targetIndex * itemHeight;
             
-            console.log('✅ Начинаю анимацию, targetPosition:', targetPosition);
+            console.log('✅ Начинаю анимацию, targetPosition:', targetPosition, 'подарок:', selectedPrize);
             
             // Easing функция для плавного замедления
             function easeOutCubic(t) {
