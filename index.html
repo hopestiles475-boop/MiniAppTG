@@ -4954,18 +4954,17 @@
             console.log('✅ Всего кейсов для загрузки:', cases.length);
             console.log('✅ Данные кейсов:', cases.map(c => `#${c.id}`).join(', '));
             
-            // Сохраняем тестовый элемент если он есть
-            const existingTestElement = casesContainer.querySelector('div[style*="ТЕСТ"]') || casesContainer.querySelector('div[style*="Тест"]');
+            // Удаляем все тестовые элементы (красные таблички) и старые карточки
+            const existingTestElements = casesContainer.querySelectorAll('div[style*="ТЕСТ"], div[style*="Тест"], div[style*="тест"], div[style*="rgba(255, 0, 0"], div[style*="background: rgba(255, 0, 0"], div[style*="background:rgba(255,0,0"]');
+            existingTestElements.forEach(el => {
+                el.remove();
+                console.log('✅ Тестовый элемент удален');
+            });
             
             // Удаляем только старые карточки кейсов (если есть)
             const existingCards = casesContainer.querySelectorAll('.case-card');
             existingCards.forEach(card => card.remove());
             console.log('✅ Старые карточки удалены:', existingCards.length);
-            
-            // Если есть тестовый элемент - не трогаем его
-            if (existingTestElement) {
-                console.log('✅ Тестовый элемент сохранен, будет удален после загрузки кейсов');
-            }
             
             // Убеждаемся, что контейнер видим - ПРИНУДИТЕЛЬНО
             casesContainer.style.display = 'flex';
@@ -5035,20 +5034,16 @@
             console.log('✅ Кейсы загружены:', cardsCreated, 'из', cases.length, 'контейнер:', casesContainer);
             console.log('✅ Детей в контейнере:', casesContainer.children.length);
             
-            // Удаляем тестовый элемент если кейсы загружены
-            const testElement = casesContainer.querySelector('div[style*="ТЕСТ"]') || casesContainer.querySelector('div[style*="Тест"]') || casesContainer.querySelector('div[style*="тест"]');
-            if (testElement) {
-                if (cardsCreated > 0) {
-                    testElement.remove();
-                    console.log('✅ Тестовый элемент удален, кейсы загружены:', cardsCreated);
-                } else {
-                    console.warn('⚠️ Тестовый элемент найден, но кейсы не созданы. Количество созданных:', cardsCreated);
-                }
-            }
+            // Удаляем все тестовые элементы (красные таблички)
+            const testElements = casesContainer.querySelectorAll('div[style*="ТЕСТ"], div[style*="Тест"], div[style*="тест"], div[style*="rgba(255, 0, 0"], div[style*="background: rgba(255, 0, 0"], div[style*="background:rgba(255,0,0"]');
+            testElements.forEach(el => {
+                el.remove();
+                console.log('✅ Тестовый элемент удален');
+            });
             
             // Проверяем видимость контейнера
             const totalChildren = casesContainer.children.length;
-            const hasTestElement = !!testElement;
+            const hasTestElement = testElements.length > 0;
             if (cardsCreated === 0 || totalChildren === 0 || (totalChildren === 1 && hasTestElement)) {
                 console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: Кейсы не были добавлены в контейнер!');
                 console.error('❌ Контейнер существует:', !!casesContainer);
