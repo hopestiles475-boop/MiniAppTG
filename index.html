@@ -47,6 +47,24 @@
     </script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
+        // КРИТИЧЕСКИ ВАЖНО: Определяем функции СРАЗУ, чтобы они были доступны в HTML
+        // Функция openCase - должна быть доступна глобально
+        window.openCase = function() {
+            console.log('🔵 openCase вызвана (заглушка - будет переопределена)');
+            if (typeof window.openCaseFull === 'function') {
+                window.openCaseFull();
+            } else {
+                console.warn('⚠️ window.openCaseFull еще не определена, ждем...');
+                setTimeout(() => {
+                    if (typeof window.openCaseFull === 'function') {
+                        window.openCaseFull();
+                    } else {
+                        alert('Ошибка: Функция открытия кейса еще не загружена. Попробуйте еще раз через секунду.');
+                    }
+                }, 100);
+            }
+        };
+        
         // ПЕРЕХВАТЫВАЕМ ОШИБКИ ОТ TELEGRAM SDK
         window.addEventListener('error', function(e) {
             if (e.message && (e.message.includes("reading 'top'") || e.message.includes('calculatePosition'))) {
@@ -3504,6 +3522,12 @@
         let isOpening = false;
         let currentTab = 'cases';
         
+        // Определяем функцию openCase глобально СРАЗУ, чтобы она была доступна
+        window.openCase = function() {
+            console.log('🔵 openCase вызвана (заглушка)');
+            console.log('Функция будет определена позже');
+        };
+        
         // API эндпоинт (замените на ваш реальный сервер)
         const API_BASE_URL = 'http://localhost:3000/api'; // Локальный сервер
         
@@ -4476,8 +4500,19 @@
         // Инициализация табов (уже обрабатывается в initEventHandlers)
         // Обработчики карточек кейсов также инициализируются в initCaseCards
 
+        // Переопределяем window.openCase полной версией
         window.openCase = function() {
-            console.log('🔵 openCase вызвана');
+            if (typeof window.openCaseFull === 'function') {
+                window.openCaseFull();
+            } else {
+                console.warn('⚠️ window.openCaseFull еще не определена');
+                alert('Ошибка: Функция открытия кейса еще не загружена. Попробуйте еще раз.');
+            }
+        };
+        
+        // Полная версия функции openCase
+        window.openCaseFull = function() {
+            console.log('🔵 openCaseFull вызвана');
             console.log('currentCase:', currentCase);
             console.log('isOpening:', isOpening);
             console.log('_balance:', _balance);
@@ -4799,6 +4834,13 @@
                 openCaseFunc();
             }
         };
+        
+        // Убеждаемся, что функция доступна глобально
+        if (typeof window.openCase === 'function') {
+            console.log('✅ window.openCase определена глобально');
+        } else {
+            console.error('❌ window.openCase НЕ определена!');
+        }
 
         function createRoulette() {
             const rouletteTrack = document.getElementById('rouletteTrack');
@@ -5204,11 +5246,11 @@
                     // Вызываем функцию открытия
                     if (typeof window.openCase === 'function') {
                         window.openCase();
-                    } else if (typeof openCase === 'function') {
-                        openCase();
+                    } else if (typeof window.openCaseFull === 'function') {
+                        window.openCaseFull();
                     } else {
                         console.error('❌ Функция openCase не найдена!');
-                        alert('Ошибка: Функция openCase не найдена');
+                        alert('Ошибка: Функция openCase не найдена. Перезагрузите страницу.');
                     }
                     return false;
                 };
