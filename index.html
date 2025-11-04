@@ -124,13 +124,19 @@
                 
                 for (var i = 0; i < pages.length; i++) {
                     if (pages[i]) {
+                        // Не скрываем страницу, которую хотим показать
+                        if (pages[i].id === 'casesPage' && page === 'cases') {
+                            // Не скрываем casesPage если переключаемся на кейсы
+                            continue;
+                        }
+                        
                         // Не скрываем mainPage полностью, если переключаемся на другую вкладку
                         // Просто скрываем визуально, но сохраняем структуру
                         if (pages[i].id === 'mainPage' && page !== 'cases') {
-                        pages[i].style.display = 'none';
-                        pages[i].style.visibility = 'hidden';
-                        pages[i].style.opacity = '0';
-                        pages[i].style.pointerEvents = 'none';
+                            pages[i].style.display = 'none';
+                            pages[i].style.visibility = 'hidden';
+                            pages[i].style.opacity = '0';
+                            pages[i].style.pointerEvents = 'none';
                         } else if (pages[i].id !== 'mainPage') {
                             pages[i].style.display = 'none';
                             pages[i].style.visibility = 'hidden';
@@ -185,7 +191,9 @@
                 
                 // Показываем нужную страницу и инициализируем
                 if (page === 'cases' && casesPage) {
-                    // Убеждаемся что кейсы НЕ скрыты
+                    console.log('🔵 Переключение на вкладку Кейсы');
+                    
+                    // Убеждаемся что кейсы НЕ скрыты - ПРИНУДИТЕЛЬНО
                     casesPage.style.display = 'block';
                     casesPage.style.visibility = 'visible';
                     casesPage.style.opacity = '1';
@@ -198,17 +206,27 @@
                     casesPage.style.height = '100%';
                     casesPage.style.zIndex = '100';
                     casesPage.style.pointerEvents = 'auto';
+                    casesPage.classList.add('active');
                     
                     // Убеждаемся что контейнер кейсов видим
                     const casesContainer = document.getElementById('casesContainer') || document.querySelector('.cases-container');
                     if (casesContainer) {
+                        console.log('✅ Контейнер кейсов найден:', casesContainer);
                         casesContainer.style.display = 'flex';
                         casesContainer.style.visibility = 'visible';
                         casesContainer.style.opacity = '1';
                         casesContainer.style.pointerEvents = 'auto';
+                        casesContainer.style.width = '100%';
+                        casesContainer.style.minHeight = '200px';
+                    } else {
+                        console.error('❌ Контейнер кейсов НЕ НАЙДЕН!');
                     }
                     
-                    if (header) header.style.display = 'flex';
+                    if (header) {
+                        header.style.display = 'flex';
+                        header.style.visibility = 'visible';
+                        header.style.opacity = '1';
+                    }
                     
                     // Скрываем кнопку подписки если она есть
                     const subscribeBtn = document.querySelector('.subscribe-btn');
@@ -218,22 +236,38 @@
                     
                     // Загружаем кейсы сразу - несколько раз для надежности
                     function forceLoadCases() {
+                        console.log('🔵 forceLoadCases вызвана');
                         if (typeof loadCases === 'function') {
                             console.log('🔵 Принудительно загружаю кейсы');
-                            loadCases();
+                            try {
+                                loadCases();
+                            } catch (e) {
+                                console.error('❌ Ошибка в loadCases:', e);
+                            }
                         } else {
-                            console.error('❌ loadCases не найдена');
+                            console.error('❌ loadCases не найдена, тип:', typeof loadCases);
                         }
                     }
                     
+                    // Вызываем сразу и с задержками
                     forceLoadCases();
+                    setTimeout(forceLoadCases, 50);
                     setTimeout(forceLoadCases, 100);
+                    setTimeout(forceLoadCases, 200);
                     setTimeout(forceLoadCases, 300);
                     setTimeout(forceLoadCases, 500);
                     setTimeout(forceLoadCases, 1000);
                     
                     setTimeout(function() {
                         if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+                        // Дополнительная проверка через 2 секунды
+                        setTimeout(function() {
+                            const container = document.getElementById('casesContainer');
+                            if (container && container.children.length === 0) {
+                                console.warn('⚠️ Кейсы все еще не загружены, повторная попытка...');
+                                forceLoadCases();
+                            }
+                        }, 2000);
                     }, 50);
                 } else if (page === 'profile' && profilePage) {
                     if (header) header.style.display = 'flex';
