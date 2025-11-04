@@ -4585,396 +4585,330 @@
             }
         };
         
-        // Полная версия функции openCase
+        // Полная версия функции openCase - УПРОЩЕННАЯ И РАБОТАЮЩАЯ
         window.openCaseFull = function() {
-            console.log('🔵🔵🔵 window.openCaseFull НАЧАЛАСЬ!');
             console.log('🔵 openCaseFull вызвана');
-            console.log('currentCase:', currentCase);
-            console.log('isOpening:', isOpening);
-            console.log('_balance:', _balance);
-            console.log('typeof currentCase:', typeof currentCase);
             
             if (!currentCase) {
-                console.error('❌ currentCase не определена!');
-                if (tg) {
-                    tg.showAlert('Ошибка: Кейс не выбран');
-                } else {
-                    alert('Ошибка: Кейс не выбран');
-                }
+                alert('Ошибка: Кейс не выбран');
                 return;
             }
             
             if (isOpening) {
-                console.warn('⚠️ Кейс уже открывается');
+                console.warn('Уже открывается');
                 return;
             }
             
-            console.log('✅ Проверки пройдены, запускаем openCaseFunc');
-            console.log('✅ currentPrizes:', currentPrizes);
-            console.log('✅ currentPrizes.length:', currentPrizes ? currentPrizes.length : 0);
-            
-            // Проверяем, что currentPrizes установлены
+            // Восстанавливаем currentPrizes если нужно
             if (!currentPrizes || currentPrizes.length === 0) {
-                console.warn('⚠️ currentPrizes пуст, восстанавливаем из currentCase');
                 currentPrizes = currentCase.prizes || [];
-                console.log('✅ Восстановили currentPrizes:', currentPrizes);
             }
             
-            const openCaseFunc = function() {
-                    console.log('🔵🔵🔵 openCaseFunc НАЧАЛАСЬ!');
-                    if (isOpening) {
-                        console.warn('⚠️ Уже открывается, выходим');
-                        return;
-                    }
-                    console.log('✅ Выполняется openCaseFunc');
-                    console.log('✅ currentCase:', currentCase);
-                    console.log('✅ currentPrizes:', currentPrizes);
-                    
-                    const price = currentCase.price || 0;
-                    console.log('💰 Цена кейса:', price);
-                    console.log('💰 Текущий баланс:', _balance);
-                    
-                    if (_balance < price) {
-                        console.error('❌ Недостаточно баланса!');
-                        if (tg) {
-                            tg.showAlert('Недостаточно баланса! Нужно: ' + price + ', есть: ' + _balance.toFixed(2));
-                            tg.HapticFeedback.notificationOccurred('error');
-                        } else {
-                            alert('Недостаточно баланса! Нужно: ' + price + ', есть: ' + _balance.toFixed(2));
-                        }
-                        isOpening = false;
-                        return;
-                    }
+            // ПРОСТАЯ ПРЯМАЯ ФУНКЦИЯ БЕЗ ВЛОЖЕННОСТИ
+            if (isOpening) {
+                return;
+            }
+            
+            const price = currentCase.price || 0;
+            
+            if (_balance < price) {
+                if (tg) {
+                    tg.showAlert('Недостаточно баланса! Нужно: ' + price + ', есть: ' + _balance.toFixed(2));
+                } else {
+                    alert('Недостаточно баланса! Нужно: ' + price + ', есть: ' + _balance.toFixed(2));
+                }
+                return;
+            }
 
-                    isOpening = true;
-                    if (!changeBalance(-price, 'openCase')) {
-                        isOpening = false;
-                        return;
-                    }
-                    saveInventory(); // Сохраняем баланс локально
-                    saveUserData(); // Сохраняем баланс на сервер
-                    
-                    const detailIcon = document.getElementById('detailIcon');
-                    const rouletteContainer = document.getElementById('rouletteContainer');
-                    const openBtn = document.getElementById('openBtn');
-                    
-                    // Полностью скрываем кнопку при начале прокрутки
-                    openBtn.classList.remove('show');
-                    openBtn.style.cssText = 'display: none !important;';
-                    openBtn.disabled = true;
-                    
-                    // Скрываем иконку только во время рулетки
-                    detailIcon.style.display = 'none';
-                    
-                    // Проверяем, что currentPrizes установлены
-                    if (!currentPrizes || currentPrizes.length === 0) {
-                        console.error('❌ currentPrizes пуст!');
-                        currentPrizes = currentCase.prizes || [];
-                        console.log('✅ Восстановили currentPrizes из currentCase:', currentPrizes);
-                    }
-                    
-                    // Проверяем, что элементы существуют
-                    if (!rouletteContainer) {
-                        console.error('❌ rouletteContainer не найден!');
-                        alert('Ошибка: Элемент рулетки не найден');
-                        isOpening = false;
-                        return;
-                    }
-                    
-                    // Сначала создаем рулетку, потом показываем
-                    console.log('✅ Создаем рулетку...');
-                    try {
-                        if (typeof createRoulette === 'function') {
-                            createRoulette();
-                            console.log('✅ createRoulette вызвана успешно');
-                        } else {
-                            console.error('❌ createRoulette не является функцией!');
-                            alert('Ошибка: Функция createRoulette не найдена');
-                            isOpening = false;
-                            return;
-                        }
-                    } catch (err) {
-                        console.error('❌ Ошибка при вызове createRoulette:', err);
-                        alert('Ошибка при создании рулетки: ' + err.message);
-                        isOpening = false;
-                        return;
-                    }
-                    
-                    // Убеждаемся, что контейнер видим
-                    rouletteContainer.style.display = 'block';
-                    rouletteContainer.classList.add('active');
-                    console.log('✅ Рулетка создана и показана');
+            isOpening = true;
+            if (!changeBalance(-price, 'openCase')) {
+                isOpening = false;
+                return;
+            }
+            saveInventory();
+            saveUserData();
+            
+            const detailIcon = document.getElementById('detailIcon');
+            const rouletteContainer = document.getElementById('rouletteContainer');
+            const openBtn = document.getElementById('openBtn');
+            
+            if (!rouletteContainer) {
+                alert('Ошибка: Элемент рулетки не найден');
+                isOpening = false;
+                return;
+            }
+            
+            if (openBtn) {
+                openBtn.style.display = 'none';
+                openBtn.disabled = true;
+            }
+            
+            if (detailIcon) {
+                detailIcon.style.display = 'none';
+            }
+            
+            // Создаем рулетку
+            if (typeof createRoulette === 'function') {
+                createRoulette();
+            } else {
+                alert('Ошибка: Функция createRoulette не найдена');
+                isOpening = false;
+                return;
+            }
+            
+            rouletteContainer.style.display = 'block';
+            rouletteContainer.classList.add('active');
 
-                    if (tg) {
-                        tg.HapticFeedback.impactOccurred('heavy');
+            if (tg) {
+                tg.HapticFeedback.impactOccurred('heavy');
+            }
+            
+            // Даем время на отрисовку элементов перед анимацией
+            setTimeout(() => {
+                // Сначала выбираем случайный приз из доступных
+                const randomPrize = currentPrizes[Math.floor(Math.random() * currentPrizes.length)];
+                const rouletteTrack = document.getElementById('rouletteTrack');
+                const giftItems = rouletteTrack.querySelectorAll('.gift-item');
+                
+                // Убеждаемся, что все элементы видны СРАЗУ
+                giftItems.forEach(item => {
+                    item.style.opacity = '1';
+                    item.style.visibility = 'visible';
+                    item.style.display = 'flex';
+                });
+                
+                const itemWidth = 150 + 20; // 150px ширина + 20px gap
+                const containerWidth = rouletteContainer.offsetWidth;
+                
+                // Находим все подарки с нужным иконом (иконка выбранного приза)
+                const matchingIndices = [];
+                for (let i = 0; i < giftItems.length; i++) {
+                    if (giftItems[i].dataset.icon === randomPrize.icon && 
+                        giftItems[i].dataset.name === randomPrize.name) {
+                        matchingIndices.push(i);
                     }
+                }
+                
+                // Выбираем случайный индекс из середины массива для плавной остановки
+                let targetIndex;
+                if (matchingIndices.length > 0) {
+                    const midPoint = Math.floor(giftItems.length / 2);
+                    const candidates = matchingIndices.filter(idx => 
+                        idx > midPoint - giftItems.length / 4 && 
+                        idx < midPoint + giftItems.length / 4
+                    );
+                    targetIndex = candidates.length > 0 
+                        ? candidates[Math.floor(Math.random() * candidates.length)]
+                        : matchingIndices[Math.floor(matchingIndices.length / 2)];
+                } else {
+                    // Если не нашли точное совпадение, выбираем из середины
+                    targetIndex = Math.floor(giftItems.length / 2);
+                }
+                
+                // Расчет позиций
+                // Трек центрирован в контейнере через left: 50% и transform: translate(-50%, -50%)
+                // Поэтому позиция 0 = центр контейнера
+                // Отрицательные значения = движение влево, положительные = вправо
+                
+                // Целевая позиция: центрируем выбранный подарок
+                const targetItemCenter = targetIndex * itemWidth + itemWidth / 2;
+                const totalTrackWidth = giftItems.length * itemWidth;
+                const targetItemOffset = targetItemCenter - totalTrackWidth / 2;
+                
+                // Начальная позиция: добавляем много прокруток для эффекта
+                const spins = 15;
+                const extraDistance = spins * currentPrizes.length * itemWidth;
+                const startPosition = targetItemOffset + extraDistance;
+                
+                // Финальная позиция: центрируем выбранный подарок
+                const finalPosition = targetItemOffset;
+                
+                const spinDuration = 4000;
+                
+                // Устанавливаем начальную позицию
+                rouletteTrack.style.left = '50%';
+                rouletteTrack.style.top = '50%';
+                rouletteTrack.style.transform = `translate(calc(-50% + ${startPosition}px), -50%)`;
+                rouletteTrack.style.transition = 'none';
+                rouletteTrack.style.display = 'flex';
+                rouletteTrack.style.visibility = 'visible';
+                rouletteTrack.style.opacity = '1';
+                rouletteTrack.style.position = 'absolute';
+                rouletteTrack.style.marginTop = '0';
+                rouletteTrack.style.marginBottom = '0';
+                
+                let startTime = Date.now();
+                const animateRoulette = () => {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / spinDuration, 1);
                     
-                    // Даем время на отрисовку элементов перед анимацией
-                    setTimeout(() => {
-                        // Сначала выбираем случайный приз из доступных
-                        const randomPrize = currentPrizes[Math.floor(Math.random() * currentPrizes.length)];
-                        const rouletteTrack = document.getElementById('rouletteTrack');
-                        const giftItems = rouletteTrack.querySelectorAll('.gift-item');
+                    // Простая функция замедления
+                    const ease = 1 - Math.pow(1 - progress, 3);
+                    const currentOffset = startPosition + (finalPosition - startPosition) * ease;
+                    
+                    // Применяем трансформацию - трек центрирован, смещаем только по X, Y всегда -50%
+                    rouletteTrack.style.transform = `translate(calc(-50% + ${currentOffset}px), -50%)`;
+                    rouletteTrack.style.top = '50%';
+                    rouletteTrack.style.marginTop = '0';
+                    rouletteTrack.style.marginBottom = '0';
+                    
+                    // Обновляем выбранный элемент и ВСЕГДА делаем все видимыми
+                    giftItems.forEach((item, index) => {
+                        // ВАЖНО: Принудительно делаем все элементы видимыми на каждом кадре
+                        item.style.cssText = `
+                            opacity: 1 !important;
+                            visibility: visible !important;
+                            display: flex !important;
+                            transition: none !important;
+                            flex-shrink: 0 !important;
+                            width: 150px !important;
+                            min-width: 150px !important;
+                            max-width: 150px !important;
+                            height: 150px !important;
+                            position: relative !important;
+                            top: 0 !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            vertical-align: top !important;
+                        `;
                         
-                        // Убеждаемся, что все элементы видны СРАЗУ
-                        giftItems.forEach(item => {
-                            item.style.opacity = '1';
-                            item.style.visibility = 'visible';
-                            item.style.display = 'flex';
+                        // Убеждаемся, что изображения внутри тоже видимы
+                        const images = item.querySelectorAll('img');
+                        images.forEach(img => {
+                            img.style.cssText = `
+                                opacity: 1 !important;
+                                visibility: visible !important;
+                                display: block !important;
+                                width: 80px !important;
+                                height: 80px !important;
+                            `;
                         });
                         
-                        const itemWidth = 150 + 20; // 150px ширина + 20px gap
-                        const containerWidth = rouletteContainer.offsetWidth;
+                        // Убеждаемся, что текст тоже видим
+                        const textElements = item.querySelectorAll('.gift-name');
+                        textElements.forEach(text => {
+                            text.style.cssText = `
+                                opacity: 1 !important;
+                                visibility: visible !important;
+                            `;
+                        });
                         
-                        // Находим все подарки с нужным иконом (иконка выбранного приза)
-                        const matchingIndices = [];
-                        for (let i = 0; i < giftItems.length; i++) {
-                            if (giftItems[i].dataset.icon === randomPrize.icon && 
-                                giftItems[i].dataset.name === randomPrize.name) {
-                                matchingIndices.push(i);
-                            }
-                        }
-                        
-                        // Выбираем случайный индекс из середины массива для плавной остановки
-                        let targetIndex;
-                        if (matchingIndices.length > 0) {
-                            const midPoint = Math.floor(giftItems.length / 2);
-                            const candidates = matchingIndices.filter(idx => 
-                                idx > midPoint - giftItems.length / 4 && 
-                                idx < midPoint + giftItems.length / 4
-                            );
-                            targetIndex = candidates.length > 0 
-                                ? candidates[Math.floor(Math.random() * candidates.length)]
-                                : matchingIndices[Math.floor(matchingIndices.length / 2)];
-                        } else {
-                            // Если не нашли точное совпадение, выбираем из середины
-                            targetIndex = Math.floor(giftItems.length / 2);
-                        }
-                        
-                        // Расчет позиций
-                        // Трек центрирован в контейнере через left: 50% и transform: translate(-50%, -50%)
-                        // Поэтому позиция 0 = центр контейнера
-                        // Отрицательные значения = движение влево, положительные = вправо
-                        
-                        // Целевая позиция: центрируем выбранный подарок
-                        const targetItemCenter = targetIndex * itemWidth + itemWidth / 2;
+                        // Расчет позиции элемента относительно центра контейнера
+                        // Трек центрирован, поэтому центр трека = центр контейнера
+                        // Позиция элемента = его offset от начала трека - половина ширины трека + текущее смещение
+                        const itemOffset = index * itemWidth + itemWidth / 2;
                         const totalTrackWidth = giftItems.length * itemWidth;
-                        const targetItemOffset = targetItemCenter - totalTrackWidth / 2;
+                        const itemCenter = itemOffset - totalTrackWidth / 2 + currentOffset;
+                        const distance = Math.abs(itemCenter);
                         
-                        // Начальная позиция: добавляем много прокруток для эффекта
-                        const spins = 15;
-                        const extraDistance = spins * currentPrizes.length * itemWidth;
-                        const startPosition = targetItemOffset + extraDistance;
+                        if (distance < itemWidth / 2) {
+                            item.classList.add('selected');
+                        } else {
+                            item.classList.remove('selected');
+                        }
+                    });
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(animateRoulette);
+                    } else {
+                        // Ищем элемент, который был выделен в последний момент анимации
+                        // (тот, у которого класс 'selected' после последнего обновления)
+                        let selectedItem = null;
                         
-                        // Финальная позиция: центрируем выбранный подарок
-                        const finalPosition = targetItemOffset;
+                        // Сначала проверяем, есть ли элемент с классом selected
+                        giftItems.forEach(item => {
+                            if (item.classList.contains('selected')) {
+                                selectedItem = item;
+                            }
+                        });
                         
-                        const spinDuration = 4000;
-                        
-                        // Устанавливаем начальную позицию
-                        rouletteTrack.style.left = '50%';
-                        rouletteTrack.style.top = '50%';
-                        rouletteTrack.style.transform = `translate(calc(-50% + ${startPosition}px), -50%)`;
-                        rouletteTrack.style.transition = 'none';
-                        rouletteTrack.style.display = 'flex';
-                        rouletteTrack.style.visibility = 'visible';
-                        rouletteTrack.style.opacity = '1';
-                        rouletteTrack.style.position = 'absolute';
-                        rouletteTrack.style.marginTop = '0';
-                        rouletteTrack.style.marginBottom = '0';
-                        
-                        let startTime = Date.now();
-                        const animateRoulette = () => {
-                            const elapsed = Date.now() - startTime;
-                            const progress = Math.min(elapsed / spinDuration, 1);
+                        // Если не нашли, используем расчет по позиции
+                        if (!selectedItem) {
+                            let minDistance = Infinity;
+                            const centerX = 0;
                             
-                            // Простая функция замедления
-                            const ease = 1 - Math.pow(1 - progress, 3);
-                            const currentOffset = startPosition + (finalPosition - startPosition) * ease;
-                            
-                            // Применяем трансформацию - трек центрирован, смещаем только по X, Y всегда -50%
-                            rouletteTrack.style.transform = `translate(calc(-50% + ${currentOffset}px), -50%)`;
-                            rouletteTrack.style.top = '50%';
-                            rouletteTrack.style.marginTop = '0';
-                            rouletteTrack.style.marginBottom = '0';
-                            
-                            // Обновляем выбранный элемент и ВСЕГДА делаем все видимыми
                             giftItems.forEach((item, index) => {
-                                // ВАЖНО: Принудительно делаем все элементы видимыми на каждом кадре
-                                item.style.cssText = `
-                                    opacity: 1 !important;
-                                    visibility: visible !important;
-                                    display: flex !important;
-                                    transition: none !important;
-                                    flex-shrink: 0 !important;
-                                    width: 150px !important;
-                                    min-width: 150px !important;
-                                    max-width: 150px !important;
-                                    height: 150px !important;
-                                    position: relative !important;
-                                    top: 0 !important;
-                                    margin: 0 !important;
-                                    padding: 0 !important;
-                                    vertical-align: top !important;
-                                `;
-                                
-                                // Убеждаемся, что изображения внутри тоже видимы
-                                const images = item.querySelectorAll('img');
-                                images.forEach(img => {
-                                    img.style.cssText = `
-                                        opacity: 1 !important;
-                                        visibility: visible !important;
-                                        display: block !important;
-                                        width: 80px !important;
-                                        height: 80px !important;
-                                    `;
-                                });
-                                
-                                // Убеждаемся, что текст тоже видим
-                                const textElements = item.querySelectorAll('.gift-name');
-                                textElements.forEach(text => {
-                                    text.style.cssText = `
-                                        opacity: 1 !important;
-                                        visibility: visible !important;
-                                    `;
-                                });
-                                
-                                // Расчет позиции элемента относительно центра контейнера
-                                // Трек центрирован, поэтому центр трека = центр контейнера
-                                // Позиция элемента = его offset от начала трека - половина ширины трека + текущее смещение
                                 const itemOffset = index * itemWidth + itemWidth / 2;
                                 const totalTrackWidth = giftItems.length * itemWidth;
-                                const itemCenter = itemOffset - totalTrackWidth / 2 + currentOffset;
-                                const distance = Math.abs(itemCenter);
+                                const itemCenter = itemOffset - totalTrackWidth / 2 + finalPosition;
+                                const distance = Math.abs(itemCenter - centerX);
                                 
-                                if (distance < itemWidth / 2) {
-                                    item.classList.add('selected');
-                                } else {
-                                    item.classList.remove('selected');
+                                if (distance < minDistance) {
+                                    minDistance = distance;
+                                    selectedItem = item;
                                 }
                             });
+                        }
+                        
+                        // Если все еще не нашли, используем целевой элемент
+                        if (!selectedItem) {
+                            selectedItem = giftItems[targetIndex];
+                        }
+                        
+                        setTimeout(() => {
+                            giftItems.forEach(item => item.classList.remove('selected'));
                             
-                            if (progress < 1) {
-                                requestAnimationFrame(animateRoulette);
-                            } else {
-                                // Ищем элемент, который был выделен в последний момент анимации
-                                // (тот, у которого класс 'selected' после последнего обновления)
-                                let selectedItem = null;
+                            if (selectedItem) {
+                                selectedItem.classList.add('selected');
                                 
-                                // Сначала проверяем, есть ли элемент с классом selected
-                                giftItems.forEach(item => {
-                                    if (item.classList.contains('selected')) {
-                                        selectedItem = item;
-                                    }
+                                // Получаем данные приза непосредственно из элемента
+                                const actualPrize = {
+                                    icon: selectedItem.dataset.icon || '',
+                                    name: selectedItem.dataset.name || '',
+                                    value: parseFloat(selectedItem.dataset.value) || 0
+                                };
+                                
+                                // Если данные пустые, берем из randomPrize
+                                if (!actualPrize.name || !actualPrize.icon) {
+                                    actualPrize.icon = randomPrize.icon;
+                                    actualPrize.name = randomPrize.name;
+                                    actualPrize.value = randomPrize.value;
+                                }
+                                
+                                console.log('=== PRIZE SELECTION ===');
+                                console.log('Selected item dataset:', {
+                                    icon: selectedItem.dataset.icon,
+                                    name: selectedItem.dataset.name,
+                                    value: selectedItem.dataset.value
                                 });
-                                
-                                // Если не нашли, используем расчет по позиции
-                                if (!selectedItem) {
-                                    let minDistance = Infinity;
-                                    const centerX = 0;
-                                    
-                                    giftItems.forEach((item, index) => {
-                                        const itemOffset = index * itemWidth + itemWidth / 2;
-                                        const totalTrackWidth = giftItems.length * itemWidth;
-                                        const itemCenter = itemOffset - totalTrackWidth / 2 + finalPosition;
-                                        const distance = Math.abs(itemCenter - centerX);
-                                        
-                                        if (distance < minDistance) {
-                                            minDistance = distance;
-                                            selectedItem = item;
-                                        }
-                                    });
-                                }
-                                
-                                // Если все еще не нашли, используем целевой элемент
-                                if (!selectedItem) {
-                                    selectedItem = giftItems[targetIndex];
-                                }
+                                console.log('Final prize:', actualPrize.name);
+                                console.log('Target prize:', randomPrize.name);
                                 
                                 setTimeout(() => {
-                                    giftItems.forEach(item => item.classList.remove('selected'));
+                                    showPrizeModal(actualPrize);
                                     
-                                    if (selectedItem) {
-                                        selectedItem.classList.add('selected');
-                                        
-                                        // Получаем данные приза непосредственно из элемента
-                                        const actualPrize = {
-                                            icon: selectedItem.dataset.icon || '',
-                                            name: selectedItem.dataset.name || '',
-                                            value: parseFloat(selectedItem.dataset.value) || 0
+                                    // Восстанавливаем иконку кейса
+                                    if (currentCase && (currentCase.icon.includes('.png') || currentCase.icon.includes('.jpg') || currentCase.icon.includes('.jpeg'))) {
+                                        const img = document.createElement('img');
+                                        img.src = currentCase.icon;
+                                        img.alt = 'Case';
+                                        img.style.width = '100%';
+                                        img.style.maxWidth = '300px';
+                                        img.style.height = 'auto';
+                                        img.style.objectFit = 'contain';
+                                        img.style.display = 'block';
+                                        img.onerror = function() {
+                                            detailIcon.textContent = '🔐';
                                         };
-                                        
-                                        // Если данные пустые, берем из randomPrize
-                                        if (!actualPrize.name || !actualPrize.icon) {
-                                            actualPrize.icon = randomPrize.icon;
-                                            actualPrize.name = randomPrize.name;
-                                            actualPrize.value = randomPrize.value;
-                                        }
-                                        
-                                        console.log('=== PRIZE SELECTION ===');
-                                        console.log('Selected item dataset:', {
-                                            icon: selectedItem.dataset.icon,
-                                            name: selectedItem.dataset.name,
-                                            value: selectedItem.dataset.value
-                                        });
-                                        console.log('Final prize:', actualPrize.name);
-                                        console.log('Target prize:', randomPrize.name);
-                                        
-                                        setTimeout(() => {
-                                            showPrizeModal(actualPrize);
-                                            
-                                            // Восстанавливаем иконку кейса
-                                            if (currentCase && (currentCase.icon.includes('.png') || currentCase.icon.includes('.jpg') || currentCase.icon.includes('.jpeg'))) {
-                                                const img = document.createElement('img');
-                                                img.src = currentCase.icon;
-                                                img.alt = 'Case';
-                                                img.style.width = '100%';
-                                                img.style.maxWidth = '300px';
-                                                img.style.height = 'auto';
-                                                img.style.objectFit = 'contain';
-                                                img.style.display = 'block';
-                                                img.onerror = function() {
-                                                    detailIcon.textContent = '🔐';
-                                                };
-                                                detailIcon.innerHTML = '';
-                                                detailIcon.appendChild(img);
-                                            }
-                                            detailIcon.style.display = 'flex';
-                                            
-                                            rouletteContainer.classList.remove('active');
-                                            isOpening = false;
-                                            
-                                            if (tg) {
-                                                tg.HapticFeedback.notificationOccurred('success');
-                                            }
-                                        }, 500);
+                                        detailIcon.innerHTML = '';
+                                        detailIcon.appendChild(img);
                                     }
-                                }, 300);
+                                    detailIcon.style.display = 'flex';
+                                    
+                                    rouletteContainer.classList.remove('active');
+                                    isOpening = false;
+                                    
+                                    if (tg) {
+                                        tg.HapticFeedback.notificationOccurred('success');
+                                    }
+                                }, 500);
                             }
-                        };
-                        
-                        requestAnimationFrame(animateRoulette);
-                    }, 300);
+                        }, 300);
+                    }
                 };
                 
-                console.log('✅ Вызываем openCaseFunc');
-                console.log('✅ openCaseFunc type:', typeof openCaseFunc);
-                try {
-                    if (typeof openCaseFunc === 'function') {
-                        console.log('🔵 Вызываем openCaseFunc...');
-                        openCaseFunc();
-                        console.log('✅ openCaseFunc вызвана');
-                    } else {
-                        console.error('❌ openCaseFunc не является функцией!');
-                        alert('Ошибка: openCaseFunc не является функцией');
-                        isOpening = false;
-                    }
-                } catch (err) {
-                    console.error('❌ ОШИБКА в openCaseFunc:', err);
-                    console.error('Stack:', err.stack);
-                    isOpening = false;
-                    alert('Ошибка при открытии кейса: ' + err.message + '\n\nПроверьте консоль для подробностей.');
-                }
+                requestAnimationFrame(animateRoulette);
+            }, 300);
         };
         
         // Убеждаемся, что функция доступна глобально
@@ -5361,91 +5295,66 @@
                 newBtn.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; bottom: 100px !important; left: 20px !important; right: 20px !important; z-index: 99999 !important; pointer-events: auto !important; cursor: pointer !important;';
                 newBtn.innerHTML = 'Открыть <span>🚀</span>';
                 
-                // Единая функция обработки клика
+                // Единая функция обработки клика - ПРОСТАЯ И ПРЯМАЯ
                 const handleOpenClick = function(e) {
-                    console.log('🔵🔵🔵 КЛИК ПО КНОПКЕ ОТКРЫТЬ!');
-                    console.log('🔵 Событие:', e);
-                    
                     if (e) {
                         e.preventDefault();
                         e.stopPropagation();
                         e.stopImmediatePropagation();
                     }
                     
-                    console.log('🔵 Клик по кнопке "Открыть"');
+                    console.log('🔵 КЛИК ПО КНОПКЕ ОТКРЫТЬ!');
                     console.log('currentCase:', currentCase);
-                    console.log('currentCase type:', typeof currentCase);
                     console.log('isOpening:', isOpening);
-                    console.log('typeof window.openCase:', typeof window.openCase);
-                    console.log('typeof window.openCaseFull:', typeof window.openCaseFull);
                     
-                    // Проверяем currentCase
                     if (!currentCase) {
-                        console.error('❌ currentCase пуст!');
-                        alert('Ошибка: Кейс не выбран. Вернитесь назад и выберите кейс снова.');
+                        alert('Ошибка: Кейс не выбран');
                         return false;
                     }
                     
-                    // Пробуем вызвать функцию напрямую
+                    if (isOpening) {
+                        console.warn('Уже открывается');
+                        return false;
+                    }
+                    
+                    // ВЫЗЫВАЕМ НАПРЯМУЮ window.openCaseFull
                     try {
-                        console.log('🔵 Пробуем вызвать функцию...');
-                        if (typeof window.openCase === 'function') {
-                            console.log('✅ Вызываем window.openCase()');
-                            const result = window.openCase();
-                            console.log('✅ window.openCase() вернула:', result);
-                        } else if (typeof window.openCaseFull === 'function') {
-                            console.log('✅ Вызываем window.openCaseFull()');
-                            const result = window.openCaseFull();
-                            console.log('✅ window.openCaseFull() вернула:', result);
+                        if (typeof window.openCaseFull === 'function') {
+                            window.openCaseFull();
+                        } else if (typeof window.openCase === 'function') {
+                            window.openCase();
                         } else {
-                            console.error('❌ Функция openCase не найдена!');
-                            console.error('window.openCase:', window.openCase);
-                            console.error('window.openCaseFull:', window.openCaseFull);
-                            alert('Ошибка: Функция openCase не найдена. Перезагрузите страницу.');
-                            return false;
+                            alert('Ошибка: Функция не найдена. Перезагрузите страницу.');
                         }
                     } catch (err) {
-                        console.error('❌ ОШИБКА при вызове openCase:', err);
-                        console.error('Stack:', err.stack);
-                        alert('Ошибка: ' + err.message + '\n\nПроверьте консоль для подробностей.');
-                        return false;
+                        console.error('Ошибка:', err);
+                        alert('Ошибка: ' + err.message);
                     }
                     
                     return false;
                 };
                 
-                // Устанавливаем обработчик через onclick
-                newBtn.onclick = handleOpenClick;
-                
-                // Также добавляем через addEventListener для надежности
-                newBtn.addEventListener('click', handleOpenClick, { capture: true, once: false });
-                
-                // Также добавляем через mousedown для гарантии
-                newBtn.addEventListener('mousedown', function(e) {
-                    console.log('🔵 mousedown на кнопке');
+                // Устанавливаем обработчик ПРОСТО И ПРЯМО
+                newBtn.onclick = function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
                     handleOpenClick(e);
-                });
+                };
                 
-                // Также добавляем touchstart для мобильных устройств
-                newBtn.addEventListener('touchstart', function(e) {
-                    console.log('🔵 touchstart на кнопке');
-                    e.preventDefault();
-                    handleOpenClick(e);
-                });
+                // Также через addEventListener
+                newBtn.addEventListener('click', handleOpenClick, true);
                 
-                // Проверяем, что кнопка доступна
-                console.log('✅ Кнопка настроена, disabled:', newBtn.disabled);
-                console.log('✅ Кнопка pointer-events:', newBtn.style.pointerEvents);
-                console.log('✅ Кнопка style:', newBtn.style.cssText);
-                console.log('✅ Кнопка z-index:', window.getComputedStyle(newBtn).zIndex);
+                // Делаем глобальную функцию для тестирования
+                window.testOpenCase = function() {
+                    console.log('ТЕСТ: Вызываем openCase');
+                    if (typeof window.openCaseFull === 'function') {
+                        window.openCaseFull();
+                    } else {
+                        alert('openCaseFull не найдена');
+                    }
+                };
                 
-                // Тестируем, что кнопка видна
-                const rect = newBtn.getBoundingClientRect();
-                console.log('✅ Кнопка позиция:', rect);
-                console.log('✅ Кнопка видима:', rect.width > 0 && rect.height > 0);
-                
-                console.log('✅ Обработчики кнопки "Открыть" установлены');
+                console.log('✅ Обработчики кнопки установлены');
             } else {
                 console.error('❌ Open button not found!');
             }
