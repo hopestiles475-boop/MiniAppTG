@@ -3140,6 +3140,19 @@
         </div>
         <div class="cases-container" id="casesContainer">
         </div>
+        <script>
+            // Принудительная загрузка кейсов сразу после создания контейнера
+            (function() {
+                setTimeout(function() {
+                    if (typeof window.loadCases === 'function') {
+                        console.log('🔵 Прямой вызов loadCases из HTML');
+                        window.loadCases();
+                    } else {
+                        console.error('❌ window.loadCases не найдена в HTML');
+                    }
+                }, 100);
+            })();
+        </script>
     </div>
 
     <div id="caseDetailPage" class="case-detail-page" style="display: none;">
@@ -3149,7 +3162,7 @@
             <div class="case-detail-price" id="detailPrice">0.1 <span class="currency-icon"></span></div>
         </div>
         
-        <button class="open-case-btn" id="openCaseBtn" onclick="if(typeof window.openCase === 'function'){window.openCase();}else{alert('Функция открытия не найдена');}">Открыть кейс</button>
+        <button class="open-case-btn" id="openCaseBtn" onclick="try{console.log('🔵 Прямой onclick на кнопке');if(typeof window.openCase === 'function'){console.log('✅ Вызываю window.openCase');window.openCase();}else{alert('Функция открытия не найдена. Тип: '+typeof window.openCase);console.error('❌ window.openCase:', typeof window.openCase);}}catch(e){console.error('Ошибка в onclick:',e);alert('Ошибка: '+e.message);}return false;">Открыть кейс</button>
         
         <div class="whats-inside-title">Что может выпасть?</div>
         <div class="prizes-grid" id="prizesGrid">
@@ -4201,20 +4214,42 @@
         
         // Функция загрузки кейсов из папок
         function loadCases() {
-            console.log('🔵 loadCases вызвана');
-            const casesContainer = document.getElementById('casesContainer');
+            console.log('🔵 loadCases вызвана, ищу контейнер...');
+            
+            // Пытаемся найти контейнер разными способами
+            let casesContainer = document.getElementById('casesContainer');
+            if (!casesContainer) {
+                casesContainer = document.querySelector('.cases-container');
+            }
+            if (!casesContainer) {
+                casesContainer = document.querySelector('#casesContainer');
+            }
+            
             if (!casesContainer) {
                 console.error('❌ casesContainer не найден, попробую найти через 100мс');
                 setTimeout(function() {
-                    const container = document.getElementById('casesContainer');
-                    if (container) {
-                        console.log('✅ casesContainer найден с задержкой');
-                        loadCases();
-                    } else {
-                        console.error('❌ casesContainer все еще не найден');
-                    }
+                    loadCases();
                 }, 100);
                 return;
+            }
+            
+            console.log('✅ Контейнер найден:', casesContainer);
+            
+            // Убеждаемся что контейнер и его родитель видимы
+            const casesPage = document.getElementById('casesPage');
+            if (casesPage) {
+                casesPage.style.display = 'block';
+                casesPage.style.visibility = 'visible';
+                casesPage.style.opacity = '1';
+                casesPage.style.position = 'fixed';
+                casesPage.style.top = '0';
+                casesPage.style.left = '0';
+                casesPage.style.right = '0';
+                casesPage.style.bottom = '0';
+                casesPage.style.width = '100%';
+                casesPage.style.height = '100%';
+                casesPage.style.zIndex = '100';
+                console.log('✅ casesPage сделана видимой');
             }
             
             console.log('✅ Загружаю кейсы в контейнер:', casesContainer);
@@ -4248,12 +4283,18 @@
             
             const cases = [case1Data];
             
+            // Очищаем контейнер
             casesContainer.innerHTML = '';
             
-            // Убеждаемся, что контейнер видим
-            casesContainer.style.display = 'flex';
-            casesContainer.style.visibility = 'visible';
-            casesContainer.style.opacity = '1';
+            // Убеждаемся, что контейнер видим - ПРИНУДИТЕЛЬНО
+            casesContainer.style.setProperty('display', 'flex', 'important');
+            casesContainer.style.setProperty('visibility', 'visible', 'important');
+            casesContainer.style.setProperty('opacity', '1', 'important');
+            casesContainer.style.setProperty('position', 'relative', 'important');
+            casesContainer.style.setProperty('width', '100%', 'important');
+            casesContainer.style.setProperty('min-height', '200px', 'important');
+            
+            console.log('✅ Стили контейнера установлены');
             
             cases.forEach(caseData => {
                 const caseCard = document.createElement('div');
@@ -4304,20 +4345,33 @@
                 console.error('❌ Кейсы не добавлены в контейнер!');
                 console.error('❌ Контейнер:', casesContainer);
                 console.error('❌ HTML контейнера:', casesContainer.innerHTML);
+                alert('Ошибка: кейсы не добавлены в контейнер. Проверьте консоль.');
             } else {
                 console.log('✅ Кейсов в контейнере:', casesContainer.children.length);
-                // Убеждаемся что контейнер видим
-                casesContainer.style.display = 'flex';
-                casesContainer.style.visibility = 'visible';
-                casesContainer.style.opacity = '1';
                 
-                // Проверяем каждый элемент
+                // Убеждаемся что контейнер видим - ПРИНУДИТЕЛЬНО
+                casesContainer.style.setProperty('display', 'flex', 'important');
+                casesContainer.style.setProperty('visibility', 'visible', 'important');
+                casesContainer.style.setProperty('opacity', '1', 'important');
+                casesContainer.style.setProperty('position', 'relative', 'important');
+                casesContainer.style.setProperty('width', '100%', 'important');
+                casesContainer.style.setProperty('min-height', '200px', 'important');
+                
+                // Проверяем каждый элемент и делаем его видимым - ПРИНУДИТЕЛЬНО
                 Array.from(casesContainer.children).forEach((child, index) => {
-                    console.log(`✅ Кейс ${index + 1}:`, child.className, child.style.display);
-                    child.style.display = 'block';
-                    child.style.visibility = 'visible';
-                    child.style.opacity = '1';
+                    console.log(`✅ Кейс ${index + 1}:`, child.className);
+                    child.style.setProperty('display', 'flex', 'important');
+                    child.style.setProperty('visibility', 'visible', 'important');
+                    child.style.setProperty('opacity', '1', 'important');
+                    child.style.setProperty('position', 'relative', 'important');
+                    child.style.setProperty('width', '100%', 'important');
+                    child.style.setProperty('max-width', '600px', 'important');
+                    child.style.setProperty('margin', '0 auto 20px auto', 'important');
+                    child.style.setProperty('pointer-events', 'auto', 'important');
+                    child.style.setProperty('z-index', '10', 'important');
                 });
+                
+                console.log('✅ Все кейсы сделаны видимыми принудительно');
             }
         }
         
@@ -4657,7 +4711,17 @@
         
         // Функция для привязки обработчиков кнопки
         function attachOpenCaseHandlers() {
-            const openCaseBtn = document.getElementById('openCaseBtn');
+            console.log('🔵 attachOpenCaseHandlers вызвана');
+            let openCaseBtn = document.getElementById('openCaseBtn');
+            
+            // Пытаемся найти кнопку разными способами
+            if (!openCaseBtn) {
+                openCaseBtn = document.querySelector('.open-case-btn');
+            }
+            if (!openCaseBtn) {
+                openCaseBtn = document.querySelector('#openCaseBtn');
+            }
+            
             if (openCaseBtn) {
                 console.log('✅ Нашел кнопку openCaseBtn, привязываю обработчики');
                 
@@ -4665,16 +4729,24 @@
                 const newBtn = openCaseBtn.cloneNode(true);
                 openCaseBtn.parentNode.replaceChild(newBtn, openCaseBtn);
                 
+                // Делаем кнопку видимой и кликабельной
+                newBtn.style.setProperty('display', 'block', 'important');
+                newBtn.style.setProperty('visibility', 'visible', 'important');
+                newBtn.style.setProperty('opacity', '1', 'important');
+                newBtn.style.setProperty('pointer-events', 'auto', 'important');
+                newBtn.style.setProperty('cursor', 'pointer', 'important');
+                
                 // Добавляем обработчик через addEventListener
                 newBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('🔵 Клик через addEventListener');
+                    console.log('🔵 Клик через addEventListener на кнопке открытия');
                     if (typeof window.openCase === 'function') {
+                        console.log('✅ Вызываю window.openCase');
                         window.openCase();
                     } else {
                         console.error('❌ window.openCase не найдена в addEventListener');
-                        alert('Ошибка: функция открытия кейса не найдена');
+                        alert('Ошибка: функция открытия кейса не найдена. Тип: ' + typeof window.openCase);
                     }
                 }, true); // useCapture = true для приоритета
                 
@@ -4682,32 +4754,52 @@
                 newBtn.onclick = function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('🔵 Клик через onclick handler');
+                    console.log('🔵 Клик через onclick handler на кнопке открытия');
                     if (typeof window.openCase === 'function') {
+                        console.log('✅ Вызываю window.openCase через onclick');
                         window.openCase();
+                    } else {
+                        console.error('❌ window.openCase не найдена в onclick');
                     }
+                    return false;
                 };
                 
                 // Также добавляем touchstart для мобильных устройств
                 newBtn.addEventListener('touchstart', function(e) {
                     e.preventDefault();
-                    console.log('🔵 touchstart на кнопке');
+                    e.stopPropagation();
+                    console.log('🔵 touchstart на кнопке открытия');
                     if (typeof window.openCase === 'function') {
+                        console.log('✅ Вызываю window.openCase через touchstart');
                         window.openCase();
                     }
+                }, { passive: false });
+                
+                // Также добавляем mousedown для надежности
+                newBtn.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    console.log('🔵 mousedown на кнопке открытия');
                 });
                 
                 console.log('✅ Обработчики кнопки открытия кейса установлены');
             } else {
-                console.warn('⚠️ Кнопка openCaseBtn не найдена');
+                console.warn('⚠️ Кнопка openCaseBtn не найдена, попробую позже');
+                setTimeout(attachOpenCaseHandlers, 200);
             }
         }
         
         // Привязываем обработчики несколько раз для надежности
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', attachOpenCaseHandlers);
-        } else {
+        function initOpenCaseButton() {
             attachOpenCaseHandlers();
+            setTimeout(attachOpenCaseHandlers, 100);
+            setTimeout(attachOpenCaseHandlers, 300);
+            setTimeout(attachOpenCaseHandlers, 500);
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initOpenCaseButton);
+        } else {
+            initOpenCaseButton();
         }
         
         // Переопределяем showCaseDetail с привязкой обработчиков
@@ -4719,8 +4811,10 @@
             }
             // Перепривязываем обработчики когда показываем страницу деталей - несколько раз
             setTimeout(attachOpenCaseHandlers, 50);
-            setTimeout(attachOpenCaseHandlers, 200);
+            setTimeout(attachOpenCaseHandlers, 150);
+            setTimeout(attachOpenCaseHandlers, 300);
             setTimeout(attachOpenCaseHandlers, 500);
+            setTimeout(attachOpenCaseHandlers, 1000);
         };
         
         // Функция возврата назад
