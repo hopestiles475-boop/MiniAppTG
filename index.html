@@ -48,6 +48,25 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         // КРИТИЧЕСКИ ВАЖНО: Определяем функции СРАЗУ, чтобы они были доступны в HTML
+        // Заглушки для функций открытия кейса - должны быть доступны сразу
+        window.openCase = function() {
+            console.log('⚠️ openCase вызвана до полной загрузки, ожидаю...');
+            setTimeout(function() {
+                if (typeof window.openCase === 'function' && window.openCase.toString().includes('caseDetailPage')) {
+                    window.openCase();
+                } else {
+                    alert('Функция открытия кейса еще не загружена. Попробуйте через секунду.');
+                }
+            }, 100);
+        };
+        
+        window.closePrizeModal = function() {
+            console.log('⚠️ closePrizeModal вызвана до полной загрузки');
+        };
+        
+        window.goBackFromCase = function() {
+            console.log('⚠️ goBackFromCase вызвана до полной загрузки');
+        };
         
         // ПЕРЕХВАТЫВАЕМ ОШИБКИ ОТ TELEGRAM SDK
         window.addEventListener('error', function(e) {
@@ -532,6 +551,21 @@
             opacity: 0 !important;
             position: absolute !important;
             pointer-events: none !important;
+        }
+        
+        #mainPage {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        
+        #mainPage:not(.hidden) {
+            display: none !important;
+        }
+        
+        body:not(.show-main-page) #mainPage {
+            display: none !important;
         }
         
         #caseDetailPage {
@@ -4509,50 +4543,81 @@
             currentOpeningCase = null;
         }
         
-        // Делаем функции глобальными ДО их использования
-        window.openCase = openCase;
+        // Делаем функции глобальными ДО их использования - ПЕРЕЗАПИСЫВАЕМ заглушки
+        window.openCase = function() {
+            console.log('🔵 window.openCase вызвана (полная версия)');
+            openCase();
+        };
         window.closePrizeModal = closePrizeModal;
+        window.goBackFromCase = goBackFromCase;
         
         // Сохраняем ID кейса при показе деталей
         const originalShowCaseDetail = window.showCaseDetail;
-        window.showCaseDetail = function(caseId) {
-            currentOpeningCase = caseId;
-            originalShowCaseDetail(caseId);
-        };
         
-        // Также добавляем обработчик события для кнопки
-        document.addEventListener('DOMContentLoaded', function() {
+        // Функция для привязки обработчиков кнопки
+        function attachOpenCaseHandlers() {
             const openCaseBtn = document.getElementById('openCaseBtn');
             if (openCaseBtn) {
-                // Удаляем старый обработчик если есть
+                console.log('✅ Нашел кнопку openCaseBtn, привязываю обработчики');
+                
+                // Удаляем все старые обработчики через клонирование
                 const newBtn = openCaseBtn.cloneNode(true);
                 openCaseBtn.parentNode.replaceChild(newBtn, openCaseBtn);
                 
-                // Добавляем новый обработчик
+                // Добавляем обработчик через addEventListener
                 newBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('🔵 Клик по кнопке открытия кейса');
+                    console.log('🔵 Клик через addEventListener');
                     if (typeof window.openCase === 'function') {
                         window.openCase();
                     } else {
-                        console.error('❌ window.openCase не найдена');
+                        console.error('❌ window.openCase не найдена в addEventListener');
                         alert('Ошибка: функция открытия кейса не найдена');
                     }
-                });
+                }, true); // useCapture = true для приоритета
                 
                 // Также добавляем onclick для совместимости
                 newBtn.onclick = function(e) {
                     e.preventDefault();
                     e.stopPropagation();
+                    console.log('🔵 Клик через onclick handler');
                     if (typeof window.openCase === 'function') {
                         window.openCase();
                     }
                 };
                 
-                console.log('✅ Обработчик кнопки открытия кейса установлен');
+                // Также добавляем touchstart для мобильных устройств
+                newBtn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    console.log('🔵 touchstart на кнопке');
+                    if (typeof window.openCase === 'function') {
+                        window.openCase();
+                    }
+                });
+                
+                console.log('✅ Обработчики кнопки открытия кейса установлены');
+            } else {
+                console.warn('⚠️ Кнопка openCaseBtn не найдена');
             }
-        });
+        }
+        
+        // Привязываем обработчики несколько раз для надежности
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', attachOpenCaseHandlers);
+        } else {
+            attachOpenCaseHandlers();
+        }
+        
+        // Переопределяем showCaseDetail с привязкой обработчиков
+        window.showCaseDetail = function(caseId) {
+            currentOpeningCase = caseId;
+            if (originalShowCaseDetail) {
+                originalShowCaseDetail(caseId);
+            }
+            // Перепривязываем обработчики когда показываем страницу деталей
+            setTimeout(attachOpenCaseHandlers, 100);
+        };
         
         // Функция возврата назад
         function goBackFromCase() {
