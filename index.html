@@ -4568,27 +4568,9 @@
         // Функция загрузки кейсов из папок
         function loadCases() {
             console.log('🔵 loadCases вызвана, ищу контейнер...');
+            console.log('🔵 document.readyState:', document.readyState);
             
-            // Пытаемся найти контейнер разными способами
-            let casesContainer = document.getElementById('casesContainer');
-            if (!casesContainer) {
-                casesContainer = document.querySelector('.cases-container');
-            }
-            if (!casesContainer) {
-                casesContainer = document.querySelector('#casesContainer');
-            }
-            
-            if (!casesContainer) {
-                console.error('❌ casesContainer не найден, попробую найти через 100мс');
-                setTimeout(function() {
-                    loadCases();
-                }, 100);
-                return;
-            }
-            
-            console.log('✅ Контейнер найден:', casesContainer);
-            
-            // Убеждаемся что контейнер и его родитель видимы
+            // Сначала убеждаемся что страница кейсов видима
             const casesPage = document.getElementById('casesPage');
             if (casesPage) {
                 casesPage.style.display = 'block';
@@ -4602,8 +4584,36 @@
                 casesPage.style.width = '100%';
                 casesPage.style.height = '100%';
                 casesPage.style.zIndex = '100';
+                casesPage.style.pointerEvents = 'auto';
                 console.log('✅ casesPage сделана видимой');
+            } else {
+                console.error('❌ casesPage НЕ НАЙДЕНА!');
             }
+            
+            // Пытаемся найти контейнер разными способами
+            let casesContainer = document.getElementById('casesContainer');
+            if (!casesContainer) {
+                casesContainer = document.querySelector('.cases-container');
+            }
+            if (!casesContainer) {
+                casesContainer = document.querySelector('#casesContainer');
+            }
+            if (!casesContainer && casesPage) {
+                // Пытаемся найти внутри casesPage
+                casesContainer = casesPage.querySelector('#casesContainer') || casesPage.querySelector('.cases-container');
+            }
+            
+            if (!casesContainer) {
+                console.error('❌ casesContainer не найден, попробую найти через 200мс');
+                console.error('❌ casesPage:', casesPage ? 'найдена' : 'НЕ НАЙДЕНА');
+                setTimeout(function() {
+                    loadCases();
+                }, 200);
+                return;
+            }
+            
+            console.log('✅ Контейнер найден:', casesContainer);
+            console.log('✅ Контейнер родитель:', casesContainer.parentElement);
             
             console.log('✅ Загружаю кейсы в контейнер:', casesContainer);
             
@@ -4812,68 +4822,92 @@
             
             const cases = [case1Data, case2Data, case3Data, case4Data, case5Data, case6Data, case7Data];
             
+            console.log('✅ Всего кейсов для загрузки:', cases.length);
+            
             // Очищаем контейнер
             casesContainer.innerHTML = '';
+            console.log('✅ Контейнер очищен');
             
             // Убеждаемся, что контейнер видим - ПРИНУДИТЕЛЬНО
-            casesContainer.style.setProperty('display', 'flex', 'important');
-            casesContainer.style.setProperty('visibility', 'visible', 'important');
-            casesContainer.style.setProperty('opacity', '1', 'important');
-            casesContainer.style.setProperty('position', 'relative', 'important');
-            casesContainer.style.setProperty('width', '100%', 'important');
-            casesContainer.style.setProperty('min-height', '200px', 'important');
+            casesContainer.style.display = 'flex';
+            casesContainer.style.visibility = 'visible';
+            casesContainer.style.opacity = '1';
+            casesContainer.style.position = 'relative';
+            casesContainer.style.width = '100%';
+            casesContainer.style.minHeight = '200px';
+            casesContainer.style.pointerEvents = 'auto';
+            casesContainer.style.zIndex = '10';
             
             console.log('✅ Стили контейнера установлены');
+            console.log('✅ Контейнер display:', casesContainer.style.display);
+            console.log('✅ Контейнер visibility:', casesContainer.style.visibility);
             
-            cases.forEach(caseData => {
-                const caseCard = document.createElement('div');
-                caseCard.className = 'case-card';
-                caseCard.dataset.case = caseData.id;
-                caseCard.style.cursor = 'pointer';
-                
-                caseCard.innerHTML = `
-                    <div class="case-icon">
-                        <img src="${caseData.icon}" alt="Кейс #${caseData.id}" onerror="this.style.display='none'; this.parentElement.innerHTML='🎁';">
-                    </div>
-                    <div class="case-info">
-                        <div class="case-name">Кейс #${caseData.id}</div>
-                        <div class="case-description">${caseData.prizes.length} предметов</div>
-                        <div class="case-price">${caseData.price} <span class="currency-icon"></span></div>
-                    </div>
-                `;
-                
-                // Обработчик клика - множественная привязка
-                caseCard.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('🔵 Клик по кейсу #' + caseData.id);
-                    if (typeof window.showCaseDetail === 'function') {
-                        window.showCaseDetail(caseData.id);
-                    } else {
-                        console.error('❌ showCaseDetail не найдена');
-                        alert('Ошибка: функция показа деталей не найдена');
-                    }
-                });
-                
-                // Также добавляем onclick для надежности
-                caseCard.onclick = function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (typeof window.showCaseDetail === 'function') {
-                        window.showCaseDetail(caseData.id);
-                    }
-                };
-                
-                casesContainer.appendChild(caseCard);
+            // Создаем карточки кейсов
+            let cardsCreated = 0;
+            cases.forEach((caseData, index) => {
+                try {
+                    console.log(`🔵 Создаю карточку кейса #${caseData.id} (${index + 1}/${cases.length})`);
+                    const caseCard = document.createElement('div');
+                    caseCard.className = 'case-card';
+                    caseCard.dataset.case = caseData.id;
+                    caseCard.style.cursor = 'pointer';
+                    
+                    caseCard.innerHTML = `
+                        <div class="case-icon">
+                            <img src="${caseData.icon}" alt="Кейс #${caseData.id}" onerror="this.style.display='none'; this.parentElement.innerHTML='🎁';">
+                        </div>
+                        <div class="case-info">
+                            <div class="case-name">Кейс #${caseData.id}</div>
+                            <div class="case-description">${caseData.prizes.length} предметов</div>
+                            <div class="case-price">${caseData.price} <span class="currency-icon"></span></div>
+                        </div>
+                    `;
+                    
+                    // Обработчик клика - множественная привязка
+                    caseCard.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('🔵 Клик по кейсу #' + caseData.id);
+                        if (typeof window.showCaseDetail === 'function') {
+                            window.showCaseDetail(caseData.id);
+                        } else {
+                            console.error('❌ showCaseDetail не найдена');
+                            alert('Ошибка: функция показа деталей не найдена');
+                        }
+                    });
+                    
+                    // Также добавляем onclick для надежности
+                    caseCard.onclick = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (typeof window.showCaseDetail === 'function') {
+                            window.showCaseDetail(caseData.id);
+                        }
+                    };
+                    
+                    casesContainer.appendChild(caseCard);
+                    cardsCreated++;
+                    console.log(`✅ Карточка кейса #${caseData.id} добавлена в контейнер (${cardsCreated}/${cases.length})`);
+                } catch (e) {
+                    console.error(`❌ Ошибка при создании карточки кейса #${caseData.id}:`, e);
+                }
             });
             
-            console.log('✅ Кейсы загружены:', cases.length, 'контейнер:', casesContainer);
+            console.log('✅ Кейсы загружены:', cardsCreated, 'из', cases.length, 'контейнер:', casesContainer);
+            console.log('✅ Детей в контейнере:', casesContainer.children.length);
             
             // Проверяем видимость контейнера
             if (casesContainer.children.length === 0) {
-                console.error('❌ Кейсы не добавлены в контейнер!');
-                console.error('❌ Контейнер:', casesContainer);
-                console.error('❌ HTML контейнера:', casesContainer.innerHTML);
+                console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: Кейсы не были добавлены в контейнер!');
+                console.error('❌ Контейнер существует:', !!casesContainer);
+                console.error('❌ Количество детей:', casesContainer ? casesContainer.children.length : 'контейнер не найден');
+                console.error('❌ innerHTML контейнера:', casesContainer ? casesContainer.innerHTML.substring(0, 200) : 'N/A');
+                
+                // Попытка повторной загрузки
+                setTimeout(function() {
+                    console.log('🔄 Повторная попытка загрузки кейсов...');
+                    loadCases();
+                }, 500);
             } else {
                 console.log('✅ Кейсов в контейнере:', casesContainer.children.length);
                 
@@ -4913,7 +4947,9 @@
             }
         }
         
+        // Экспортируем функцию глобально
         window.loadCases = loadCases;
+        console.log('✅ window.loadCases установлена, тип:', typeof window.loadCases);
         
         // Принудительная загрузка кейсов при загрузке страницы
         if (document.readyState === 'loading') {
