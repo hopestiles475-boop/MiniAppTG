@@ -4602,12 +4602,47 @@
             
             // Список подарков для прокрутки (повторяем несколько раз для эффекта)
             const prizes = caseData.prizes;
-            const scrollItems = [...prizes, ...prizes, ...prizes, ...prizes, ...prizes];
             
-            // СНАЧАЛА выбираем рандомный подарок - это будет выигрыш
-            const selectedPrizeIndex = Math.floor(Math.random() * prizes.length);
-            const selectedPrize = prizes[selectedPrizeIndex];
-            console.log('✅ Выбран подарок для выигрыша:', selectedPrize, 'индекс:', selectedPrizeIndex);
+            // Разделяем подарки на TON и остальные
+            const tonPrizes = prizes.filter(p => p.icon === 'ton_symbol.png' || p.icon.includes('ton_symbol'));
+            const otherPrizes = prizes.filter(p => p.icon !== 'ton_symbol.png' && !p.icon.includes('ton_symbol'));
+            
+            // Создаем взвешенный массив: TON подарки повторяем 5 раз (больший шанс), остальные 1 раз
+            const weightedPrizes = [];
+            tonPrizes.forEach(prize => {
+                // Добавляем каждый TON подарок 5 раз для большей вероятности
+                for (let i = 0; i < 5; i++) {
+                    weightedPrizes.push(prize);
+                }
+            });
+            // Остальные подарки добавляем по 1 разу
+            otherPrizes.forEach(prize => {
+                weightedPrizes.push(prize);
+            });
+            
+            // Выбираем случайный подарок из взвешенного массива
+            const selectedPrize = weightedPrizes[Math.floor(Math.random() * weightedPrizes.length)];
+            
+            // Находим индекс выбранного подарка в оригинальном массиве
+            let selectedPrizeIndex = prizes.findIndex(p => 
+                p.icon === selectedPrize.icon && p.value === selectedPrize.value
+            );
+            
+            // Если не найден (не должно быть, но на всякий случай)
+            if (selectedPrizeIndex === -1) {
+                // Ищем по иконке
+                selectedPrizeIndex = prizes.findIndex(p => p.icon === selectedPrize.icon);
+                if (selectedPrizeIndex === -1) {
+                    // Если всё равно не найден, выбираем случайный индекс
+                    selectedPrizeIndex = Math.floor(Math.random() * prizes.length);
+                    console.warn('⚠️ Индекс подарка не найден, используем случайный:', selectedPrizeIndex);
+                }
+            }
+            
+            const isTonPrize = tonPrizes.some(p => p.icon === selectedPrize.icon && p.value === selectedPrize.value);
+            console.log('✅ Выбран подарок для выигрыша:', selectedPrize, 'индекс:', selectedPrizeIndex, 'TON подарок:', isTonPrize);
+            
+            const scrollItems = [...prizes, ...prizes, ...prizes, ...prizes, ...prizes];
             
             // Очищаем контейнер
             roulettePrize.innerHTML = '';
