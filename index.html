@@ -4516,6 +4516,7 @@
             console.log('currentCase:', currentCase);
             console.log('isOpening:', isOpening);
             console.log('_balance:', _balance);
+            console.log('typeof currentCase:', typeof currentCase);
             
             if (!currentCase) {
                 console.error('❌ currentCase не определена!');
@@ -4532,10 +4533,18 @@
                 return;
             }
             
-            if (currentCase && !isOpening) {
-                const openCaseFunc = function() {
-                    if (isOpening) return;
+            console.log('✅ Проверки пройдены, запускаем openCaseFunc');
+            console.log('✅ currentPrizes:', currentPrizes);
+            console.log('✅ currentPrizes.length:', currentPrizes ? currentPrizes.length : 0);
+            
+            const openCaseFunc = function() {
+                    if (isOpening) {
+                        console.warn('⚠️ Уже открывается, выходим');
+                        return;
+                    }
                     console.log('✅ Выполняется openCaseFunc');
+                    console.log('✅ currentCase:', currentCase);
+                    console.log('✅ currentPrizes:', currentPrizes);
                     
                     const price = currentCase.price || 0;
                     console.log('💰 Цена кейса:', price);
@@ -4573,12 +4582,21 @@
                     // Скрываем иконку только во время рулетки
                     detailIcon.style.display = 'none';
                     
+                    // Проверяем, что currentPrizes установлены
+                    if (!currentPrizes || currentPrizes.length === 0) {
+                        console.error('❌ currentPrizes пуст!');
+                        currentPrizes = currentCase.prizes || [];
+                        console.log('✅ Восстановили currentPrizes из currentCase:', currentPrizes);
+                    }
+                    
                     // Сначала создаем рулетку, потом показываем
+                    console.log('✅ Создаем рулетку...');
                     createRoulette();
                     
                     // Убеждаемся, что контейнер видим
                     rouletteContainer.style.display = 'block';
                     rouletteContainer.classList.add('active');
+                    console.log('✅ Рулетка создана и показана');
 
                     if (tg) {
                         tg.HapticFeedback.impactOccurred('heavy');
@@ -4831,8 +4849,9 @@
                         requestAnimationFrame(animateRoulette);
                     }, 300);
                 };
+                
+                console.log('✅ Вызываем openCaseFunc');
                 openCaseFunc();
-            }
         };
         
         // Убеждаемся, что функция доступна глобально
@@ -5087,7 +5106,9 @@
             
             const prizesGrid = document.getElementById('prizesGrid');
             prizesGrid.innerHTML = '';
-            currentPrizes = currentCase.prizes;
+            currentPrizes = currentCase.prizes || [];
+            console.log('✅ currentPrizes установлены в showCaseDetail:', currentPrizes);
+            console.log('✅ currentPrizes.length:', currentPrizes.length);
             
             // Создаем элементы призов
             currentPrizes.forEach(prize => {
