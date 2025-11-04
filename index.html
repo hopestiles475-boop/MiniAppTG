@@ -2336,9 +2336,11 @@
         }
 
         .mines-page {
-            padding: 80px 20px 120px 20px !important;
-            padding-top: 80px !important;
-            min-height: 100vh;
+            padding: 0 !important;
+            padding-top: 60px !important;
+            padding-bottom: 120px !important;
+            padding-left: 20px !important;
+            padding-right: 20px !important;
             background: #0a0a0a;
             position: fixed !important;
             top: 0 !important;
@@ -2347,10 +2349,12 @@
             bottom: 0 !important;
             width: 100% !important;
             height: 100% !important;
-            overflow-y: auto !important;
+            max-height: 100vh !important;
+            overflow-y: scroll !important;
             overflow-x: hidden !important;
             z-index: 1000 !important;
             box-sizing: border-box !important;
+            -webkit-overflow-scrolling: touch !important;
         }
 
         .cases-page {
@@ -2573,9 +2577,11 @@
         }
 
         .crash-page {
-            padding: 80px 20px 120px 20px !important;
-            padding-top: 80px !important;
-            min-height: 100vh;
+            padding: 0 !important;
+            padding-top: 60px !important;
+            padding-bottom: 120px !important;
+            padding-left: 20px !important;
+            padding-right: 20px !important;
             background: transparent;
             position: fixed !important;
             top: 0 !important;
@@ -2584,10 +2590,12 @@
             bottom: 0 !important;
             width: 100% !important;
             height: 100% !important;
-            overflow-y: auto !important;
+            max-height: 100vh !important;
+            overflow-y: scroll !important;
             overflow-x: hidden !important;
             z-index: 1000 !important;
             box-sizing: border-box !important;
+            -webkit-overflow-scrolling: touch !important;
         }
 
         .crash-header {
@@ -2595,10 +2603,12 @@
             justify-content: flex-end;
             align-items: center;
             margin-bottom: 20px;
+            margin-top: 0 !important;
+            padding-top: 0 !important;
             position: relative;
             z-index: 1001 !important;
-            padding-top: 0 !important;
-            margin-top: 0 !important;
+            width: 100%;
+            flex-shrink: 0;
         }
 
         .crash-balance {
@@ -2782,9 +2792,11 @@
         }
 
         .dice-page {
-            padding: 80px 20px 120px 20px !important;
-            padding-top: 80px !important;
-            min-height: 100vh;
+            padding: 0 !important;
+            padding-top: 60px !important;
+            padding-bottom: 120px !important;
+            padding-left: 20px !important;
+            padding-right: 20px !important;
             background: transparent;
             position: fixed !important;
             top: 0 !important;
@@ -2793,20 +2805,24 @@
             bottom: 0 !important;
             width: 100% !important;
             height: 100% !important;
-            overflow-y: auto !important;
+            max-height: 100vh !important;
+            overflow-y: scroll !important;
             overflow-x: hidden !important;
             z-index: 1000 !important;
             box-sizing: border-box !important;
+            -webkit-overflow-scrolling: touch !important;
         }
 
         .dice-header {
             display: flex;
             justify-content: center;
             margin-bottom: 20px;
+            margin-top: 0 !important;
+            padding-top: 0 !important;
             position: relative;
             z-index: 1001 !important;
-            padding-top: 0 !important;
-            margin-top: 0 !important;
+            width: 100%;
+            flex-shrink: 0;
         }
         
         .dice-balance {
@@ -3119,10 +3135,12 @@
             display: flex;
             justify-content: center;
             margin-bottom: 20px;
+            margin-top: 0 !important;
+            padding-top: 0 !important;
             position: relative;
             z-index: 1001 !important;
-            padding-top: 0 !important;
-            margin-top: 0 !important;
+            width: 100%;
+            flex-shrink: 0;
         }
         
         .mines-balance {
@@ -3636,7 +3654,7 @@
     </style>
 </head>
 <body>
-    <div class="header" style="display: flex !important; align-items: center !important; justify-content: space-between !important; padding: 15px 20px !important; position: relative !important; z-index: 10 !important; flex-wrap: nowrap !important; overflow: hidden !important;">
+    <div class="header" style="display: flex !important; align-items: center !important; justify-content: space-between !important; padding: 15px 20px !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; z-index: 1001 !important; flex-wrap: nowrap !important; overflow: hidden !important; background: rgba(10, 10, 10, 0.95) !important; backdrop-filter: blur(10px) !important;">
         <div class="profile-section" style="flex-shrink: 0 !important; min-width: 0 !important; overflow: hidden !important; max-width: 50% !important;">
             <div class="avatar">👤</div>
             <div class="username" id="username" style="white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;">User</div>
