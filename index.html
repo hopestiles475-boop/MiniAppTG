@@ -139,6 +139,13 @@
                     openBtn.classList.remove('show');
                 }
                 
+                // Скрываем mainPage (старое меню) при любом переключении
+                if (mainPage) {
+                    mainPage.style.display = 'none';
+                    mainPage.style.visibility = 'hidden';
+                    mainPage.style.opacity = '0';
+                }
+                
                 // Показываем нужную страницу и инициализируем
                 if (page === 'cases' && casesPage) {
                     if (header) header.style.display = 'flex';
@@ -3093,7 +3100,7 @@
             <div class="case-detail-price" id="detailPrice">0.1 <span class="currency-icon"></span></div>
         </div>
         
-        <button class="open-case-btn" id="openCaseBtn" onclick="openCase()">Открыть кейс</button>
+        <button class="open-case-btn" id="openCaseBtn" onclick="if(typeof window.openCase === 'function'){window.openCase();}else{alert('Функция открытия не найдена');}">Открыть кейс</button>
         
         <div class="whats-inside-title">Что может выпасть?</div>
         <div class="prizes-grid" id="prizesGrid">
@@ -4153,11 +4160,11 @@
             
             console.log('✅ Загружаю кейсы...');
             
-            // Данные кейса 1 - добавляем цены для подарков (первый предмет убран)
+            // Данные кейса 1 - добавляем цены для подарков
             const case1Data = {
                 id: 1,
                 icon: 'Case1/Case/OA2YI79hneequQi62NNm5RTa0jw-sxBTwlrfcD4cx18nkOBqIQ-edited-free%20(carve.photos).png',
-                price: 0.1,
+                price: 0.5,
                 prizes: [
                     { icon: 'Case1/7aggEGM43iT4zaeQ90WDXbKgaxRuIctX8OzjKHUoNGYKDTiEdT-no-bg-preview%20(carve.photos).png', value: 22.89 },
                     { icon: 'Case1/AW7Qv-lm22xsWd8ZnVjP7pVDjzBgqo-x9-7UoZO2ekVCWsWsAl-edited-free%20(carve.photos).png', value: 7.37 },
@@ -4502,6 +4509,7 @@
             currentOpeningCase = null;
         }
         
+        // Делаем функции глобальными ДО их использования
         window.openCase = openCase;
         window.closePrizeModal = closePrizeModal;
         
@@ -4511,6 +4519,40 @@
             currentOpeningCase = caseId;
             originalShowCaseDetail(caseId);
         };
+        
+        // Также добавляем обработчик события для кнопки
+        document.addEventListener('DOMContentLoaded', function() {
+            const openCaseBtn = document.getElementById('openCaseBtn');
+            if (openCaseBtn) {
+                // Удаляем старый обработчик если есть
+                const newBtn = openCaseBtn.cloneNode(true);
+                openCaseBtn.parentNode.replaceChild(newBtn, openCaseBtn);
+                
+                // Добавляем новый обработчик
+                newBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔵 Клик по кнопке открытия кейса');
+                    if (typeof window.openCase === 'function') {
+                        window.openCase();
+                    } else {
+                        console.error('❌ window.openCase не найдена');
+                        alert('Ошибка: функция открытия кейса не найдена');
+                    }
+                });
+                
+                // Также добавляем onclick для совместимости
+                newBtn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof window.openCase === 'function') {
+                        window.openCase();
+                    }
+                };
+                
+                console.log('✅ Обработчик кнопки открытия кейса установлен');
+            }
+        });
         
         // Функция возврата назад
         function goBackFromCase() {
@@ -4548,6 +4590,33 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('✅ DOMContentLoaded - начинаем инициализацию');
             
+            const mainPage = document.getElementById('mainPage');
+            const casesPage = document.getElementById('casesPage');
+            const detailPage = document.getElementById('caseDetailPage');
+            const profilePage = document.getElementById('profilePage');
+            
+            if (!mainPage || !detailPage || !profilePage) {
+                console.error('❌ Критические страницы не найдены!');
+                return;
+            }
+            
+            // Скрываем mainPage (старое меню) при загрузке
+            mainPage.style.display = 'none';
+            mainPage.style.visibility = 'hidden';
+            mainPage.style.opacity = '0';
+            mainPage.classList.add('hidden');
+            
+            // Показываем страницу кейсов если она активна
+            if (casesPage) {
+                casesPage.style.display = 'block';
+                casesPage.style.visibility = 'visible';
+                casesPage.style.opacity = '1';
+            }
+            
+            detailPage.style.display = 'none';
+            detailPage.classList.remove('active');
+            profilePage.style.display = 'none';
+            
             // Загружаем кейсы
             loadCases();
             
@@ -4560,20 +4629,6 @@
                     console.error('❌ updateBalanceDisplay не найдена!');
                 }
             }, 100);
-            const mainPage = document.getElementById('mainPage');
-            const detailPage = document.getElementById('caseDetailPage');
-            const profilePage = document.getElementById('profilePage');
-            
-            if (!mainPage || !detailPage || !profilePage) {
-                console.error('❌ Критические страницы не найдены!');
-                return;
-            }
-            
-            mainPage.style.display = 'block';
-            mainPage.classList.remove('hidden');
-            detailPage.style.display = 'none';
-            detailPage.classList.remove('active');
-            profilePage.style.display = 'none';
             
             // Инициализируем обработчики событий СРАЗУ и несколько раз
             console.log('🚀 Начинаем инициализацию...');
