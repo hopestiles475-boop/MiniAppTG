@@ -296,7 +296,7 @@
                         console.error('❌ casesPage.innerHTML:', casesPage ? casesPage.innerHTML.substring(0, 500) : 'N/A');
                     }
                     
-                    // Показываем баланс в header для кейсов
+                    // Показываем баланс и профиль в header для кейсов
                     if (header) {
                         header.style.display = 'flex';
                         header.style.visibility = 'visible';
@@ -304,6 +304,10 @@
                         const balanceSection = header.querySelector('.balance-section');
                         if (balanceSection) {
                             balanceSection.style.display = 'flex';
+                        }
+                        const profileSection = header.querySelector('.profile-section');
+                        if (profileSection) {
+                            profileSection.style.display = 'flex';
                         }
                     }
                     
@@ -461,12 +465,16 @@
                         caseDetailPage.style.pointerEvents = 'none';
                         caseDetailPage.style.zIndex = '-1';
                     }
-                    // Скрываем баланс в header при открытии игры
+                    // Скрываем баланс и профиль в header при открытии игры
                     if (header) {
                         header.style.display = 'flex';
                         const balanceSection = header.querySelector('.balance-section');
                         if (balanceSection) {
                             balanceSection.style.display = 'none';
+                        }
+                        const profileSection = header.querySelector('.profile-section');
+                        if (profileSection) {
+                            profileSection.style.display = 'none';
                         }
                     }
                     crashPage.style.display = 'block';
@@ -539,12 +547,16 @@
                         caseDetailPage.style.pointerEvents = 'none';
                         caseDetailPage.style.zIndex = '-1';
                     }
-                    // Скрываем баланс в header при открытии игры
+                    // Скрываем баланс и профиль в header при открытии игры
                     if (header) {
                         header.style.display = 'flex';
                         const balanceSection = header.querySelector('.balance-section');
                         if (balanceSection) {
                             balanceSection.style.display = 'none';
+                        }
+                        const profileSection = header.querySelector('.profile-section');
+                        if (profileSection) {
+                            profileSection.style.display = 'none';
                         }
                     }
                     minesPage.style.display = 'block';
@@ -616,12 +628,16 @@
                         caseDetailPage.style.pointerEvents = 'none';
                         caseDetailPage.style.zIndex = '-1';
                     }
-                    // Скрываем баланс в header при открытии игры
+                    // Скрываем баланс и профиль в header при открытии игры
                     if (header) {
                         header.style.display = 'flex';
                         const balanceSection = header.querySelector('.balance-section');
                         if (balanceSection) {
                             balanceSection.style.display = 'none';
+                        }
+                        const profileSection = header.querySelector('.profile-section');
+                        if (profileSection) {
+                            profileSection.style.display = 'none';
                         }
                     }
                     dicePage.style.display = 'block';
@@ -710,6 +726,22 @@
             z-index: 10;
             background: transparent;
         }
+        
+        /* Скрываем профиль в играх, чтобы не перекрывал баланс */
+        .crash-page .header .profile-section,
+        .mines-page .header .profile-section,
+        .dice-page .header .profile-section {
+            display: none !important;
+        }
+        
+        /* Убеждаемся что балансы в играх видны */
+        .crash-balance,
+        .mines-balance,
+        .dice-balance {
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
 
 
         .profile-section {
@@ -718,6 +750,19 @@
             gap: 12px;
             position: relative;
             z-index: 1;
+        }
+        
+        /* Скрываем профиль в играх */
+        .crash-page ~ .header .profile-section,
+        .mines-page ~ .header .profile-section,
+        .dice-page ~ .header .profile-section {
+            display: none !important;
+        }
+        
+        /* Показываем профиль только в кейсах и профиле */
+        #casesPage.active ~ .header .profile-section,
+        #profilePage.active ~ .header .profile-section {
+            display: flex !important;
         }
 
         .avatar {
@@ -2354,14 +2399,18 @@
             justify-content: flex-end;
             align-items: center;
             margin-bottom: 20px;
+            position: relative;
+            z-index: 1000 !important;
         }
 
         .crash-balance {
-            display: flex;
+            display: flex !important;
             align-items: center;
             gap: 8px;
             background: rgba(255, 255, 255, 0.1);
             padding: 8px 16px;
+            position: relative;
+            z-index: 1001 !important;
             border-radius: 20px;
         }
 
@@ -2556,12 +2605,19 @@
             margin-bottom: 20px;
         }
 
+        .dice-header {
+            position: relative;
+            z-index: 1000 !important;
+        }
+        
         .dice-balance {
-            display: flex;
+            display: flex !important;
             align-items: center;
             gap: 8px;
             padding: 12px 20px;
             background: rgba(102, 126, 234, 0.1);
+            position: relative;
+            z-index: 1001 !important;
             border-radius: 16px;
             border: 2px solid rgba(102, 126, 234, 0.3);
             color: #ffffff;
@@ -2866,12 +2922,19 @@
             margin-bottom: 20px;
         }
 
+        .mines-header {
+            position: relative;
+            z-index: 1000 !important;
+        }
+        
         .mines-balance {
-            display: flex;
+            display: flex !important;
             align-items: center;
             gap: 8px;
             padding: 12px 20px;
             background: rgba(102, 126, 234, 0.1);
+            position: relative;
+            z-index: 1001 !important;
             border-radius: 16px;
             border: 2px solid rgba(102, 126, 234, 0.3);
             color: #ffffff;
