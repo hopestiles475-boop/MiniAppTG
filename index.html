@@ -4308,11 +4308,41 @@
                 ]
             };
             
+            // Данные кейса 2
+            const case2Data = {
+                id: 2,
+                icon: 'Case2/Case/05FdJJ2aGJGsQIutsKUd0AlbIHYdawIuMvN1kcQ1CIBZUU3ThvWft319nelV7u3ID1Zp5diNbUKGVIZ2yrMX7EFU-Photoroom.png',
+                price: 1.0,
+                prizes: [
+                    { icon: 'Case2/4atzFbzn2e3UxeIjh4R4mt5JR1vIlB-wau9esupxJII97_CFmUSRTdFrVRMH6CInNhOnlwjTpNgsNMRi7U0b8Q-s.png', value: 22.89 },
+                    { icon: 'Case2/5Fb-YCFbFvfEetWLJJStAOU0jv3qfu-EuVMupeTIgD6RJSDE_FSST7np9CodZxl5Zwp6b_NnJefqTxxstMvkLrT0.png', value: 7.37 },
+                    { icon: 'Case2/d9J-xWqlGTdT-H9I-yxmVjPyIfDfRUIoVIpqLHup_cmINQRfd0VjQ0MtITk6mbxTUsAkFZXDEgVkkJQ-OdP6iEgW.png', value: 1.93 },
+                    { icon: 'Case2/dbiccJZH0zWig-l2b3knXtEpZ7UDW8a4ffeZZJG9ALAuOVZVzYAH0FlrfOQzOb_KE9iEDqJ84inTnrcJtK4wlokk.png', value: 1.66 },
+                    { icon: 'Case2/F9M9_Ci6MNLF67i0fa2JJKohkl2h2eJyUlizgjKYNJ7HPRk0aiCWt5Ok_YOhj0rhNkaz-PL69ZfmaG8xpfVuRh_L.png', value: 8.00 },
+                    { icon: 'Case2/gzyva6NWRTfaE58yDe6ux65ccMFzHcnt_VuD2ZnEBMUfmLdhoMDWwAUyNl28O-4jFiNzKYXCZEVIQID4Joe2LDNK.png', value: 6.85 },
+                    { icon: 'Case2/jj58rgvhnUjNAXK73UsxvKMh8E3b0egRsMDNPnLYvRl2vWUUzaj_SFcw_OpCXU_A2weBg-ao0iUdqEeO60q3k1V1.png', value: 1.38 },
+                    { icon: 'Case2/Jx-jT_mb94wlDgjOeKbsgFfNNZGicx95NxRqKOox25a2kZAkqg8rJHhACD1bJuKYqAd28TT3GNhZsrZ5Fz7W4JP3.png', value: 2.79 },
+                    { icon: 'Case2/LcdGhlqKKnkI26o7RkuMCHXi7Q-5ivAqRgpj5YhQgRfDhjwgOhiyeb5afg2_L0Ls5wR4iHYVuWPyIglAfu1NxQ8r.png', value: 2.90 },
+                    { icon: 'Case2/LjtcgEifJ5cNeMCCHjgPNSz2LCrFu5j7Axoj6MEOKy5kPCZIBB662cvAO0AVr3z5ILutbM0Jt5DIPLy8soN7__lu.png', value: 4.59 },
+                    { icon: 'Case2/RQxtlT0hSFZTWrPagbjMP-RkwEkZliBq9DtdzEjBD56fx5Twnl4lCd0v4Hk8EFcXWrdbfSYeYOWWOG7koSzmXFNX.png', value: 2.90 },
+                    { icon: 'Case2/Ua_M9EJHMA5yXfw5TS_JLQmfl8vuOTEsagv3uq-QARWqxPFJtKZDE462U4pP6ZfwyJCVeFeUwVlAZ-v9GtSa0K6I.png', value: 1.76 },
+                    { icon: 'Case2/uorrEfYkPQ5wbi6WY1S6GO5Ed2xHrvXHzVKuHQHkHYGiuhWTesjj6ERIwI_bqOinCyBMlnUmjtf-lqulft_aRwgK.png', value: 40.44 },
+                    { icon: 'Case2/Xyi7k4eeD2gkWGlfObjRPbzVM9aq2i3r9uU2zM-0hobAbCmxwwKvTGQH404oiYFWnXWFVgFv0XIZtdllebiHmP3g.png', value: 23.50 },
+                    { icon: 'Case2/xZnLrl0D4kUBURiL825bozVLww2K5bqzWY8w3p3wsZ0t7c9k4-wVTLqqKkchtiGpJDtoPH-z941HY921gjskfCX9.png', value: 15.00 },
+                    { icon: 'ton_symbol.png', value: 5.00 },
+                    { icon: 'ton_symbol.png', value: 3.00 },
+                    { icon: 'ton_symbol.png', value: 1.00 },
+                    { icon: 'ton_symbol.png', value: 0.50 },
+                    { icon: 'ton_symbol.png', value: 0.30 }
+                ]
+            };
+            
             // Сохраняем в глобальное хранилище
             window.casesData = window.casesData || {};
             window.casesData[case1Data.id] = case1Data;
+            window.casesData[case2Data.id] = case2Data;
             
-            const cases = [case1Data];
+            const cases = [case1Data, case2Data];
             
             // Очищаем контейнер
             casesContainer.innerHTML = '';
