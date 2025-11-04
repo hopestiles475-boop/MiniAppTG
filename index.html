@@ -213,7 +213,21 @@
                     // Инициализируем профиль
                     setTimeout(function() {
                         if (typeof updateProfileInfo === 'function') updateProfileInfo();
-                        if (typeof updateInventory === 'function') updateInventory();
+                        // Загружаем инвентарь с сервера перед обновлением
+                        if (typeof loadUserData === 'function') {
+                            loadUserData().then(() => {
+                                if (typeof updateInventory === 'function') {
+                                    updateInventory();
+                                }
+                            }).catch(err => {
+                                console.error('Ошибка загрузки данных:', err);
+                                if (typeof updateInventory === 'function') {
+                                    updateInventory();
+                                }
+                            });
+                        } else {
+                            if (typeof updateInventory === 'function') updateInventory();
+                        }
                         if (typeof initProfileHandlers === 'function') initProfileHandlers();
                         if (typeof initTopUpHandlers === 'function') initTopUpHandlers();
                         if (typeof initWithdrawHandlers === 'function') initWithdrawHandlers();
@@ -4436,13 +4450,47 @@
                 ]
             };
             
+            // Данные кейса 4
+            const case4Data = {
+                id: 4,
+                icon: 'Case4/Case/acetone-2025114-143714-579.png',
+                price: 2.0,
+                prizes: [
+                    { icon: 'Case4/6909e7c56c6467000e321e41.png', value: 22.89 },
+                    { icon: 'Case4/6909e7ec6c6467000e321e58.png', value: 7.37 },
+                    { icon: 'Case4/cvbgf.png', value: 1.93 },
+                    { icon: 'Case4/design.png', value: 1.66 },
+                    { icon: 'Case4/dfgre.png', value: 8.00 },
+                    { icon: 'Case4/dfvdfg.png', value: 6.85 },
+                    { icon: 'Case4/fcb.png', value: 1.38 },
+                    { icon: 'Case4/ghj.png', value: 2.79 },
+                    { icon: 'Case4/htWoussKmtHLqPSqdJxeJFMWQGSJnXcGpv1ElXaMW3GvFQu4ByvGwNkXpY_bpi9aPnZz4V_tmORkIr1bgwNG3cSr.png', value: 2.90 },
+                    { icon: 'Case4/J0AtygNa7Vynkk01WRz3m7tvd3aGENdcSomt2KMb0IWVi4Nger7-21T8fXzbSh_gkElGXQ4YlP-tZYRN_chAwoo8.png', value: 4.59 },
+                    { icon: 'Case4/jghbmbn.png', value: 2.90 },
+                    { icon: 'Case4/lkp.png', value: 1.76 },
+                    { icon: 'Case4/m85G8Q6e9wbRhws2KZrKozAtGL8yspcDCUNh6-Znff_yFr2Zed-PS-is8UIdZvP7NlPtSiOhBKN5QbVZcaRrum1U.png', value: 40.44 },
+                    { icon: 'Case4/olg3GK1sNR-dbLonHn6WaDW-jjLFOZ7-LD1-d8DpIvm6EEhPsN6JxDoPeMAER_jHkmhbsEdOttVeYsxPTE7-M09j.png', value: 23.50 },
+                    { icon: 'Case4/remove.photos-removed-background.png', value: 15.00 },
+                    { icon: 'Case4/rthgf.png', value: 12.00 },
+                    { icon: 'Case4/sdf.png', value: 10.00 },
+                    { icon: 'Case4/sfsef.png', value: 8.50 },
+                    { icon: 'Case4/sxdfsd.png', value: 6.00 },
+                    { icon: 'Case4/vbnfg.png', value: 5.00 },
+                    { icon: 'Case4/xdfvdf.png', value: 4.00 },
+                    { icon: 'Case4/xdvc.png', value: 3.00 },
+                    { icon: 'ton_symbol.png', value: 1.00 },
+                    { icon: 'ton_symbol.png', value: 0.50 }
+                ]
+            };
+            
             // Сохраняем в глобальное хранилище
             window.casesData = window.casesData || {};
             window.casesData[case1Data.id] = case1Data;
             window.casesData[case2Data.id] = case2Data;
             window.casesData[case3Data.id] = case3Data;
+            window.casesData[case4Data.id] = case4Data;
             
-            const cases = [case1Data, case2Data, case3Data];
+            const cases = [case1Data, case2Data, case3Data, case4Data];
             
             // Очищаем контейнер
             casesContainer.innerHTML = '';
@@ -4751,9 +4799,53 @@
             });
             
             // Выбираем случайный подарок из взвешенного массива
-            const selectedPrize = JSON.parse(JSON.stringify(weightedPrizes[Math.floor(Math.random() * weightedPrizes.length)]));
+            const selectedPrizeFromWeighted = weightedPrizes[Math.floor(Math.random() * weightedPrizes.length)];
+            
+            // Создаем копию выбранного подарка
+            const selectedPrize = {
+                icon: selectedPrizeFromWeighted.icon,
+                value: selectedPrizeFromWeighted.value,
+                name: selectedPrizeFromWeighted.name
+            };
             
             console.log('✅ Выбран подарок для выигрыша:', selectedPrize);
+            console.log('   Иконка:', selectedPrize.icon);
+            console.log('   Значение:', selectedPrize.value);
+            
+            // НАЙДЕМ ПОЗИЦИЮ В ОРИГИНАЛЬНОМ МАССИВЕ ПЕРЕД СОЗДАНИЕМ SCROLLITEMS
+            // Это гарантирует, что мы точно знаем где должен быть подарок
+            let selectedPrizeIndexInOriginal = -1;
+            for (let i = 0; i < prizes.length; i++) {
+                if (prizes[i].icon === selectedPrize.icon && 
+                    Math.abs(prizes[i].value - selectedPrize.value) < 0.001) {
+                    selectedPrizeIndexInOriginal = i;
+                    console.log('✅ Найден индекс подарка в оригинальном массиве:', selectedPrizeIndexInOriginal);
+                    break;
+                }
+            }
+            
+            // Если не нашли в оригинальном массиве, ищем по иконке
+            if (selectedPrizeIndexInOriginal === -1) {
+                console.warn('⚠️ Точное совпадение не найдено в оригинальном массиве, ищу по иконке...');
+                for (let i = 0; i < prizes.length; i++) {
+                    if (prizes[i].icon === selectedPrize.icon) {
+                        selectedPrizeIndexInOriginal = i;
+                        // Обновляем значение на то, что в оригинальном массиве
+                        selectedPrize.value = prizes[i].value;
+                        console.warn('⚠️ Найдено по иконке, индекс:', selectedPrizeIndexInOriginal, 'значение обновлено на:', selectedPrize.value);
+                        break;
+                    }
+                }
+            }
+            
+            // Если всё равно не нашли, используем случайный индекс
+            if (selectedPrizeIndexInOriginal === -1) {
+                selectedPrizeIndexInOriginal = Math.floor(Math.random() * prizes.length);
+                selectedPrize.icon = prizes[selectedPrizeIndexInOriginal].icon;
+                selectedPrize.value = prizes[selectedPrizeIndexInOriginal].value;
+                console.error('❌ Подарок не найден, использую случайный индекс:', selectedPrizeIndexInOriginal);
+                console.error('   Обновлен selectedPrize на:', selectedPrize);
+            }
             
             // Создаем scrollItems из оригинального массива (5 раз для эффекта прокрутки)
             const scrollItems = [...prizes, ...prizes, ...prizes, ...prizes, ...prizes];
@@ -4770,12 +4862,12 @@
                 item.dataset.prizeIcon = prize.icon;
                 item.dataset.prizeValue = prize.value;
                 
-                                                const img = document.createElement('img');
+                const img = document.createElement('img');
                 img.src = prize.icon;
                 img.alt = '';
                 img.style.width = '80px';
                 img.style.height = '80px';
-                                                img.style.objectFit = 'contain';
+                img.style.objectFit = 'contain';
                 img.onerror = () => {
                     item.textContent = '🎁';
                     item.style.fontSize = '60px';
@@ -4786,75 +4878,25 @@
             });
             
             // Находим позицию выбранного подарка в последнем круге
-            // КРИТИЧЕСКИ ВАЖНО: ищем точное совпадение по иконке И значению
+            // Используем индекс из оригинального массива
             const lastCircleStart = scrollItems.length - prizes.length;
-            let targetIndex = -1;
+            const targetIndex = lastCircleStart + selectedPrizeIndexInOriginal;
             
-            // Ищем точное совпадение в последнем круге
-            for (let i = lastCircleStart; i < scrollItems.length; i++) {
-                if (scrollItems[i].icon === selectedPrize.icon && 
-                    Math.abs(scrollItems[i].value - selectedPrize.value) < 0.001) { // Сравнение с учетом float
-                    targetIndex = i;
-                    console.log('✅ Найдено точное совпадение на позиции:', targetIndex, 'подарок:', scrollItems[i]);
-                    break;
-                }
-            }
-            
-            // Если не нашли точное совпадение в последнем круге, ищем во всем scrollItems
-            if (targetIndex === -1) {
-                console.warn('⚠️ Точное совпадение не найдено в последнем круге, ищу во всем массиве...');
-                for (let i = scrollItems.length - prizes.length * 2; i < scrollItems.length; i++) {
-                    if (scrollItems[i].icon === selectedPrize.icon && 
-                        Math.abs(scrollItems[i].value - selectedPrize.value) < 0.001) {
-                        targetIndex = i;
-                        console.log('✅ Найдено точное совпадение на позиции:', targetIndex, 'подарок:', scrollItems[i]);
-                        break;
-                    }
-                }
-            }
-            
-            // Если всё равно не нашли, ищем по иконке в последнем круге (но это не идеально)
-            if (targetIndex === -1) {
-                console.warn('⚠️ Точное совпадение не найдено, ищу по иконке в последнем круге...');
-                for (let i = lastCircleStart; i < scrollItems.length; i++) {
-                    if (scrollItems[i].icon === selectedPrize.icon) {
-                        targetIndex = i;
-                        const foundPrize = scrollItems[i];
-                        console.warn('⚠️ Найдено по иконке на позиции:', targetIndex, 'значение:', foundPrize.value, 'ожидалось:', selectedPrize.value);
-                        // Обновляем selectedPrize на найденный подарок
-                        selectedPrize.value = foundPrize.value;
-                        console.warn('⚠️ Обновляю selectedPrize на найденный:', selectedPrize);
-                        break;
-                    }
-                }
-            }
-            
-            // Если всё равно не нашли, используем случайную позицию в последнем круге
-            if (targetIndex === -1) {
-                targetIndex = lastCircleStart + Math.floor(Math.random() * prizes.length);
-                const foundPrize = scrollItems[targetIndex];
-                console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: Не удалось найти подарок, использую случайную позицию:', targetIndex);
-                console.error('   Выбранный подарок:', selectedPrize);
-                console.error('   Подарок на позиции:', foundPrize);
-                // Обновляем selectedPrize на найденный
-                selectedPrize.icon = foundPrize.icon;
-                selectedPrize.value = foundPrize.value;
-                console.warn('⚠️ Обновляю selectedPrize на подарок на позиции:', selectedPrize);
-            }
-            
-            // Финальная проверка
+            // ПРОВЕРЯЕМ что на этой позиции правильный подарок
             const finalTargetPrize = scrollItems[targetIndex];
-            console.log('✅ Финальная позиция:', targetIndex);
+            console.log('✅ Целевая позиция:', targetIndex);
             console.log('   Выбранный подарок:', selectedPrize.icon, selectedPrize.value);
             console.log('   Подарок на позиции:', finalTargetPrize.icon, finalTargetPrize.value);
             
+            // Финальная синхронизация - если не совпадает, обновляем selectedPrize
             if (finalTargetPrize.icon === selectedPrize.icon && 
                 Math.abs(finalTargetPrize.value - selectedPrize.value) < 0.001) {
                 console.log('✅ ПОДАРОК СОВПАДАЕТ!');
             } else {
-                console.error('❌ ОШИБКА: Подарок не совпадает! Обновляю selectedPrize на найденный');
+                console.warn('⚠️ Подарок на позиции не совпадает, обновляю selectedPrize на тот что на позиции');
                 selectedPrize.icon = finalTargetPrize.icon;
                 selectedPrize.value = finalTargetPrize.value;
+                console.log('✅ Обновлен selectedPrize:', selectedPrize);
             }
             
             // Анимация прокрутки
@@ -4924,14 +4966,14 @@
                 prizeModalValue.innerHTML = `${prize.value} <span class="currency-icon"></span>`;
                 prizeModal.style.display = 'flex';
                 
-                // Добавляем выигрыш на баланс
-                changeBalance(prize.value);
+                // ВАЖНО: НЕ начисляем баланс сразу! Только добавляем в инвентарь
+                // Баланс будет начислен только при продаже предмета в инвентаре
                 
                 // Добавляем подарок в инвентарь
                 if (typeof userInventory !== 'undefined' && Array.isArray(userInventory)) {
                     const inventoryItem = {
                         icon: prize.icon,
-                        name: prize.name || `Предмет ${prize.value}`,
+                        name: prize.name || `Предмет ${prize.value.toFixed(2)}`,
                         value: prize.value,
                         timestamp: Date.now(),
                         id: Date.now() + Math.random()
@@ -4939,23 +4981,36 @@
                     
                     userInventory.push(inventoryItem);
                     console.log('✅ Подарок добавлен в инвентарь:', inventoryItem);
+                    console.log('✅ Всего предметов в инвентаре:', userInventory.length);
                     
                     // Сохраняем инвентарь
                     if (typeof saveInventory === 'function') {
                         saveInventory();
+                        console.log('✅ Инвентарь сохранен локально');
                     }
                     
                     // Сохраняем на сервер
                     if (typeof saveUserData === 'function') {
-                        saveUserData();
+                        saveUserData().then(() => {
+                            console.log('✅ Данные сохранены на сервер');
+                        }).catch(err => {
+                            console.error('❌ Ошибка сохранения на сервер:', err);
+                        });
                     }
                     
                     // Обновляем отображение инвентаря
                     if (typeof updateInventory === 'function') {
-                        updateInventory();
+                        setTimeout(() => {
+                            updateInventory();
+                            console.log('✅ Инвентарь обновлен на экране');
+                        }, 100);
                     }
-                        } else {
+                } else {
                     console.error('❌ userInventory не найден или не является массивом');
+                    console.error('   Тип userInventory:', typeof userInventory);
+                    if (typeof userInventory !== 'undefined') {
+                        console.error('   userInventory:', userInventory);
+                    }
                 }
             }
         }
@@ -5456,10 +5511,23 @@
         
         // Обновление отображения инвентаря
         function updateInventory() {
+            console.log('🔵 updateInventory вызвана, userInventory:', userInventory);
+            
             const inventoryGrid = document.getElementById('inventoryGrid');
             const inventoryCount = document.getElementById('inventoryCount');
             
-            if (!inventoryGrid) return;
+            if (!inventoryGrid) {
+                console.warn('⚠️ inventoryGrid не найден');
+                return;
+            }
+            
+            // Убеждаемся что userInventory это массив
+            if (!Array.isArray(userInventory)) {
+                console.error('❌ userInventory не является массивом:', typeof userInventory);
+                userInventory = [];
+            }
+            
+            console.log('✅ Всего предметов в инвентаре:', userInventory.length);
             
             inventoryGrid.innerHTML = '';
             
@@ -5469,6 +5537,7 @@
             
             // Показываем максимум 9 предметов (3x3), + слот для перелистывания
             const itemsToShow = userInventory.slice(0, 8);
+            console.log('✅ Показываю предметов:', itemsToShow.length);
             
             itemsToShow.forEach((item, index) => {
                 const slot = document.createElement('div');
