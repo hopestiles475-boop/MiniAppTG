@@ -48,50 +48,6 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         // КРИТИЧЕСКИ ВАЖНО: Определяем функции СРАЗУ, чтобы они были доступны в HTML
-        // Функция openCase - должна быть доступна глобально
-        window.openCase = function() {
-            console.log('🔵 openCase вызвана (заглушка - будет переопределена)');
-            if (typeof window.openCaseFull === 'function') {
-                window.openCaseFull();
-            } else {
-                console.warn('⚠️ window.openCaseFull еще не определена, ждем...');
-                setTimeout(() => {
-                    if (typeof window.openCaseFull === 'function') {
-                        window.openCaseFull();
-                    } else {
-                        alert('Ошибка: Функция открытия кейса еще не загружена. Попробуйте еще раз через секунду.');
-                    }
-                }, 100);
-            }
-        };
-        
-        // Функция handleCaseClick - должна быть доступна глобально СРАЗУ
-        window.handleCaseClick = function(caseNum) {
-            console.log('🔵 handleCaseClick вызвана, caseNum:', caseNum);
-            // Пробуем вызвать полную версию сразу, если она уже определена
-            // Если нет - ждем и пробуем снова
-            const tryCall = () => {
-                // Проверяем, есть ли полная версия (которая вызывает showCaseDetail)
-                if (typeof window.showCaseDetail === 'function') {
-                    console.log('✅ Вызываем showCaseDetail через handleCaseClick');
-                    try {
-                        const num = parseInt(caseNum);
-                        if (isNaN(num)) {
-                            alert('Ошибка: Неверный номер кейса');
-                            return;
-                        }
-                        window.showCaseDetail(num);
-                    } catch(err) {
-                        console.error('Ошибка в handleCaseClick:', err);
-                        alert('Ошибка: ' + err.message);
-                    }
-                } else {
-                    console.warn('⚠️ showCaseDetail еще не определена, ждем...');
-                    setTimeout(tryCall, 100);
-                }
-            };
-            tryCall();
-        };
         
         // ПЕРЕХВАТЫВАЕМ ОШИБКИ ОТ TELEGRAM SDK
         window.addEventListener('error', function(e) {
@@ -124,6 +80,7 @@
                 // Получаем страницы
                 var mainPage = document.getElementById('mainPage');
                 var profilePage = document.getElementById('profilePage');
+                var casesPage = document.getElementById('casesPage');
                 var crashPage = document.getElementById('crashPage');
                 var minesPage = document.getElementById('minesPage');
                 var dicePage = document.getElementById('dicePage');
@@ -135,6 +92,7 @@
                 
                 // Скрываем все страницы, включая детальный просмотр кейса
                 var pages = [mainPage, profilePage];
+                if (casesPage) pages.push(casesPage);
                 if (crashPage) pages.push(crashPage);
                 if (minesPage) pages.push(minesPage);
                 if (dicePage) pages.push(dicePage);
@@ -145,10 +103,10 @@
                         // Не скрываем mainPage полностью, если переключаемся на другую вкладку
                         // Просто скрываем визуально, но сохраняем структуру
                         if (pages[i].id === 'mainPage' && page !== 'cases') {
-                            pages[i].style.display = 'none';
-                            pages[i].style.visibility = 'hidden';
-                            pages[i].style.opacity = '0';
-                            pages[i].style.pointerEvents = 'none';
+                        pages[i].style.display = 'none';
+                        pages[i].style.visibility = 'hidden';
+                        pages[i].style.opacity = '0';
+                        pages[i].style.pointerEvents = 'none';
                         } else if (pages[i].id !== 'mainPage') {
                             pages[i].style.display = 'none';
                             pages[i].style.visibility = 'hidden';
@@ -177,45 +135,23 @@
                 }
                 
                 // Показываем нужную страницу и инициализируем
-                if (page === 'cases' && mainPage) {
+                if (page === 'cases' && casesPage) {
                     if (header) header.style.display = 'flex';
-                    mainPage.style.display = 'block';
-                    mainPage.style.visibility = 'visible';
-                    mainPage.style.opacity = '1';
-                    mainPage.style.pointerEvents = 'auto';
-                    mainPage.classList.remove('hidden');
-                    
-                    // Показываем casesCarousel и все карточки кейсов с принудительными стилями
-                    const casesCarousel = document.getElementById('casesCarousel');
-                    if (casesCarousel) {
-                        casesCarousel.style.setProperty('display', 'flex', 'important');
-                        casesCarousel.style.setProperty('visibility', 'visible', 'important');
-                        casesCarousel.style.setProperty('opacity', '1', 'important');
-                        casesCarousel.style.pointerEvents = 'auto';
-                        casesCarousel.style.position = 'relative';
-                    }
-                    
-                    // Показываем все карточки кейсов с принудительными стилями
-                    const caseCards = document.querySelectorAll('.case-card');
-                    caseCards.forEach(card => {
-                        card.style.setProperty('display', 'flex', 'important');
-                        card.style.setProperty('visibility', 'visible', 'important');
-                        card.style.setProperty('opacity', '1', 'important');
-                        card.style.pointerEvents = 'auto';
-                    });
-                    
-                    // Показываем табы навигации
-                    const tabs = document.querySelectorAll('.tab');
-                    tabs.forEach(tab => {
-                        tab.style.setProperty('display', 'block', 'important');
-                        tab.style.setProperty('visibility', 'visible', 'important');
-                        tab.style.setProperty('opacity', '1', 'important');
-                    });
-                    
-                    // Инициализируем кейсы
+                    casesPage.style.display = 'block';
+                    casesPage.style.visibility = 'visible';
+                    casesPage.style.opacity = '1';
+                    casesPage.style.position = 'fixed';
+                    casesPage.style.top = '0';
+                    casesPage.style.left = '0';
+                    casesPage.style.right = '0';
+                    casesPage.style.bottom = '0';
+                    casesPage.style.width = '100%';
+                    casesPage.style.height = '100%';
+                    casesPage.style.zIndex = '100';
+                    casesPage.style.pointerEvents = 'auto';
                     setTimeout(function() {
-                        if (typeof initCaseCards === 'function') initCaseCards();
-                        if (typeof initOpenButton === 'function') initOpenButton();
+                        if (typeof loadCases === 'function') loadCases();
+                        if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
                     }, 50);
                 } else if (page === 'profile' && profilePage) {
                     if (header) header.style.display = 'flex';
@@ -520,237 +456,6 @@
         }
 
 
-        .cases-carousel {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            padding: 25px;
-            padding-bottom: 120px;
-            width: 100%;
-            box-sizing: border-box;
-            background: transparent;
-            position: relative;
-            z-index: 1;
-        }
-
-        .cases-carousel::-webkit-scrollbar {
-            display: none;
-        }
-
-        .case-card {
-            cursor: pointer !important;
-            pointer-events: auto !important;
-            position: relative !important;
-            z-index: 10 !important;
-            width: 100%;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
-            border-radius: 24px;
-            padding: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.15);
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            gap: 20px;
-            overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
-                        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-        }
-
-        .case-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transition: left 0.6s;
-        }
-
-        .case-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(102, 126, 234, 0.5);
-            box-shadow: 0 12px 48px rgba(102, 126, 234, 0.4),
-                        0 0 0 1px rgba(102, 126, 234, 0.3) inset;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
-        }
-
-        .case-card:hover::before {
-            left: 100%;
-        }
-
-        .case-card:active {
-            transform: translateY(-2px) scale(0.98);
-        }
-
-        .case-icon {
-            font-size: 80px;
-            text-align: center;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 140px;
-            min-width: 140px;
-            height: 140px;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
-            border-radius: 20px;
-            padding: 15px;
-            flex-shrink: 0;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            transition: all 0.4s;
-        }
-
-        .case-card:hover .case-icon {
-            transform: scale(1.05) rotate(2deg);
-            border-color: rgba(102, 126, 234, 0.4);
-            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.5);
-        }
-
-        .case-icon::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-            animation: shine 3s infinite;
-        }
-
-        @keyframes shine {
-            0%, 100% { transform: translate(-50%, -50%) rotate(0deg); opacity: 0; }
-            50% { opacity: 1; }
-        }
-
-        .case-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            display: block;
-            position: relative;
-            z-index: 1;
-            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
-            transition: transform 0.4s;
-        }
-
-        .case-card:hover .case-icon img {
-            transform: scale(1.1);
-        }
-
-        .case-icon:empty {
-            display: none;
-        }
-
-        .case-icon img + * {
-            display: none;
-        }
-
-        .case-info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            z-index: 1;
-        }
-
-        .case-name {
-            font-size: 22px;
-            font-weight: 700;
-            color: #ffffff;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-            letter-spacing: 0.5px;
-        }
-
-        .case-description {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.7);
-            font-weight: 500;
-        }
-
-        .case-price-badge {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(102, 126, 234, 0.2) 100%);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 15px;
-            font-weight: 700;
-            color: #00d4ff;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            border: 1px solid rgba(0, 212, 255, 0.3);
-            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
-            z-index: 2;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s;
-        }
-
-        .case-card:hover .case-price-badge {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(0, 212, 255, 0.5);
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.3) 0%, rgba(102, 126, 234, 0.3) 100%);
-        }
-        
-        .case-price-badge .currency-icon {
-            width: 14px;
-            height: 14px;
-        }
-
-        .case-info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding-left: 10px;
-        }
-
-        .case-name {
-            font-size: 18px;
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 5px;
-        }
-
-        .case-description {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            padding: 15px;
-            padding-bottom: 100px;
-        }
-
-        .page-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            border: none;
-            background: rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .page-btn.active {
-            background: #667eea;
-            color: white;
-        }
-
         #mainPage {
             display: block;
             position: relative;
@@ -804,409 +509,7 @@
             pointer-events: none !important;
         }
         
-        #caseDetailPage {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100%;
-            height: 100%;
-            overflow-y: auto;
-            z-index: 1000;
-            background: linear-gradient(180deg, 
-                rgba(10, 10, 20, 0.98) 0%, 
-                rgba(20, 15, 30, 0.98) 25%,
-                rgba(30, 20, 40, 0.98) 50%,
-                rgba(20, 15, 30, 0.98) 75%,
-                rgba(10, 10, 20, 0.98) 100%);
-            background-attachment: fixed;
-            display: none;
-            visibility: hidden;
-            opacity: 0;
-            pointer-events: none;
-        }
 
-        #caseDetailPage::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(0, 212, 255, 0.08) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        #caseDetailPage.active,
-        #caseDetailPage[style*="block"] {
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            pointer-events: auto !important;
-        }
-
-        .case-detail-page {
-            padding: 20px;
-            padding-bottom: 120px;
-            position: relative;
-            z-index: 1;
-            min-height: 100vh;
-        }
-
-        .case-detail-page.active ~ .open-btn,
-        .case-detail-page.active + .open-btn {
-            display: flex !important;
-        }
-
-
-        .case-detail-header {
-            text-align: center;
-            margin-bottom: 30px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .case-detail-icon {
-            font-size: 120px;
-            margin: 20px 0;
-            background: transparent;
-            border-radius: 16px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 150px;
-        }
-
-        .case-detail-icon img {
-            width: 100%;
-            max-width: 300px;
-            min-width: 150px;
-            height: auto;
-            max-height: 300px;
-            object-fit: contain;
-            display: block;
-        }
-
-        .roulette-container {
-            width: 100%;
-            height: 200px;
-            position: relative;
-            overflow: hidden !important;
-            margin: 20px 0;
-            border-radius: 16px;
-            background: rgba(255, 255, 255, 0.05);
-            display: none;
-            padding: 0;
-            box-sizing: border-box;
-            min-height: 200px;
-        }
-        
-        .roulette-wrapper {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            overflow: hidden !important;
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .roulette-container.active {
-            display: block;
-        }
-
-        .roulette-track {
-            display: flex;
-            gap: 20px;
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            will-change: transform;
-            white-space: nowrap;
-            width: auto;
-            height: 150px;
-            align-items: center;
-            margin: 0;
-            padding: 0;
-            box-sizing: content-box;
-        }
-
-        .gift-item {
-            width: 150px;
-            min-width: 150px;
-            max-width: 150px;
-            height: 150px;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
-            border-radius: 16px;
-            display: flex !important;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border: 3px solid rgba(255, 255, 255, 0.2);
-            font-size: 80px;
-            position: relative;
-            flex-shrink: 0;
-            visibility: visible !important;
-            opacity: 1 !important;
-            z-index: 2;
-            transition: none !important;
-            pointer-events: auto !important;
-            margin: 0;
-            padding: 0;
-            vertical-align: top;
-        }
-
-        .gift-item img {
-            width: 80px;
-            height: 80px;
-            object-fit: contain;
-            display: block;
-        }
-
-        .gift-item.selected {
-            border-color: #00ff00;
-            background: rgba(0, 255, 0, 0.2);
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
-            transform: scale(1.1);
-            z-index: 3;
-        }
-
-        .gift-name {
-            position: absolute;
-            bottom: -25px;
-            font-size: 12px;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.8);
-            white-space: nowrap;
-        }
-
-        .center-indicator {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            width: 3px;
-            height: 180px;
-            background: linear-gradient(to bottom, transparent, #00ff00, transparent);
-            z-index: 5;
-            pointer-events: none;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-        }
-
-        .case-detail-price {
-            font-size: 28px;
-            font-weight: 700;
-            color: #667eea;
-            margin: 15px 0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            justify-content: center;
-        }
-        
-        .case-detail-price .currency-icon {
-            width: 24px;
-            height: 24px;
-        }
-
-        .whats-inside-title {
-            font-size: 24px;
-            font-weight: 700;
-            margin: 35px 0 25px 0;
-            padding: 0 15px;
-            color: #ffffff;
-            text-align: center;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-            letter-spacing: 0.5px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .prizes-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 18px;
-            padding: 0 15px;
-            margin-bottom: 40px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .prize-item {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
-            border-radius: 20px;
-            padding: 18px;
-            text-align: center;
-            border: 2px solid rgba(255, 255, 255, 0.15);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .prize-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transition: left 0.6s;
-        }
-
-        .prize-item:hover {
-            transform: translateY(-5px) scale(1.05);
-            border-color: rgba(102, 126, 234, 0.5);
-            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.25) 0%, rgba(118, 75, 162, 0.25) 100%);
-        }
-
-        .prize-item:hover::before {
-            left: 100%;
-        }
-
-        .prize-item.win {
-            border-color: #00ff00;
-            background: linear-gradient(135deg, rgba(0, 255, 0, 0.2) 0%, rgba(0, 200, 0, 0.2) 100%);
-            animation: winPulse 1s;
-            box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
-        }
-
-        @keyframes winPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        .prize-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 40px;
-            margin-bottom: 10px;
-        }
-
-        .prize-icon img {
-            width: 60px;
-            height: 60px;
-            object-fit: contain;
-            display: block;
-        }
-
-        .prize-value {
-            font-size: 16px;
-            font-weight: 600;
-            color: #667eea;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            justify-content: center;
-        }
-        
-        .prize-value .currency-icon {
-            width: 16px;
-            height: 16px;
-        }
-
-        .open-btn {
-            position: fixed !important;
-            bottom: 100px !important;
-            left: 20px !important;
-            right: 20px !important;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-            color: white !important;
-            border: 3px solid rgba(255, 255, 255, 0.3) !important;
-            padding: 20px !important;
-            border-radius: 24px !important;
-            font-size: 20px !important;
-            font-weight: 700 !important;
-            cursor: pointer !important;
-            display: none !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 12px !important;
-            z-index: 99999 !important;
-            box-shadow: 0 10px 50px rgba(102, 126, 234, 0.9), 
-                        0 0 40px rgba(102, 126, 234, 0.7), 
-                        inset 0 2px 0 rgba(255, 255, 255, 0.4),
-                        inset 0 -2px 0 rgba(0, 0, 0, 0.2) !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            text-transform: uppercase !important;
-            letter-spacing: 1px !important;
-            position: relative !important;
-            overflow: hidden !important;
-        }
-
-        .open-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: left 0.6s;
-        }
-        
-        /* Скрываем кнопку на всех страницах кроме страницы деталей кейса */
-        #mainPage:not(.hidden) ~ .open-btn,
-        #profilePage[style*="block"] ~ .open-btn,
-        #profilePage:not([style*="none"]) ~ .open-btn {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-        }
-        
-        .open-btn:hover {
-            transform: translateY(-4px) scale(1.02) !important;
-            box-shadow: 0 15px 60px rgba(102, 126, 234, 1), 
-                        0 0 50px rgba(102, 126, 234, 0.9), 
-                        inset 0 2px 0 rgba(255, 255, 255, 0.5),
-                        inset 0 -2px 0 rgba(0, 0, 0, 0.3) !important;
-            background: linear-gradient(135deg, #7b8ef5 0%, #8a5fb8 100%) !important;
-        }
-
-        .open-btn:hover::before {
-            left: 100%;
-        }
-        
-        .open-btn:active {
-            transform: translateY(-1px) scale(0.98) !important;
-        }
-
-        .open-btn.show {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-
-        /* Скрываем кнопку "Открыть" когда модальное окно активно */
-        .modal.active ~ .open-btn,
-        .modal.active + * + .open-btn,
-        body:has(.modal.active) .open-btn {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-        }
-
-        #caseDetailPage.active ~ #openBtn,
-        #caseDetailPage.active + #openBtn {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
 
         .open-btn:disabled {
             opacity: 0.5 !important;
@@ -2000,6 +1303,115 @@
             background: #0a0a0a;
             position: relative;
             z-index: 1;
+        }
+
+        .cases-page {
+            padding: 20px;
+            padding-bottom: 120px;
+            min-height: 100vh;
+            background: transparent;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .cases-header {
+            text-align: center;
+            padding: 20px;
+            padding-top: 40px;
+        }
+
+        .cases-header h2 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 20px;
+        }
+
+        .cases-container {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .case-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+            border-radius: 24px;
+            padding: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            cursor: pointer;
+            transition: all 0.4s;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .case-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(102, 126, 234, 0.5);
+            box-shadow: 0 12px 48px rgba(102, 126, 234, 0.4);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+        }
+
+        .case-icon {
+            width: 120px;
+            height: 120px;
+            min-width: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .case-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .case-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .case-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .case-description {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .case-price {
+            font-size: 20px;
+            font-weight: 700;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .case-price .currency-icon {
+            width: 18px;
+            height: 18px;
         }
 
         .crash-page {
@@ -3088,61 +2500,6 @@
             <div class="subscribe-action">Подписаться</div>
         </button>
 
-        <div class="tabs">
-            <button class="tab active" data-tab="cases">
-                <span style="font-size: 18px; margin-right: 8px;">📦</span>
-                <span>Кейсы</span>
-            </button>
-        </div>
-
-
-        <div class="cases-carousel" id="casesCarousel">
-            <div class="case-card" data-case="1" data-price="0.1" onclick="try{window.handleCaseClick(1);}catch(e){alert('Ошибка: '+e.message);}" style="cursor: pointer !important; pointer-events: auto !important; z-index: 999 !important;">
-                <div class="case-price-badge"><span class="currency-icon"></span> 0.1</div>
-                <div class="case-icon"><img src="IconCase/2c0JGQXrElCDlaNGbYHwgipHo2-yq00qIxcU39IganVzrqDys2-no-bg-preview%20%28carve.photos%29.png" alt="Case 1" onerror="console.error('Failed to load image:', this.src)"></div>
-                <div class="case-info">
-                    <div class="case-name">Кейс #1</div>
-                    <div class="case-description">9 предметов</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="pagination" style="display: none;">
-        </div>
-    </div>
-
-    <div class="case-detail-page" id="caseDetailPage" style="display: none;">
-        <button class="back-btn" onclick="window.goBack()" style="position: relative; z-index: 10;">← Назад</button>
-        <div class="case-detail-header">
-            <div class="case-detail-icon" id="detailIcon"></div>
-            <div class="case-detail-price" id="detailPrice"><span class="currency-icon"></span> 2.25</div>
-            
-            <div class="roulette-container" id="rouletteContainer">
-                <div class="roulette-wrapper">
-                    <div class="center-indicator"></div>
-                    <div class="roulette-track" id="rouletteTrack"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="whats-inside-title">Что внутри?</div>
-        
-        <div class="prizes-grid" id="prizesGrid">
-        </div>
-
-    </div>
-
-    <button class="open-btn" id="openBtn" type="button" style="cursor: pointer !important; pointer-events: auto !important; z-index: 99999 !important;">
-        Открыть <span>🚀</span>
-    </button>
-
-    <div class="modal" id="prizeModal">
-        <div class="modal-content">
-            <div class="modal-prize-icon" id="modalPrizeIcon">🏆</div>
-            <div class="modal-prize-name" id="modalPrizeName">Оскар</div>
-            <div class="modal-prize-value" id="modalPrizeValue"><span class="currency-icon"></span> 82.17</div>
-            <button class="modal-close" onclick="closePrizeModal()">Закрыть</button>
-        </div>
     </div>
 
     <div class="modal" id="inventoryItemModal">
@@ -3356,6 +2713,14 @@
         </div>
     </div>
 
+    <div id="casesPage" class="cases-page" style="display: block;">
+        <div class="cases-header">
+            <h2>Кейсы</h2>
+        </div>
+        <div class="cases-container" id="casesContainer">
+        </div>
+    </div>
+
     <div id="crashPage" class="crash-page" style="display: none;">
         <div class="crash-header">
             <div class="crash-balance">
@@ -3414,31 +2779,6 @@
         // Делаем все переменные глобальными и доступными сразу
         
         // КОНФИГУРАЦИЯ КЕЙСА #1
-        const case1Config = {
-            icon: 'IconCase/2c0JGQXrElCDlaNGbYHwgipHo2-yq00qIxcU39IganVzrqDys2-no-bg-preview%20%28carve.photos%29.png',
-            price: 0.1,
-            items: [
-                { icon: 'ItemCase1/_Jne2Jf3nM6erEUU5TEnvU7PWFOiElGs2WJc0zQ250JHxRd6md_v1huDDCpZRSesDCZP53pWDPEnqfojbzsYqjbD.png', name: 'Лоли поп', value: 82.17 },
-                { icon: 'ItemCase1/4dOUEOHs9WSNk5pRBkEnCptGIs16lB5xe4E7mh3sWF6XAkHcwQvINscw7cXwhK5IUXv5eOdct9_vxDZtoaMTm8GJ.png', name: 'Бабочка', value: 75.66 },
-                { icon: 'ItemCase1/GsJZ-oPiqQHoyerbmc-z_L_NTi8cBWgKmS9ueEOwk5_PHeYbWeRwn6Jxic2d1Yhl8IZwt0rBUg5ZfvrkYkYp0UrO.png', name: 'Зелье', value: 69.30 },
-                { icon: 'ItemCase1/qlq8mJd7J1-60XWhd29rLbtjBfzeXSPLMVgzkcBDTNfHL50TBMHG2B0h2jB1bAd-rJWlHO1NtkI0zAsWF4BgcVHn.png', name: 'Шлем', value: 25.27 },
-                { icon: 'ItemCase1/QrKwYOzBzIX1ilzkfuCuiFdyCRU9jBm5pASbp_z2Sb6ATFNaaB1Zr1XfNGehXeHTYhldZNO8x4_l0ueW2t4MZ62W.png', name: 'Сигара', value: 23.50 },
-                { icon: 'ItemCase1/R1v8ymGGn2ZBo6cI96QvcWu5Yh2FsyiAmDW_WTGMfz7CMvELAOFCf7I7Ns2XGdKv1AxHTvrioJ6h-ALjrzjxb7Ra.png', name: 'Кольцо', value: 17.00 },
-                { icon: 'ItemCase1/XQTRb7Jx7OBjYfqnitHsZGV9pmln2Nhr9n5oYkJvZsF_dtkAYxPHS8Npi_qa6Pxcx0o368YwkcY9uRHmabTE5-LS.png', name: 'Бабочка', value: 11.40 },
-                { icon: 'ItemCase1/Y6HIRzDSCdUNCqWtHRsCpePjILr5QyrOnOD0T9PtrYjgu3Ff3XVbLGxLT1snsWyNNMzfDvTlhms0y1_Wwev6tz9-.png', name: 'Зелье', value: 8.64 },
-                { icon: 'ItemCase1/YLHOesDBQxjSVcanvj-iKz2mgFXRfweB38vb951G5LvwfJ8ytmlfe3PFUk3k_AgekpyW9A3uIpzEjM87k6_aUVS1.png', name: 'Цветок', value: 7.90 }
-            ]
-        };
-        
-        // Инициализируем window.cases сразу
-        window.cases = {
-            1: {
-                icon: case1Config.icon,
-                price: case1Config.price,
-                prizes: case1Config.items
-            }
-        };
-        var cases = window.cases; // Для обратной совместимости
         
         // Состояние игры Мины
         let minesGameState = {
@@ -3482,41 +2822,6 @@
         
         // ГЛОБАЛЬНЫЕ ОБРАБОТЧИКИ - ОПРЕДЕЛЯЕМ СРАЗУ В НАЧАЛЕ СКРИПТА
         // Эти функции будут доступны для inline onclick
-        window.handleCaseClick = function(caseNum) {
-            console.log('🔵 Клик по кейсу:', caseNum, 'тип:', typeof caseNum);
-            try {
-                // Преобразуем в число если нужно
-                var num = parseInt(caseNum);
-                if (isNaN(num)) {
-                    console.error('caseNum не является числом:', caseNum);
-                    alert('Ошибка: Неверный номер кейса');
-                    return;
-                }
-                
-                // Проверяем что cases определена и не пустая
-                if (typeof window.cases === 'undefined' || !window.cases || Object.keys(window.cases).length === 0) {
-                    console.error('window.cases не определена или пустая:', window.cases);
-                    alert('Ошибка: Данные кейсов не загружены. Перезагрузите страницу.');
-                    return;
-                }
-                
-                console.log('window.cases:', window.cases);
-                console.log('Ищем кейс с номером:', num);
-                
-                // Проверяем что функция определена
-                if (typeof window.showCaseDetail === 'function') {
-                    window.showCaseDetail(num);
-                } else if (typeof showCaseDetail === 'function') {
-                    showCaseDetail(num);
-                } else {
-                    alert('Ошибка: showCaseDetail не найдена. Перезагрузите страницу.');
-                    console.error('showCaseDetail не определена');
-                }
-            } catch(err) {
-                console.error('Ошибка handleCaseClick:', err);
-                alert('Ошибка: ' + err.message);
-            }
-        };
         
         window.handleMinesStart = function(e) {
             console.log('🔵 Клик по кнопке мины');
@@ -3800,16 +3105,8 @@
         };
         Object.freeze(protectedFunctions);
         
-        let currentCase = null;
-        let currentPrizes = [];
-        let isOpening = false;
         let currentTab = 'cases';
         
-        // Определяем функцию openCase глобально СРАЗУ, чтобы она была доступна
-        window.openCase = function() {
-            console.log('🔵 openCase вызвана (заглушка)');
-            console.log('Функция будет определена позже');
-        };
         
         // API эндпоинт (замените на ваш реальный сервер)
         const API_BASE_URL = 'http://localhost:3000/api'; // Локальный сервер
@@ -4251,14 +3548,6 @@
             }
             
             // Обработчики карточек кейсов
-            if (typeof initCaseCards === 'function') {
-                initCaseCards();
-            }
-            
-            // Обработчик кнопки "Открыть"
-            if (typeof initOpenButton === 'function') {
-                initOpenButton();
-            }
             
             // Обработчик кнопки подписки
             if (typeof initSubscribeButton === 'function') {
@@ -4282,79 +3571,6 @@
             
             if (typeof initWithdrawHandlers === 'function') {
                 initWithdrawHandlers();
-            }
-        }
-        
-        
-        // Инициализация карточек кейсов
-        function initCaseCards() {
-            try {
-                const cards = document.querySelectorAll('.case-card');
-                console.log(`✅ Найдено ${cards.length} карточек кейсов`);
-                
-                // Переустанавливаем обработчики для каждой карточки
-                cards.forEach(card => {
-                    const newCard = card.cloneNode(true);
-                    const caseNum = parseInt(newCard.dataset.case || '1');
-                    card.parentNode.replaceChild(newCard, card);
-                    
-                    // Добавляем inline onclick прямо в HTML атрибут
-                    newCard.setAttribute('onclick', 'window.handleCaseClick(' + caseNum + ');');
-                    
-                    // Устанавливаем обработчик через onclick для гарантии
-                    newCard.onclick = function(e) {
-                        if (e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            e.stopImmediatePropagation();
-                        }
-                        console.log('🔵 Клик по кейсу через onclick:', caseNum);
-                        window.handleCaseClick(caseNum);
-                        return false;
-                    };
-                    
-                    // Также через addEventListener
-                    newCard.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                        console.log('🔵 Клик по кейсу через addEventListener:', caseNum);
-                        window.handleCaseClick(caseNum);
-                    }, { capture: true });
-                });
-            } catch (error) {
-                console.error('❌ Ошибка инициализации карточек:', error);
-            }
-        }
-        
-        // Инициализация кнопки "Открыть"
-        function initOpenButton() {
-            try {
-                const openBtn = document.getElementById('openBtn');
-                if (openBtn) {
-                    const newBtn = openBtn.cloneNode(true);
-                    openBtn.parentNode.replaceChild(newBtn, openBtn);
-                    
-                    newBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('Клик по кнопке Открыть');
-                        
-                        if (typeof window.openCase === 'function') {
-                            window.openCase();
-                        } else {
-                            console.error('Функция openCase не найдена');
-                            if (typeof openCaseFunc === 'function') {
-                                openCaseFunc();
-                            }
-                        }
-                    });
-                    console.log('✅ Кнопка "Открыть" инициализирована');
-                } else {
-                    console.warn('⚠️ Кнопка "Открыть" не найдена');
-                }
-            } catch (error) {
-                console.error('❌ Ошибка инициализации кнопки "Открыть":', error);
             }
         }
         
@@ -4529,8 +3745,66 @@
             }
         }
 
+        // Функция загрузки кейсов из папок
+        function loadCases() {
+            const casesContainer = document.getElementById('casesContainer');
+            if (!casesContainer) return;
+            
+            // Данные кейса 1
+            const case1Data = {
+                id: 1,
+                icon: 'Case1/Case/OA2YI79hneequQi62NNm5RTa0jw-sxBTwlrfcD4cx18nkOBqIQ-edited-free%20(carve.photos).png',
+                price: 0.1,
+                prizes: [
+                    'Case1/_D0XSaGmN7sJKEqjy0b9AaZOeqNBYK-HQ2iXL3fx0KLNqjlEfW-edited-free%20(carve.photos).png',
+                    'Case1/7aggEGM43iT4zaeQ90WDXbKgaxRuIctX8OzjKHUoNGYKDTiEdT-no-bg-preview%20(carve.photos).png',
+                    'Case1/AW7Qv-lm22xsWd8ZnVjP7pVDjzBgqo-x9-7UoZO2ekVCWsWsAl-edited-free%20(carve.photos).png',
+                    'Case1/cIBPnG2m_9uqU5vfNaXES6TIPHfksPhjIYc8nPIjbVuiGb317Z-no-bg-preview%20(carve.photos).png',
+                    'Case1/g7a9ySOF7wq3mu2Shuxr67enQDHEcB0zcgllGa59ked5fEcXN-yfwBe-9z2LBU_7zbVRyb2z2-DCQaLdGYWqfUqS-Photoroom.png',
+                    'Case1/Jftdn-uPpbWzly4TEgsyY3LBDQUkI1Q0hcmopC-HAru9nM5uJW-no-bg-preview%20(carve.photos).png',
+                    'Case1/kIMnTGaiutK0Ou4X_-RRh2ckiNpdKQBCMNtnb9wRdYmxf_kJ3s-no-bg-preview%20(carve.photos).png',
+                    'Case1/KQdlr7WVUg4qZZ3J0muYmXNRCePTR-p8n74r-_r7zQMhtyuhHTUb9JrOU6rTAjB9tnNBBplZGBXyh-YxLPQnqYZO-Photoroom.png',
+                    'Case1/L3L25Ezu2782EQaWm5os_oi1ELu1qudKKDGbeP4FMGOxxjKCBi-no-bg-preview%20(carve.photos).png',
+                    'Case1/llJ3ZTgJvieSHhmehyG9LuNG5M2dY7tr5bPpctgOh6H_Mz4bal-edited-free%20(carve.photos).png',
+                    'Case1/NE-peoxoim_KxZ6SDxHjoRAwQSnt7tj6rcRUOgvyfYHoXKlU9f-no-bg-preview%20(carve.photos).png',
+                    'Case1/QWvlnRQNdZo2nqVt5hI6ff7l3ZpxK-IGc3X10-CUGLv10ycEwc-no-bg-preview%20(carve.photos).png',
+                    'Case1/rO9Afzk_7QoBW7-D-94uoD2JsyTsaZnp1prTIWnzp_AsMeQrp--no-bg-preview%20(carve.photos).png',
+                    'Case1/SZPAhV0giLdoCjqwE0tP2Fa3_NfB65B54BuJKToWItApL6Qtt3-no-bg-preview%20(carve.photos).png',
+                    'Case1/VqbJmqTX4m3Um9XF5l6aFIETbR-TRBmBrEOiHLnxicnI8Bfqoh-no-bg-preview%20(carve.photos).png'
+                ]
+            };
+            
+            const cases = [case1Data];
+            
+            casesContainer.innerHTML = '';
+            
+            cases.forEach(caseData => {
+                const caseCard = document.createElement('div');
+                caseCard.className = 'case-card';
+                caseCard.dataset.case = caseData.id;
+                
+                caseCard.innerHTML = `
+                    <div class="case-icon">
+                        <img src="${caseData.icon}" alt="Кейс #${caseData.id}" onerror="this.style.display='none'; this.parentElement.innerHTML='🎁';">
+                    </div>
+                    <div class="case-info">
+                        <div class="case-name">Кейс #${caseData.id}</div>
+                        <div class="case-description">${caseData.prizes.length} предметов</div>
+                        <div class="case-price">${caseData.price} <span class="currency-icon"></span></div>
+                    </div>
+                `;
+                
+                casesContainer.appendChild(caseCard);
+            });
+        }
+        
+        window.loadCases = loadCases;
+
         document.addEventListener('DOMContentLoaded', function() {
             console.log('✅ DOMContentLoaded - начинаем инициализацию');
+            
+            // Загружаем кейсы
+            loadCases();
             
             // СРАЗУ обновляем баланс
             setTimeout(function() {
@@ -4567,19 +3841,6 @@
                     console.error('❌ initEventHandlers не найдена!');
                 }
                 
-                console.log('🔧 Вызываю initCaseCards...');
-                if (typeof initCaseCards === 'function') {
-                    initCaseCards();
-                } else {
-                    console.error('❌ initCaseCards не найдена!');
-                }
-                
-                console.log('🔧 Вызываю initOpenButton...');
-                if (typeof initOpenButton === 'function') {
-                    initOpenButton();
-                } else {
-                    console.error('❌ initOpenButton не найдена!');
-                }
                 
                 // Дополнительная инициализация обработчиков пополнения и вывода
                 if (typeof initTopUpHandlers === 'function') {
@@ -4781,712 +4042,7 @@
         // updateHeaderAvatar будет вызвана в DOMContentLoaded
 
         // Инициализация табов (уже обрабатывается в initEventHandlers)
-        // Обработчики карточек кейсов также инициализируются в initCaseCards
-
-        // Переопределяем window.openCase полной версией
-        window.openCase = function() {
-            console.log('🔵 window.openCase вызвана');
-            if (typeof window.openCaseFull === 'function') {
-                console.log('✅ Вызываем window.openCaseFull');
-                return window.openCaseFull();
-            } else {
-                console.warn('⚠️ window.openCaseFull еще не определена, ждем...');
-                setTimeout(() => {
-                    if (typeof window.openCaseFull === 'function') {
-                        window.openCaseFull();
-                    } else {
-                        console.error('❌ window.openCaseFull так и не определена');
-                        alert('Ошибка: Функция открытия кейса не загружена. Перезагрузите страницу.');
-                    }
-                }, 200);
-            }
-        };
         
-        // ПЕРЕПИСАННАЯ ФУНКЦИЯ ОТКРЫТИЯ КЕЙСА - ПРОСТАЯ И РАБОТАЮЩАЯ
-        window.openCaseFull = function() {
-            if (!currentCase || isOpening) return;
-            
-            // Восстанавливаем призы
-            if (!currentPrizes || currentPrizes.length === 0) {
-                currentPrizes = currentCase.prizes || [];
-            }
-            
-            if (currentPrizes.length === 0) {
-                alert('Ошибка: В кейсе нет призов');
-                return;
-            }
-            
-            // Проверяем баланс
-            const price = currentCase.price || 0;
-            if (_balance < price) {
-                alert('Недостаточно баланса! Нужно: ' + price + ', есть: ' + _balance.toFixed(2));
-                return;
-            }
-
-            // Списываем баланс
-            isOpening = true;
-            if (!changeBalance(-price, 'openCase')) {
-                isOpening = false;
-                return;
-            }
-            saveInventory();
-            saveUserData();
-            
-            // Получаем элементы
-            const detailIcon = document.getElementById('detailIcon');
-            const rouletteContainer = document.getElementById('rouletteContainer');
-            const openBtn = document.getElementById('openBtn');
-            
-            if (!rouletteContainer) {
-                isOpening = false;
-                return;
-            }
-            
-            // Скрываем кнопку и иконку
-            if (openBtn) {
-                openBtn.style.display = 'none';
-                openBtn.disabled = true;
-            }
-            if (detailIcon) {
-                detailIcon.style.display = 'none';
-            }
-            
-            // Создаем рулетку
-            createRoulette();
-            
-            // Показываем контейнер рулетки
-            rouletteContainer.style.display = 'block';
-            rouletteContainer.classList.add('active');
-
-            if (tg) {
-                tg.HapticFeedback.impactOccurred('heavy');
-            }
-            
-            // Запускаем анимацию через 300ms
-            setTimeout(() => {
-                const rouletteTrack = document.getElementById('rouletteTrack');
-                if (!rouletteTrack) {
-                    isOpening = false;
-                    return;
-                }
-                
-                const giftItems = rouletteTrack.querySelectorAll('.gift-item');
-                if (giftItems.length === 0) {
-                    isOpening = false;
-                    return;
-                }
-                
-                // Выбираем случайный приз
-                const randomPrize = currentPrizes[Math.floor(Math.random() * currentPrizes.length)];
-                
-                // Делаем все элементы видимыми
-                giftItems.forEach(item => {
-                    item.style.opacity = '1';
-                    item.style.visibility = 'visible';
-                    item.style.display = 'flex';
-                });
-                
-                // Параметры анимации
-                const itemWidth = 170;
-                const spins = 15;
-                const spinDuration = 4000;
-                
-                // Находим индекс выбранного приза
-                let targetIndex = 0;
-                for (let i = 0; i < giftItems.length; i++) {
-                    if (giftItems[i].dataset.icon === randomPrize.icon && 
-                        giftItems[i].dataset.name === randomPrize.name) {
-                        targetIndex = i;
-                        break;
-                    }
-                }
-                
-                // Выбираем из середины для плавной остановки
-                const midPoint = Math.floor(giftItems.length / 2);
-                targetIndex = midPoint + (targetIndex % currentPrizes.length);
-                
-                // Расчет позиций
-                const totalTrackWidth = giftItems.length * itemWidth;
-                const targetItemCenter = targetIndex * itemWidth + itemWidth / 2;
-                const targetOffset = targetItemCenter - totalTrackWidth / 2;
-                const extraDistance = spins * currentPrizes.length * itemWidth;
-                const startPosition = targetOffset + extraDistance;
-                const finalPosition = targetOffset;
-                
-                // Устанавливаем начальную позицию
-                rouletteTrack.style.left = '50%';
-                rouletteTrack.style.top = '50%';
-                rouletteTrack.style.transform = `translate(calc(-50% + ${startPosition}px), -50%)`;
-                rouletteTrack.style.transition = 'none';
-                rouletteTrack.style.display = 'flex';
-                rouletteTrack.style.visibility = 'visible';
-                rouletteTrack.style.opacity = '1';
-                rouletteTrack.style.position = 'absolute';
-                
-                // Анимация
-                let startTime = Date.now();
-                const animateRoulette = () => {
-                    const elapsed = Date.now() - startTime;
-                    const progress = Math.min(elapsed / spinDuration, 1);
-                    const ease = 1 - Math.pow(1 - progress, 3);
-                    const currentOffset = startPosition + (finalPosition - startPosition) * ease;
-                    
-                    rouletteTrack.style.transform = `translate(calc(-50% + ${currentOffset}px), -50%)`;
-                    
-                    // Обновляем видимость элементов
-                    giftItems.forEach((item, index) => {
-                        item.style.cssText = `
-                            opacity: 1 !important;
-                            visibility: visible !important;
-                            display: flex !important;
-                            flex-shrink: 0 !important;
-                            width: 150px !important;
-                            height: 150px !important;
-                        `;
-                        
-                        const itemCenter = index * itemWidth + itemWidth / 2 - totalTrackWidth / 2 + currentOffset;
-                        if (Math.abs(itemCenter) < itemWidth / 2) {
-                            item.classList.add('selected');
-                        } else {
-                            item.classList.remove('selected');
-                        }
-                    });
-                    
-                    if (progress < 1) {
-                        requestAnimationFrame(animateRoulette);
-                    } else {
-                        // Находим выбранный элемент
-                        let selectedItem = giftItems[targetIndex];
-                        giftItems.forEach(item => {
-                            if (item.classList.contains('selected')) {
-                                selectedItem = item;
-                            }
-                        });
-                        
-                        setTimeout(() => {
-                            const prize = {
-                                icon: selectedItem.dataset.icon || randomPrize.icon,
-                                name: selectedItem.dataset.name || randomPrize.name,
-                                value: parseFloat(selectedItem.dataset.value) || randomPrize.value
-                            };
-                            
-                            showPrizeModal(prize);
-                            
-                            // Восстанавливаем иконку
-                            if (detailIcon && currentCase) {
-                                if (currentCase.icon.includes('.png') || currentCase.icon.includes('.jpg')) {
-                                    const img = document.createElement('img');
-                                    img.src = currentCase.icon;
-                                    img.style.width = '100%';
-                                    img.style.maxWidth = '300px';
-                                    img.style.height = 'auto';
-                                    img.style.objectFit = 'contain';
-                                    detailIcon.innerHTML = '';
-                                    detailIcon.appendChild(img);
-                                } else {
-                                    detailIcon.textContent = currentCase.icon || '🔐';
-                                }
-                                detailIcon.style.display = 'flex';
-                            }
-                            
-                            rouletteContainer.classList.remove('active');
-                            isOpening = false;
-                            
-                            if (tg) {
-                                tg.HapticFeedback.notificationOccurred('success');
-                            }
-                        }, 500);
-                    }
-                };
-                
-                requestAnimationFrame(animateRoulette);
-            }, 300);
-        };
-        
-        // Убеждаемся, что функция доступна глобально
-        if (typeof window.openCase === 'function') {
-            console.log('✅ window.openCase определена глобально');
-        } else {
-            console.error('❌ window.openCase НЕ определена!');
-        }
-
-        // ПЕРЕПИСАННАЯ ФУНКЦИЯ СОЗДАНИЯ РУЛЕТКИ
-        function createRoulette() {
-            const rouletteTrack = document.getElementById('rouletteTrack');
-            if (!rouletteTrack) return;
-            
-            // Восстанавливаем призы если нужно
-            if (!currentPrizes || currentPrizes.length === 0) {
-                currentPrizes = currentCase.prizes || [];
-            }
-            
-            if (currentPrizes.length === 0) return;
-            
-            rouletteTrack.innerHTML = '';
-            
-            // Создаем множество повторений для прокрутки
-            const repeatCount = 50;
-            const extendedPrizes = [];
-            for (let i = 0; i < repeatCount; i++) {
-                extendedPrizes.push(...currentPrizes);
-            }
-            
-            // Создаем элементы
-            extendedPrizes.forEach(prize => {
-                const giftItem = document.createElement('div');
-                giftItem.className = 'gift-item';
-                
-                const iconStr = String(prize.icon || '');
-                const isImage = iconStr.toLowerCase().includes('.png') || 
-                               iconStr.toLowerCase().includes('.jpg') || 
-                               iconStr.toLowerCase().includes('.jpeg') ||
-                               iconStr.toLowerCase().includes('.gif') ||
-                               iconStr.toLowerCase().includes('.webp');
-                
-                if (isImage) {
-                    const img = document.createElement('img');
-                    img.src = prize.icon;
-                    img.alt = prize.name;
-                    img.style.cssText = 'width: 80px !important; height: 80px !important; object-fit: contain !important; display: block !important;';
-                    
-                    const nameDiv = document.createElement('div');
-                    nameDiv.className = 'gift-name';
-                    nameDiv.textContent = prize.name;
-                    
-                    giftItem.appendChild(img);
-                    giftItem.appendChild(nameDiv);
-                } else {
-                    giftItem.innerHTML = `${prize.icon || '?'}<div class="gift-name">${prize.name}</div>`;
-                }
-                
-                giftItem.dataset.icon = prize.icon;
-                giftItem.dataset.name = prize.name;
-                giftItem.dataset.value = prize.value;
-                
-                giftItem.style.cssText = `
-                    flex-shrink: 0 !important;
-                    display: flex !important;
-                    width: 150px !important;
-                    height: 150px !important;
-                    opacity: 1 !important;
-                    visibility: visible !important;
-                `;
-                
-                rouletteTrack.appendChild(giftItem);
-            });
-            
-            rouletteTrack.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important;';
-        }
-        
-        window.createRoulette = createRoulette;
-
-        // ПЕРЕПИСАННАЯ ФУНКЦИЯ ПОКАЗА ДЕТАЛЕЙ КЕЙСА
-        function showCaseDetail(caseNum) {
-            window.showCaseDetail = showCaseDetail;
-            if (isOpening) return;
-            
-            const casesObj = window.cases || cases;
-            if (!casesObj) {
-                alert('Ошибка: Данные кейсов не загружены');
-                return;
-            }
-            
-            const caseData = casesObj[caseNum] || casesObj[String(caseNum)] || casesObj[parseInt(caseNum)];
-            if (!caseData) {
-                alert('Ошибка: Кейс не найден');
-                return;
-            }
-            
-            currentCase = caseData;
-            currentPrizes = currentCase.prizes || [];
-            isOpening = false;
-            
-            // Скрываем все страницы
-            const mainPage = document.getElementById('mainPage');
-            const detailPage = document.getElementById('caseDetailPage');
-            const profilePage = document.getElementById('profilePage');
-            const crashPage = document.getElementById('crashPage');
-            const minesPage = document.getElementById('minesPage');
-            const dicePage = document.getElementById('dicePage');
-            const header = document.querySelector('.header');
-            const modal = document.getElementById('prizeModal');
-            
-            if (mainPage) {
-                mainPage.style.display = 'none';
-                mainPage.classList.add('hidden');
-            }
-            if (profilePage) profilePage.style.display = 'none';
-            if (crashPage) crashPage.style.display = 'none';
-            if (minesPage) minesPage.style.display = 'none';
-            if (dicePage) dicePage.style.display = 'none';
-            if (header) header.style.display = 'none';
-            if (modal) {
-                modal.style.display = 'none';
-                modal.classList.remove('active');
-            }
-            
-            // Показываем страницу деталей
-            if (detailPage) {
-                detailPage.style.display = 'block';
-                detailPage.style.visibility = 'visible';
-                detailPage.style.opacity = '1';
-                detailPage.style.pointerEvents = 'auto';
-                detailPage.classList.add('active');
-                detailPage.style.position = 'fixed';
-                detailPage.style.top = '0';
-                detailPage.style.left = '0';
-                detailPage.style.right = '0';
-                detailPage.style.bottom = '0';
-                detailPage.style.zIndex = '1000';
-            }
-            
-            // Показываем иконку кейса
-            const detailIcon = document.getElementById('detailIcon');
-            if (detailIcon && currentCase) {
-                detailIcon.innerHTML = '';
-                if (currentCase.icon.includes('.png') || currentCase.icon.includes('.jpg') || currentCase.icon.includes('.jpeg')) {
-                    const img = document.createElement('img');
-                    img.src = currentCase.icon;
-                    img.alt = `Case ${caseNum}`;
-                    img.style.width = '100%';
-                    img.style.maxWidth = '300px';
-                    img.style.height = 'auto';
-                    img.style.objectFit = 'contain';
-                    img.onerror = () => detailIcon.textContent = '🔐';
-                    detailIcon.appendChild(img);
-                } else {
-                    detailIcon.textContent = currentCase.icon || '🔐';
-                }
-                detailIcon.style.display = 'flex';
-            }
-            
-            // Показываем цену
-            const detailPrice = document.getElementById('detailPrice');
-            if (detailPrice) {
-                detailPrice.innerHTML = formatPrice(currentCase.price);
-            }
-            
-            // Скрываем рулетку
-            const rouletteContainer = document.getElementById('rouletteContainer');
-            if (rouletteContainer) {
-                rouletteContainer.classList.remove('active');
-                rouletteContainer.style.display = 'none';
-            }
-            
-            // Создаем сетку призов
-            const prizesGrid = document.getElementById('prizesGrid');
-            if (prizesGrid) {
-                prizesGrid.innerHTML = '';
-            
-                // Создаем элементы призов
-                currentPrizes.forEach(prize => {
-                    const prizeItem = document.createElement('div');
-                    prizeItem.className = 'prize-item';
-                    
-                    const iconDiv = document.createElement('div');
-                    iconDiv.className = 'prize-icon';
-                    
-                    const iconStr = String(prize.icon || '');
-                    const isImage = iconStr.toLowerCase().includes('.png') || 
-                                   iconStr.toLowerCase().includes('.jpg') || 
-                                   iconStr.toLowerCase().includes('.jpeg') ||
-                                   iconStr.toLowerCase().includes('.gif') ||
-                                   iconStr.toLowerCase().includes('.webp');
-                    
-                    if (isImage) {
-                        const img = document.createElement('img');
-                        img.src = prize.icon;
-                        img.alt = prize.name || 'Prize';
-                        img.style.width = '60px';
-                        img.style.height = '60px';
-                        img.style.objectFit = 'contain';
-                        img.onerror = () => iconDiv.textContent = prize.name || '?';
-                        iconDiv.appendChild(img);
-                    } else {
-                        iconDiv.textContent = prize.icon || '?';
-                    }
-                    
-                    prizeItem.appendChild(iconDiv);
-                    
-                    const valueDiv = document.createElement('div');
-                    valueDiv.className = 'prize-value';
-                    valueDiv.innerHTML = formatPrice(prize.value);
-                    prizeItem.appendChild(valueDiv);
-                    
-                    prizeItem.dataset.icon = prize.icon;
-                    prizeItem.dataset.name = prize.name;
-                    prizeItem.dataset.value = prize.value;
-                    
-                    prizesGrid.appendChild(prizeItem);
-                });
-            }
-
-            // Настраиваем кнопку "Открыть"
-            const openBtn = document.getElementById('openBtn');
-            if (openBtn) {
-                const newBtn = openBtn.cloneNode(true);
-                newBtn.removeAttribute('onclick');
-                openBtn.parentNode.replaceChild(newBtn, openBtn);
-                
-                newBtn.disabled = false;
-                newBtn.classList.add('show');
-                newBtn.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; bottom: 100px !important; left: 20px !important; right: 20px !important; z-index: 999999 !important; pointer-events: auto !important; cursor: pointer !important;';
-                newBtn.innerHTML = 'ОТКРЫТЬ <span>🚀</span>';
-                newBtn.id = 'openBtn';
-                
-                newBtn.onclick = function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    window.openCaseFull();
-                    return false;
-                };
-            }
-
-            document.querySelectorAll('.prize-item').forEach(item => {
-                item.classList.remove('win', 'spinning-prizes');
-            });
-
-            if (tg) {
-                tg.HapticFeedback.impactOccurred('medium');
-            }
-        }
-
-        function goBack() {
-            const mainPage = document.getElementById('mainPage');
-            const detailPage = document.getElementById('caseDetailPage');
-            const modal = document.getElementById('prizeModal');
-            const openBtn = document.getElementById('openBtn');
-            
-            // Скрываем detailPage
-            if (detailPage) {
-            detailPage.style.display = 'none';
-                detailPage.style.visibility = 'hidden';
-                detailPage.style.opacity = '0';
-                detailPage.style.pointerEvents = 'none';
-            detailPage.classList.remove('active');
-                detailPage.style.zIndex = '-1';
-            }
-            
-            // Обязательно скрываем кнопку "Открыть" при возврате назад
-            if (openBtn) {
-                openBtn.classList.remove('show');
-                openBtn.style.display = 'none';
-                openBtn.style.visibility = 'hidden';
-                openBtn.style.opacity = '0';
-                openBtn.style.pointerEvents = 'none';
-                openBtn.disabled = true;
-                openBtn.innerHTML = 'Открыть <span>🚀</span>';
-            }
-            
-            // Показываем mainPage и полностью восстанавливаем
-            if (mainPage) {
-                // Сначала удаляем класс hidden, который может блокировать отображение
-            mainPage.classList.remove('hidden');
-            
-                // Восстанавливаем все стили с !important через setProperty для приоритета
-                mainPage.style.setProperty('display', 'block', 'important');
-                mainPage.style.setProperty('visibility', 'visible', 'important');
-                mainPage.style.setProperty('opacity', '1', 'important');
-                mainPage.style.setProperty('pointer-events', 'auto', 'important');
-                mainPage.style.position = 'relative';
-                mainPage.style.width = '100%';
-                mainPage.style.minHeight = '100vh';
-                
-                // Принудительно показываем все содержимое mainPage
-                const casesCarousel = document.getElementById('casesCarousel');
-                if (casesCarousel) {
-                    casesCarousel.style.setProperty('display', 'flex', 'important');
-                    casesCarousel.style.setProperty('visibility', 'visible', 'important');
-                    casesCarousel.style.setProperty('opacity', '1', 'important');
-                    casesCarousel.style.pointerEvents = 'auto';
-                }
-                
-                // Показываем все кейсы
-                const caseCards = document.querySelectorAll('.case-card');
-                caseCards.forEach(card => {
-                    card.style.display = 'flex';
-                    card.style.visibility = 'visible';
-                    card.style.opacity = '1';
-                    card.style.pointerEvents = 'auto';
-                });
-                
-                // Показываем табы
-                const tabs = document.querySelectorAll('.tab');
-                tabs.forEach(tab => {
-                    tab.style.display = 'block';
-                    tab.style.visibility = 'visible';
-                    tab.style.opacity = '1';
-                });
-                
-                // Показываем навигацию внизу
-                const navBar = document.querySelector('.nav-bar');
-                if (navBar) {
-                    navBar.style.display = 'flex';
-                    navBar.style.visibility = 'visible';
-                    navBar.style.opacity = '1';
-                }
-                
-                // Переинициализируем кейсы после возврата
-                setTimeout(function() {
-                    if (typeof initCaseCards === 'function') {
-                        initCaseCards();
-                    }
-                    if (typeof initOpenButton === 'function') {
-                        initOpenButton();
-                    }
-                    // Обновляем отображение баланса
-                    if (typeof updateBalanceDisplay === 'function') {
-                        updateBalanceDisplay();
-                    }
-                }, 100);
-            }
-            
-            // Показываем header
-            const header = document.querySelector('.header');
-            if (header) {
-                header.style.display = 'flex';
-            }
-            
-            // Скрываем modal
-            if (modal) {
-            modal.style.display = 'none';
-            modal.classList.remove('active');
-            }
-            
-            document.querySelectorAll('.prize-item').forEach(item => {
-                item.classList.remove('win', 'spinning-prizes');
-            });
-            
-            isOpening = false;
-            currentCase = null;
-            
-            if (tg) {
-                tg.HapticFeedback.impactOccurred('light');
-            }
-        }
-        
-        window.goBack = goBack;
-
-
-        async function showPrizeModal(prize) {
-            // Добавляем подарок в инвентарь пользователя
-            addToInventory(prize);
-            
-            // Отправляем выигрыш на сервер (или добавляем локально при ошибке)
-            const sent = await sendPrizeToServer(prize);
-            
-            // Если успешно отправили на сервер, обновляем список
-            if (sent) {
-                setTimeout(() => {
-                    fetchGlobalPrizes();
-                }, 500);
-            }
-            
-            const modalPrizeIcon = document.getElementById('modalPrizeIcon');
-            
-            // Проверяем, является ли иконка изображением
-            const iconStr = String(prize.icon || '');
-            if (iconStr.toLowerCase().includes('.png') || iconStr.toLowerCase().includes('.jpg') || iconStr.toLowerCase().includes('.jpeg')) {
-                const img = document.createElement('img');
-                img.src = prize.icon;
-                img.alt = prize.name;
-                img.style.width = '120px';
-                img.style.height = '120px';
-                img.style.objectFit = 'contain';
-                img.onerror = function() {
-                    console.error('Failed to load modal prize image:', this.src);
-                    modalPrizeIcon.textContent = prize.name || '?';
-                };
-                modalPrizeIcon.innerHTML = '';
-                modalPrizeIcon.appendChild(img);
-            } else {
-                modalPrizeIcon.textContent = prize.icon || '?';
-            }
-            
-            document.getElementById('modalPrizeName').textContent = prize.name;
-            document.getElementById('modalPrizeValue').innerHTML = formatPrice(prize.value);
-            document.getElementById('prizeModal').classList.add('active');
-            
-            // Полностью скрываем кнопку "Открыть" со страницы деталей когда показывается модальное окно
-            const openBtn = document.getElementById('openBtn');
-            if (openBtn) {
-                openBtn.classList.remove('show');
-                openBtn.style.display = 'none';
-                openBtn.style.visibility = 'hidden';
-                openBtn.style.opacity = '0';
-                openBtn.style.pointerEvents = 'none';
-                openBtn.style.cssText += 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important;';
-            }
-        }
-
-        function closePrizeModal() {
-            document.getElementById('prizeModal').classList.remove('active');
-            document.querySelectorAll('.prize-item').forEach(item => {
-                item.classList.remove('win');
-            });
-            
-            // Показываем кнопку "Открыть" обратно после закрытия модального окна
-            const openBtn = document.getElementById('openBtn');
-            const detailPage = document.getElementById('caseDetailPage');
-            const detailIcon = document.getElementById('detailIcon');
-            
-            if (openBtn && detailPage && detailPage.classList.contains('active')) {
-                openBtn.disabled = false;
-                openBtn.classList.add('show');
-                openBtn.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important;';
-                openBtn.innerHTML = 'Открыть <span>🚀</span>';
-            }
-            
-            // Восстанавливаем иконку кейса после закрытия модального окна
-            if (detailIcon && currentCase) {
-                if (currentCase.icon.includes('.jpg') || currentCase.icon.includes('.png') || currentCase.icon.includes('.jpeg')) {
-                    const imgPath = currentCase.icon;
-                    detailIcon.innerHTML = '';
-                    const img = document.createElement('img');
-                    img.src = imgPath;
-                    img.alt = 'Case';
-                    img.style.width = '100%';
-                    img.style.maxWidth = '300px';
-                    img.style.height = 'auto';
-                    img.style.objectFit = 'contain';
-                    img.style.display = 'block';
-                    img.onload = function() {
-                        console.log('Image loaded successfully:', this.src);
-                    };
-                    img.onerror = function() {
-                        console.error('Failed to load detail image:', this.src);
-                        // Попробуем декодировать путь
-                        try {
-                            const decodedPath = decodeURIComponent(imgPath);
-                            if (decodedPath !== imgPath) {
-                                this.src = decodedPath;
-                            } else {
-                                detailIcon.textContent = '🔐';
-                            }
-                        } catch(e) {
-                            detailIcon.textContent = '🔐';
-                        }
-                    };
-                    detailIcon.appendChild(img);
-                } else {
-                    detailIcon.textContent = currentCase.icon || '🔐';
-                }
-                detailIcon.style.display = 'flex';
-            }
-            
-            if (tg) {
-                tg.HapticFeedback.impactOccurred('light');
-            }
-        }
-
-        function openNextCase() {
-            closePrizeModal();
-            if (tg) {
-                tg.HapticFeedback.impactOccurred('medium');
-            }
-        }
-        
-        window.openNextCase = openNextCase;
 
         document.querySelector('.subscribe-btn').addEventListener('click', () => {
             if (tg) {
