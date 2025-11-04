@@ -3573,9 +3573,24 @@
                 return false;
             }
             
+            const oldBalance = _balance;
             _balance = newBalance;
             updateBalanceDisplay();
-            console.log(`✅ Баланс изменён на ${validated} из ${source}. Новый баланс: ${_balance}`);
+            
+            // Сохраняем локально сразу
+            try {
+                localStorage.setItem('userBalance', _balance.toString());
+                console.log('✅ Баланс сохранен локально:', _balance);
+            } catch (e) {
+                console.error('❌ Ошибка сохранения баланса локально:', e);
+            }
+            
+            // Сохраняем на сервер асинхронно (не блокируем выполнение)
+            saveUserData().catch(error => {
+                console.error('❌ Ошибка сохранения баланса на сервер:', error);
+            });
+            
+            console.log(`✅ Баланс изменён на ${validated} из ${source}. Старый: ${oldBalance}, Новый: ${_balance}`);
             return true;
         }
         
@@ -3751,6 +3766,10 @@
                 return;
             }
             
+            // Сначала загружаем локальный баланс (на случай если он больше серверного)
+            const localBalance = localStorage.getItem('userBalance');
+            const localBalanceValue = localBalance ? parseFloat(localBalance) : null;
+            
             try {
                 const response = await makeProtectedRequest(`${API_BASE_URL}/users/${userId}`);
                 
@@ -3759,7 +3778,23 @@
                     if (data) {
                         // Загружаем баланс с сервера (защищённо)
                         if (data.balance !== undefined) {
-                            setBalanceFromServer(data.balance);
+                            const serverBalance = parseFloat(data.balance);
+                            
+                            // Используем больший баланс (локальный или серверный)
+                            // Это защищает от потери баланса при одновременных изменениях
+                            if (localBalanceValue !== null && localBalanceValue > serverBalance) {
+                                console.log(`⚠️ Локальный баланс (${localBalanceValue}) больше серверного (${serverBalance}), используем локальный`);
+                                setBalanceFromServer(localBalanceValue);
+                                // Сохраняем больший баланс обратно на сервер
+                                saveUserData().catch(err => console.error('Ошибка сохранения баланса:', err));
+                            } else {
+                                setBalanceFromServer(serverBalance);
+                            }
+                        } else if (localBalanceValue !== null) {
+                            // Если на сервере нет баланса, используем локальный
+                            console.log('⚠️ Баланс на сервере не найден, используем локальный:', localBalanceValue);
+                            setBalanceFromServer(localBalanceValue);
+                            saveUserData().catch(err => console.error('Ошибка сохранения баланса:', err));
                         }
                         
                         // Загружаем инвентарь
@@ -3772,10 +3807,18 @@
                     }
                 } else {
                     console.log('Failed to load user data, using local storage');
+                    // Используем локальный баланс если сервер недоступен
+                    if (localBalanceValue !== null) {
+                        setBalanceFromServer(localBalanceValue);
+                    }
                     loadInventory();
                 }
             } catch (error) {
                 console.error('Error loading user data:', error);
+                // Используем локальный баланс при ошибке
+                if (localBalanceValue !== null) {
+                    setBalanceFromServer(localBalanceValue);
+                }
                 loadInventory();
             }
         }
@@ -3869,7 +3912,11 @@
                 }
                 
                 localStorage.setItem('userInventory', JSON.stringify(userInventory));
-                localStorage.setItem('userBalance', _balance.toString()); // Используем защищённый баланс
+                
+                // Всегда сохраняем текущий баланс в localStorage
+                const balanceToSave = _balance.toString();
+                localStorage.setItem('userBalance', balanceToSave);
+                console.log('✅ Баланс сохранен в localStorage:', balanceToSave);
             } catch (e) {
                 console.error('Failed to save inventory:', e);
             }
@@ -4374,17 +4421,17 @@
                     { icon: 'Case3/black.png', value: 35.84 },
                     { icon: 'Case3/Cris.png', value: 101.88 },
                     { icon: 'Case3/Kukla.png', value: 16.19 },
-                    { icon: 'Case3/rejrwk.png', value: 8.00 },
-                    { icon: 'Case3/remove-photos-background-removed.png', value: 6.85 },
-                    { icon: 'Case3/snapedit_1762254932069.png', value: 1.38 },
-                    { icon: 'Case3/snapedit_1762254948441.png', value: 2.79 },
-                    { icon: 'Case3/snapedit_1762254959768.png', value: 2.90 },
-                    { icon: 'Case3/snapedit_1762254971800.png', value: 4.59 },
-                    { icon: 'Case3/snapedit_1762254982271.png', value: 2.90 },
-                    { icon: 'Case3/snapedit_1762254992823.png', value: 1.76 },
-                    { icon: 'Case3/snapedit_1762255004128.png', value: 40.44 },
-                    { icon: 'Case3/snapedit_1762255014774.png', value: 23.50 },
-                    { icon: 'ton_symbol.png', value: 1.00 },
+                    { icon: 'Case3/rejrwk.png', value: 23.50 },
+                    { icon: 'Case3/remove-photos-background-removed.png', value: 7.37 },
+                    { icon: 'Case3/snapedit_1762254932069.png', value: 1.25 },
+                    { icon: 'Case3/snapedit_1762254948441.png', value: 1.30 },
+                    { icon: 'Case3/snapedit_1762254959768.png', value: 1.80 },
+                    { icon: 'Case3/snapedit_1762254971800.png', value: 2.00 },
+                    { icon: 'Case3/snapedit_1762254982271.png', value: 2.49 },
+                    { icon: 'Case3/snapedit_1762254992823.png', value: 2.90 },
+                    { icon: 'Case3/snapedit_1762255004128.png', value: 2.93 },
+                    { icon: 'Case3/snapedit_1762255014774.png', value: 6.85 },
+                    { icon: 'ton_symbol.png', value: 0.70 },
                     { icon: 'ton_symbol.png', value: 0.50 }
                 ]
             };
