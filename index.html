@@ -4573,9 +4573,10 @@
             const prizes = caseData.prizes;
             const scrollItems = [...prizes, ...prizes, ...prizes, ...prizes, ...prizes];
             
-            // Выбираем рандомный подарок
-            const randomPrize = prizes[Math.floor(Math.random() * prizes.length)];
-            console.log('✅ Выбран подарок:', randomPrize);
+            // СНАЧАЛА выбираем рандомный подарок - это будет выигрыш
+            const selectedPrizeIndex = Math.floor(Math.random() * prizes.length);
+            const selectedPrize = prizes[selectedPrizeIndex];
+            console.log('✅ Выбран подарок для выигрыша:', selectedPrize, 'индекс:', selectedPrizeIndex);
             
             // Очищаем контейнер
             roulettePrize.innerHTML = '';
@@ -4603,12 +4604,25 @@
             });
             
             // Находим позицию выбранного подарка в последнем круге
-            const randomIndexInLastCircle = Math.floor(Math.random() * prizes.length);
-            const targetIndex = (scrollItems.length - prizes.length) + randomIndexInLastCircle;
-            const targetPrize = scrollItems[targetIndex];
+            // Убеждаемся что выбранный подарок находится в последнем круге
+            const lastCircleStart = scrollItems.length - prizes.length;
+            let targetIndex = lastCircleStart + selectedPrizeIndex;
             
-            // Используем выбранный подарок
-            const finalPrize = targetPrize || randomPrize;
+            // Проверяем что на этой позиции именно выбранный подарок
+            let targetPrize = scrollItems[targetIndex];
+            if (!targetPrize || targetPrize.icon !== selectedPrize.icon) {
+                console.warn('⚠️ Несоответствие подарка, ищу правильную позицию...');
+                // Ищем правильную позицию в последнем круге
+                for (let i = lastCircleStart; i < scrollItems.length; i++) {
+                    if (scrollItems[i].icon === selectedPrize.icon) {
+                        targetIndex = i;
+                        targetPrize = scrollItems[i];
+                        break;
+                    }
+                }
+            }
+            
+            console.log('✅ Целевая позиция:', targetIndex, 'подарок:', selectedPrize);
             
             // Анимация прокрутки
             const duration = 3000;
@@ -4635,10 +4649,10 @@
                 if (progress < 1) {
                     requestAnimationFrame(animate);
                 } else {
-                    // Анимация завершена, показываем выигрыш
-                    console.log('✅ Анимация завершена, показываю подарок');
+                    // Анимация завершена, показываем выигрыш - используем выбранный подарок
+                    console.log('✅ Анимация завершена, показываю подарок:', selectedPrize);
                     setTimeout(() => {
-                        showPrize(finalPrize);
+                        showPrize(selectedPrize);
                     }, 500);
                 }
             }
@@ -4652,6 +4666,8 @@
         
         // Функция показа выигрыша
         function showPrize(prize) {
+            console.log('🔵 showPrize вызвана, подарок:', prize);
+            
             const rouletteContainer = document.getElementById('rouletteContainer');
             const prizeModal = document.getElementById('prizeModal');
             const prizeModalIcon = document.getElementById('prizeModalIcon');
@@ -4677,6 +4693,37 @@
                 
                 // Добавляем выигрыш на баланс
                 changeBalance(prize.value);
+                
+                // Добавляем подарок в инвентарь
+                if (typeof userInventory !== 'undefined' && Array.isArray(userInventory)) {
+                    const inventoryItem = {
+                        icon: prize.icon,
+                        name: prize.name || `Предмет ${prize.value}`,
+                        value: prize.value,
+                        timestamp: Date.now(),
+                        id: Date.now() + Math.random()
+                    };
+                    
+                    userInventory.push(inventoryItem);
+                    console.log('✅ Подарок добавлен в инвентарь:', inventoryItem);
+                    
+                    // Сохраняем инвентарь
+                    if (typeof saveInventory === 'function') {
+                        saveInventory();
+                    }
+                    
+                    // Сохраняем на сервер
+                    if (typeof saveUserData === 'function') {
+                        saveUserData();
+                    }
+                    
+                    // Обновляем отображение инвентаря
+                    if (typeof updateInventory === 'function') {
+                        updateInventory();
+                    }
+                } else {
+                    console.error('❌ userInventory не найден или не является массивом');
+                }
             }
         }
         
