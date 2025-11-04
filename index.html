@@ -114,10 +114,19 @@
                 
                 for (var i = 0; i < pages.length; i++) {
                     if (pages[i]) {
-                        pages[i].style.display = 'none';
-                        pages[i].style.visibility = 'hidden';
-                        pages[i].style.opacity = '0';
-                        pages[i].style.pointerEvents = 'none';
+                        // Не скрываем mainPage полностью, если переключаемся на другую вкладку
+                        // Просто скрываем визуально, но сохраняем структуру
+                        if (pages[i].id === 'mainPage' && page !== 'cases') {
+                            pages[i].style.display = 'none';
+                            pages[i].style.visibility = 'hidden';
+                            pages[i].style.opacity = '0';
+                            pages[i].style.pointerEvents = 'none';
+                        } else if (pages[i].id !== 'mainPage') {
+                            pages[i].style.display = 'none';
+                            pages[i].style.visibility = 'hidden';
+                            pages[i].style.opacity = '0';
+                            pages[i].style.pointerEvents = 'none';
+                        }
                         pages[i].classList.remove('active');
                         // Дополнительно сбрасываем позиционирование для caseDetailPage
                         if (pages[i].id === 'caseDetailPage') {
@@ -146,6 +155,35 @@
                     mainPage.style.visibility = 'visible';
                     mainPage.style.opacity = '1';
                     mainPage.style.pointerEvents = 'auto';
+                    mainPage.classList.remove('hidden');
+                    
+                    // Показываем casesCarousel и все карточки кейсов с принудительными стилями
+                    const casesCarousel = document.getElementById('casesCarousel');
+                    if (casesCarousel) {
+                        casesCarousel.style.setProperty('display', 'flex', 'important');
+                        casesCarousel.style.setProperty('visibility', 'visible', 'important');
+                        casesCarousel.style.setProperty('opacity', '1', 'important');
+                        casesCarousel.style.pointerEvents = 'auto';
+                        casesCarousel.style.position = 'relative';
+                    }
+                    
+                    // Показываем все карточки кейсов с принудительными стилями
+                    const caseCards = document.querySelectorAll('.case-card');
+                    caseCards.forEach(card => {
+                        card.style.setProperty('display', 'flex', 'important');
+                        card.style.setProperty('visibility', 'visible', 'important');
+                        card.style.setProperty('opacity', '1', 'important');
+                        card.style.pointerEvents = 'auto';
+                    });
+                    
+                    // Показываем табы навигации
+                    const tabs = document.querySelectorAll('.tab');
+                    tabs.forEach(tab => {
+                        tab.style.setProperty('display', 'block', 'important');
+                        tab.style.setProperty('visibility', 'visible', 'important');
+                        tab.style.setProperty('opacity', '1', 'important');
+                    });
+                    
                     // Инициализируем кейсы
                     setTimeout(function() {
                         if (typeof initCaseCards === 'function') initCaseCards();
@@ -5240,6 +5278,7 @@
                 
                 // Единая функция обработки клика
                 const handleOpenClick = function(e) {
+                    console.log('🔵🔵🔵 КЛИК ПО КНОПКЕ ОТКРЫТЬ!');
                     if (e) {
                         e.preventDefault();
                         e.stopPropagation();
@@ -5248,31 +5287,28 @@
                     console.log('🔵 Клик по кнопке "Открыть"');
                     console.log('currentCase:', currentCase);
                     console.log('isOpening:', isOpening);
+                    console.log('typeof window.openCase:', typeof window.openCase);
+                    console.log('typeof window.openCaseFull:', typeof window.openCaseFull);
                     
-                    if (!currentCase) {
-                        console.error('❌ currentCase не определена!');
-                        if (tg) {
-                            tg.showAlert('Ошибка: Кейс не выбран');
+                    // Пробуем вызвать функцию напрямую
+                    try {
+                        if (typeof window.openCase === 'function') {
+                            console.log('✅ Вызываем window.openCase()');
+                            window.openCase();
+                        } else if (typeof window.openCaseFull === 'function') {
+                            console.log('✅ Вызываем window.openCaseFull()');
+                            window.openCaseFull();
                         } else {
-                            alert('Ошибка: Кейс не выбран');
+                            console.error('❌ Функция openCase не найдена!');
+                            alert('Ошибка: Функция openCase не найдена. Перезагрузите страницу.');
+                            return false;
                         }
+                    } catch (err) {
+                        console.error('❌ Ошибка при вызове openCase:', err);
+                        alert('Ошибка: ' + err.message);
                         return false;
                     }
                     
-                    if (isOpening) {
-                        console.warn('⚠️ Кейс уже открывается');
-                        return false;
-                    }
-                    
-                    // Вызываем функцию открытия
-                    if (typeof window.openCase === 'function') {
-                        window.openCase();
-                    } else if (typeof window.openCaseFull === 'function') {
-                        window.openCaseFull();
-                    } else {
-                        console.error('❌ Функция openCase не найдена!');
-                        alert('Ошибка: Функция openCase не найдена. Перезагрузите страницу.');
-                    }
                     return false;
                 };
                 
@@ -5281,6 +5317,16 @@
                 
                 // Также добавляем через addEventListener для надежности
                 newBtn.addEventListener('click', handleOpenClick, { capture: true, once: false });
+                
+                // Также добавляем через mousedown для гарантии
+                newBtn.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    handleOpenClick(e);
+                });
+                
+                // Проверяем, что кнопка доступна
+                console.log('✅ Кнопка настроена, disabled:', newBtn.disabled);
+                console.log('✅ Кнопка pointer-events:', newBtn.style.pointerEvents);
                 
                 console.log('✅ Обработчики кнопки "Открыть" установлены');
             } else {
