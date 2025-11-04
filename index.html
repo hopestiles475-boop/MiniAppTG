@@ -4804,13 +4804,17 @@
         
         // Полная версия функции openCase - МАКСИМАЛЬНО ПРОСТАЯ
         window.openCaseFull = function() {
+            // ТЕСТ: Проверяем, что функция вызывается
+            alert('Функция openCaseFull вызвана!');
+            
             // Базовые проверки
             if (!currentCase) {
-                alert('Ошибка: Кейс не выбран');
+                alert('Ошибка: Кейс не выбран. currentCase = ' + currentCase);
                 return;
             }
             
             if (isOpening) {
+                alert('Кейс уже открывается');
                 return;
             }
             
@@ -4818,29 +4822,32 @@
             if (!currentPrizes || currentPrizes.length === 0) {
                 currentPrizes = currentCase.prizes || [];
                 if (!currentPrizes || currentPrizes.length === 0) {
-                    alert('Ошибка: В кейсе нет призов');
+                    alert('Ошибка: В кейсе нет призов. currentPrizes = ' + JSON.stringify(currentPrizes));
                     return;
                 }
             }
             
+            alert('Проверки пройдены, продолжаем...');
+            
             const price = currentCase.price || 0;
             
+            alert('Цена кейса: ' + price + ', Баланс: ' + _balance);
+            
             if (_balance < price) {
-                if (tg) {
-                    tg.showAlert('Недостаточно баланса! Нужно: ' + price + ', есть: ' + _balance.toFixed(2));
-                } else {
-                    alert('Недостаточно баланса! Нужно: ' + price + ', есть: ' + _balance.toFixed(2));
-                }
+                alert('Недостаточно баланса! Нужно: ' + price + ', есть: ' + _balance.toFixed(2));
                 return;
             }
 
+            alert('Баланс достаточен, списываем...');
             isOpening = true;
             if (!changeBalance(-price, 'openCase')) {
+                alert('Ошибка списания баланса');
                 isOpening = false;
                 return;
             }
             saveInventory();
             saveUserData();
+            alert('Баланс списан, создаем рулетку...');
             
             const detailIcon = document.getElementById('detailIcon');
             const rouletteContainer = document.getElementById('rouletteContainer');
@@ -4875,14 +4882,16 @@
             // Создаем рулетку
             try {
                 if (typeof createRoulette === 'function') {
+                    alert('Вызываем createRoulette...');
                     createRoulette();
+                    alert('createRoulette выполнена');
                 } else {
-                    alert('Ошибка: Функция createRoulette не найдена');
+                    alert('Ошибка: Функция createRoulette не найдена. typeof createRoulette = ' + typeof createRoulette);
                     isOpening = false;
                     return;
                 }
             } catch (err) {
-                alert('Ошибка при создании рулетки: ' + err.message);
+                alert('Ошибка при создании рулетки: ' + err.message + '\n' + err.stack);
                 isOpening = false;
                 return;
             }
@@ -5577,17 +5586,21 @@
                 newBtn.innerHTML = 'ОТКРЫТЬ <span>🚀</span>';
                 newBtn.id = 'openBtn'; // Убеждаемся что ID есть
                 
-                // МАКСИМАЛЬНО ПРОСТОЙ ОБРАБОТЧИК - ПРЯМОЙ ВЫЗОВ
+                // МАКСИМАЛЬНО ПРОСТОЙ ОБРАБОТЧИК - ПРЯМОЙ ВЫЗОВ С ТЕСТОМ
                 newBtn.onclick = function(e) {
+                    alert('КНОПКА НАЖАТА!');
                     e.preventDefault();
                     e.stopPropagation();
                     e.stopImmediatePropagation();
                     
+                    alert('Проверяем функцию... typeof window.openCaseFull = ' + typeof window.openCaseFull);
+                    
                     // Прямой вызов функции
                     if (typeof window.openCaseFull === 'function') {
+                        alert('Вызываем window.openCaseFull()...');
                         window.openCaseFull();
                     } else {
-                        alert('Функция не найдена');
+                        alert('ОШИБКА: Функция window.openCaseFull не найдена!');
                     }
                     
                     return false;
@@ -5595,15 +5608,19 @@
                 
                 // Также через addEventListener для надежности
                 newBtn.addEventListener('click', function(e) {
+                    alert('Клик через addEventListener!');
                     e.preventDefault();
                     e.stopPropagation();
                     if (typeof window.openCaseFull === 'function') {
                         window.openCaseFull();
+                    } else {
+                        alert('Функция не найдена в addEventListener');
                     }
                 }, true);
                 
                 // И через mousedown для гарантии
                 newBtn.addEventListener('mousedown', function(e) {
+                    alert('mousedown!');
                     e.preventDefault();
                     if (typeof window.openCaseFull === 'function') {
                         window.openCaseFull();
@@ -5612,11 +5629,14 @@
                 
                 // И через touchstart для мобильных
                 newBtn.addEventListener('touchstart', function(e) {
+                    alert('touchstart!');
                     e.preventDefault();
                     if (typeof window.openCaseFull === 'function') {
                         window.openCaseFull();
                     }
                 });
+                
+                alert('Обработчики кнопки установлены!');
                 
                 // Делаем глобальную функцию для тестирования
                 window.testOpenCase = function() {
