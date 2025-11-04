@@ -65,6 +65,34 @@
             }
         };
         
+        // Функция handleCaseClick - должна быть доступна глобально СРАЗУ
+        window.handleCaseClick = function(caseNum) {
+            console.log('🔵 handleCaseClick вызвана, caseNum:', caseNum);
+            // Пробуем вызвать полную версию сразу, если она уже определена
+            // Если нет - ждем и пробуем снова
+            const tryCall = () => {
+                // Проверяем, есть ли полная версия (которая вызывает showCaseDetail)
+                if (typeof window.showCaseDetail === 'function') {
+                    console.log('✅ Вызываем showCaseDetail через handleCaseClick');
+                    try {
+                        const num = parseInt(caseNum);
+                        if (isNaN(num)) {
+                            alert('Ошибка: Неверный номер кейса');
+                            return;
+                        }
+                        window.showCaseDetail(num);
+                    } catch(err) {
+                        console.error('Ошибка в handleCaseClick:', err);
+                        alert('Ошибка: ' + err.message);
+                    }
+                } else {
+                    console.warn('⚠️ showCaseDetail еще не определена, ждем...');
+                    setTimeout(tryCall, 100);
+                }
+            };
+            tryCall();
+        };
+        
         // ПЕРЕХВАТЫВАЕМ ОШИБКИ ОТ TELEGRAM SDK
         window.addEventListener('error', function(e) {
             if (e.message && (e.message.includes("reading 'top'") || e.message.includes('calculatePosition'))) {
