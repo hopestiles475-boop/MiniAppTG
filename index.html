@@ -691,6 +691,175 @@
             background: rgba(102, 126, 234, 0.5);
             transform: translateY(-2px);
         }
+
+        .open-case-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 18px 40px;
+            border-radius: 20px;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            margin: 30px auto;
+            display: block;
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+            position: relative;
+            z-index: 1;
+        }
+
+        .open-case-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.6);
+        }
+
+        .open-case-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .roulette-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .roulette-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            height: 300px;
+            overflow: hidden;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 24px;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .roulette-prize {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.1s linear;
+            will-change: transform;
+        }
+
+        .roulette-item {
+            width: 100%;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .roulette-item img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+        }
+
+        .roulette-arrow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 25px solid #667eea;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .prize-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .prize-modal-content {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            border: 2px solid rgba(102, 126, 234, 0.5);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .prize-modal-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 30px;
+        }
+
+        .prize-modal-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            min-height: 120px;
+        }
+
+        .prize-modal-icon img {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+        }
+
+        .prize-modal-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .prize-modal-value .currency-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .prize-modal-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 16px 40px;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .prize-modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
+        }
         
 
 
@@ -2925,6 +3094,24 @@
         <div class="whats-inside-title">Что может выпасть?</div>
         <div class="prizes-grid" id="prizesGrid">
         </div>
+        
+        <button class="open-case-btn" id="openCaseBtn" onclick="openCase()">Открыть кейс</button>
+        
+        <div id="rouletteContainer" class="roulette-container" style="display: none;">
+            <div class="roulette-wrapper">
+                <div class="roulette-prize" id="roulettePrize"></div>
+                <div class="roulette-arrow"></div>
+            </div>
+        </div>
+        
+        <div id="prizeModal" class="prize-modal" style="display: none;">
+            <div class="prize-modal-content">
+                <div class="prize-modal-title">Вы выиграли!</div>
+                <div class="prize-modal-icon" id="prizeModalIcon"></div>
+                <div class="prize-modal-value" id="prizeModalValue"></div>
+                <button class="prize-modal-btn" onclick="closePrizeModal()">Забрать</button>
+            </div>
+        </div>
     </div>
 
     <div id="crashPage" class="crash-page" style="display: none;">
@@ -3970,20 +4157,20 @@
                 icon: 'Case1/Case/OA2YI79hneequQi62NNm5RTa0jw-sxBTwlrfcD4cx18nkOBqIQ-edited-free%20(carve.photos).png',
                 price: 0.1,
                 prizes: [
-                    { icon: 'Case1/7aggEGM43iT4zaeQ90WDXbKgaxRuIctX8OzjKHUoNGYKDTiEdT-no-bg-preview%20(carve.photos).png', value: 75.66 },
-                    { icon: 'Case1/AW7Qv-lm22xsWd8ZnVjP7pVDjzBgqo-x9-7UoZO2ekVCWsWsAl-edited-free%20(carve.photos).png', value: 69.30 },
-                    { icon: 'Case1/cIBPnG2m_9uqU5vfNaXES6TIPHfksPhjIYc8nPIjbVuiGb317Z-no-bg-preview%20(carve.photos).png', value: 25.27 },
-                    { icon: 'Case1/g7a9ySOF7wq3mu2Shuxr67enQDHEcB0zcgllGa59ked5fEcXN-yfwBe-9z2LBU_7zbVRyb2z2-DCQaLdGYWqfUqS-Photoroom.png', value: 23.50 },
-                    { icon: 'Case1/Jftdn-uPpbWzly4TEgsyY3LBDQUkI1Q0hcmopC-HAru9nM5uJW-no-bg-preview%20(carve.photos).png', value: 17.00 },
-                    { icon: 'Case1/kIMnTGaiutK0Ou4X_-RRh2ckiNpdKQBCMNtnb9wRdYmxf_kJ3s-no-bg-preview%20(carve.photos).png', value: 11.40 },
-                    { icon: 'Case1/KQdlr7WVUg4qZZ3J0muYmXNRCePTR-p8n74r-_r7zQMhtyuhHTUb9JrOU6rTAjB9tnNBBplZGBXyh-YxLPQnqYZO-Photoroom.png', value: 8.64 },
-                    { icon: 'Case1/L3L25Ezu2782EQaWm5os_oi1ELu1qudKKDGbeP4FMGOxxjKCBi-no-bg-preview%20(carve.photos).png', value: 7.90 },
-                    { icon: 'Case1/llJ3ZTgJvieSHhmehyG9LuNG5M2dY7tr5bPpctgOh6H_Mz4bal-edited-free%20(carve.photos).png', value: 6.50 },
-                    { icon: 'Case1/NE-peoxoim_KxZ6SDxHjoRAwQSnt7tj6rcRUOgvyfYHoXKlU9f-no-bg-preview%20(carve.photos).png', value: 5.20 },
-                    { icon: 'Case1/QWvlnRQNdZo2nqVt5hI6ff7l3ZpxK-IGc3X10-CUGLv10ycEwc-no-bg-preview%20(carve.photos).png', value: 4.80 },
-                    { icon: 'Case1/rO9Afzk_7QoBW7-D-94uoD2JsyTsaZnp1prTIWnzp_AsMeQrp--no-bg-preview%20(carve.photos).png', value: 3.60 },
-                    { icon: 'Case1/SZPAhV0giLdoCjqwE0tP2Fa3_NfB65B54BuJKToWItApL6Qtt3-no-bg-preview%20(carve.photos).png', value: 2.40 },
-                    { icon: 'Case1/VqbJmqTX4m3Um9XF5l6aFIETbR-TRBmBrEOiHLnxicnI8Bfqoh-no-bg-preview%20(carve.photos).png', value: 1.20 }
+                    { icon: 'Case1/7aggEGM43iT4zaeQ90WDXbKgaxRuIctX8OzjKHUoNGYKDTiEdT-no-bg-preview%20(carve.photos).png', value: 22.89 },
+                    { icon: 'Case1/AW7Qv-lm22xsWd8ZnVjP7pVDjzBgqo-x9-7UoZO2ekVCWsWsAl-edited-free%20(carve.photos).png', value: 7.37 },
+                    { icon: 'Case1/cIBPnG2m_9uqU5vfNaXES6TIPHfksPhjIYc8nPIjbVuiGb317Z-no-bg-preview%20(carve.photos).png', value: 1.93 },
+                    { icon: 'Case1/g7a9ySOF7wq3mu2Shuxr67enQDHEcB0zcgllGa59ked5fEcXN-yfwBe-9z2LBU_7zbVRyb2z2-DCQaLdGYWqfUqS-Photoroom.png', value: 1.66 },
+                    { icon: 'Case1/Jftdn-uPpbWzly4TEgsyY3LBDQUkI1Q0hcmopC-HAru9nM5uJW-no-bg-preview%20(carve.photos).png', value: 8.00 },
+                    { icon: 'Case1/kIMnTGaiutK0Ou4X_-RRh2ckiNpdKQBCMNtnb9wRdYmxf_kJ3s-no-bg-preview%20(carve.photos).png', value: 6.85 },
+                    { icon: 'Case1/KQdlr7WVUg4qZZ3J0muYmXNRCePTR-p8n74r-_r7zQMhtyuhHTUb9JrOU6rTAjB9tnNBBplZGBXyh-YxLPQnqYZO-Photoroom.png', value: 1.38 },
+                    { icon: 'Case1/L3L25Ezu2782EQaWm5os_oi1ELu1qudKKDGbeP4FMGOxxjKCBi-no-bg-preview%20(carve.photos).png', value: 2.79 },
+                    { icon: 'Case1/llJ3ZTgJvieSHhmehyG9LuNG5M2dY7tr5bPpctgOh6H_Mz4bal-edited-free%20(carve.photos).png', value: 2.90 },
+                    { icon: 'Case1/NE-peoxoim_KxZ6SDxHjoRAwQSnt7tj6rcRUOgvyfYHoXKlU9f-no-bg-preview%20(carve.photos).png', value: 4.59 },
+                    { icon: 'Case1/QWvlnRQNdZo2nqVt5hI6ff7l3ZpxK-IGc3X10-CUGLv10ycEwc-no-bg-preview%20(carve.photos).png', value: 2.90 },
+                    { icon: 'Case1/rO9Afzk_7QoBW7-D-94uoD2JsyTsaZnp1prTIWnzp_AsMeQrp--no-bg-preview%20(carve.photos).png', value: 1.76 },
+                    { icon: 'Case1/SZPAhV0giLdoCjqwE0tP2Fa3_NfB65B54BuJKToWItApL6Qtt3-no-bg-preview%20(carve.photos).png', value: 40.44 },
+                    { icon: 'Case1/VqbJmqTX4m3Um9XF5l6aFIETbR-TRBmBrEOiHLnxicnI8Bfqoh-no-bg-preview%20(carve.photos).png', value: 23.50 }
                 ]
             };
             
@@ -4115,14 +4302,200 @@
         
         window.showCaseDetail = showCaseDetail;
         
+        // Текущий открываемый кейс
+        let currentOpeningCase = null;
+        
+        // Функция открытия кейса с рулеткой
+        function openCase() {
+            const caseDetailPage = document.getElementById('caseDetailPage');
+            if (!caseDetailPage) return;
+            
+            // Получаем ID кейса из URL или из сохраненного состояния
+            const caseId = currentOpeningCase || 1;
+            const caseData = window.casesData[caseId];
+            
+            if (!caseData) {
+                alert('Кейс не найден');
+                return;
+            }
+            
+            // Проверяем баланс
+            const balance = parseFloat(_balance || 0);
+            if (balance < caseData.price) {
+                alert('Недостаточно средств');
+                return;
+            }
+            
+            // Сохраняем текущий кейс
+            currentOpeningCase = caseId;
+            
+            // Скрываем кнопку и список подарков
+            const openBtn = document.getElementById('openCaseBtn');
+            const prizesGrid = document.getElementById('prizesGrid');
+            const whatsInside = document.querySelector('.whats-inside-title');
+            
+            if (openBtn) openBtn.style.display = 'none';
+            if (prizesGrid) prizesGrid.style.display = 'none';
+            if (whatsInside) whatsInside.style.display = 'none';
+            
+            // Показываем рулетку
+            const rouletteContainer = document.getElementById('rouletteContainer');
+            if (rouletteContainer) {
+                rouletteContainer.style.display = 'block';
+                startRoulette(caseData);
+            }
+        }
+        
+        // Функция запуска рулетки
+        function startRoulette(caseData) {
+            const roulettePrize = document.getElementById('roulettePrize');
+            if (!roulettePrize) return;
+            
+            // Список подарков для прокрутки (повторяем несколько раз для эффекта)
+            const prizes = caseData.prizes;
+            const scrollItems = [...prizes, ...prizes, ...prizes, ...prizes];
+            
+            // Выбираем рандомный подарок
+            const randomPrize = prizes[Math.floor(Math.random() * prizes.length)];
+            
+            // Очищаем контейнер
+            roulettePrize.innerHTML = '';
+            
+            // Создаем элементы для прокрутки
+            scrollItems.forEach((prize, index) => {
+                const item = document.createElement('div');
+                item.className = 'roulette-item';
+                item.dataset.prizeIndex = index % prizes.length;
+                
+                const img = document.createElement('img');
+                img.src = prize.icon;
+                img.alt = '';
+                img.style.width = '80px';
+                img.style.height = '80px';
+                img.style.objectFit = 'contain';
+                img.onerror = () => item.textContent = '🎁';
+                
+                item.appendChild(img);
+                roulettePrize.appendChild(item);
+            });
+            
+            // Находим позицию выбранного подарка (последний круг + случайная позиция)
+            const targetIndex = scrollItems.length - prizes.length + Math.floor(Math.random() * prizes.length);
+            
+            // Анимация прокрутки
+            const duration = 3000;
+            const startTime = Date.now();
+            const startPosition = 0;
+            const itemHeight = 100;
+            const totalHeight = scrollItems.length * itemHeight;
+            const targetPosition = targetIndex * itemHeight;
+            
+            // Easing функция для плавного замедления
+            function easeOutCubic(t) {
+                return 1 - Math.pow(1 - t, 3);
+            }
+            
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easedProgress = easeOutCubic(progress);
+                
+                const currentPosition = startPosition + (targetPosition - startPosition) * easedProgress;
+                roulettePrize.style.transform = `translateY(-${currentPosition}px)`;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // Анимация завершена, показываем выигрыш
+                    setTimeout(() => {
+                        showPrize(randomPrize);
+                    }, 500);
+                }
+            }
+            
+            // Запускаем анимацию
+            requestAnimationFrame(animate);
+            
+            // Списываем баланс
+            changeBalance(-caseData.price);
+        }
+        
+        // Функция показа выигрыша
+        function showPrize(prize) {
+            const rouletteContainer = document.getElementById('rouletteContainer');
+            const prizeModal = document.getElementById('prizeModal');
+            const prizeModalIcon = document.getElementById('prizeModalIcon');
+            const prizeModalValue = document.getElementById('prizeModalValue');
+            
+            if (rouletteContainer) {
+                rouletteContainer.style.display = 'none';
+            }
+            
+            if (prizeModal && prizeModalIcon && prizeModalValue) {
+                prizeModalIcon.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = prize.icon;
+                img.alt = '';
+                img.style.width = '120px';
+                img.style.height = '120px';
+                img.style.objectFit = 'contain';
+                img.onerror = () => prizeModalIcon.textContent = '🎁';
+                prizeModalIcon.appendChild(img);
+                
+                prizeModalValue.innerHTML = `${prize.value} <span class="currency-icon"></span>`;
+                prizeModal.style.display = 'flex';
+                
+                // Добавляем выигрыш на баланс
+                changeBalance(prize.value);
+            }
+        }
+        
+        // Функция закрытия модального окна выигрыша
+        function closePrizeModal() {
+            const prizeModal = document.getElementById('prizeModal');
+            const openBtn = document.getElementById('openCaseBtn');
+            const prizesGrid = document.getElementById('prizesGrid');
+            const whatsInside = document.querySelector('.whats-inside-title');
+            
+            if (prizeModal) {
+                prizeModal.style.display = 'none';
+            }
+            
+            if (openBtn) openBtn.style.display = 'block';
+            if (prizesGrid) prizesGrid.style.display = 'grid';
+            if (whatsInside) whatsInside.style.display = 'block';
+            
+            currentOpeningCase = null;
+        }
+        
+        window.openCase = openCase;
+        window.closePrizeModal = closePrizeModal;
+        
+        // Сохраняем ID кейса при показе деталей
+        const originalShowCaseDetail = window.showCaseDetail;
+        window.showCaseDetail = function(caseId) {
+            currentOpeningCase = caseId;
+            originalShowCaseDetail(caseId);
+        };
+        
         // Функция возврата назад
         function goBackFromCase() {
             const caseDetailPage = document.getElementById('caseDetailPage');
             const casesPage = document.getElementById('casesPage');
             const header = document.querySelector('.header');
+            const rouletteContainer = document.getElementById('rouletteContainer');
+            const prizeModal = document.getElementById('prizeModal');
             
             if (caseDetailPage) {
                 caseDetailPage.style.display = 'none';
+            }
+            
+            if (rouletteContainer) {
+                rouletteContainer.style.display = 'none';
+            }
+            
+            if (prizeModal) {
+                prizeModal.style.display = 'none';
             }
             
             if (casesPage) {
@@ -4132,6 +4505,8 @@
             if (header) {
                 header.style.display = 'flex';
             }
+            
+            currentOpeningCase = null;
         }
         
         window.goBackFromCase = goBackFromCase;
