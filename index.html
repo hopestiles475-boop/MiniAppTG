@@ -1729,9 +1729,17 @@
             width: 100%;
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px 0;
+            padding: 20px;
+            padding-top: 40px;
             visibility: visible !important;
             opacity: 1 !important;
+            min-height: 200px;
+        }
+        
+        .cases-container:empty::before {
+            content: 'Загрузка кейсов...';
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 16px;
         }
 
         .cases-header {
@@ -4234,6 +4242,7 @@
                 const caseCard = document.createElement('div');
                 caseCard.className = 'case-card';
                 caseCard.dataset.case = caseData.id;
+                caseCard.style.cursor = 'pointer';
                 
                 caseCard.innerHTML = `
                     <div class="case-icon">
@@ -4246,15 +4255,39 @@
                     </div>
                 `;
                 
-                // Обработчик клика
-                caseCard.addEventListener('click', function() {
-                    showCaseDetail(caseData.id);
+                // Обработчик клика - множественная привязка
+                caseCard.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔵 Клик по кейсу #' + caseData.id);
+                    if (typeof window.showCaseDetail === 'function') {
+                        window.showCaseDetail(caseData.id);
+                    } else {
+                        console.error('❌ showCaseDetail не найдена');
+                        alert('Ошибка: функция показа деталей не найдена');
+                    }
                 });
+                
+                // Также добавляем onclick для надежности
+                caseCard.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof window.showCaseDetail === 'function') {
+                        window.showCaseDetail(caseData.id);
+                    }
+                };
                 
                 casesContainer.appendChild(caseCard);
             });
             
-            console.log('✅ Кейсы загружены:', cases.length);
+            console.log('✅ Кейсы загружены:', cases.length, 'контейнер:', casesContainer);
+            
+            // Проверяем видимость контейнера
+            if (casesContainer.children.length === 0) {
+                console.error('❌ Кейсы не добавлены в контейнер!');
+            } else {
+                console.log('✅ Кейсов в контейнере:', casesContainer.children.length);
+            }
         }
         
         window.loadCases = loadCases;
@@ -4350,21 +4383,25 @@
         
         // Функция открытия кейса с рулеткой
         function openCase() {
-            console.log('🔵 openCase вызвана');
+            console.log('🔵 openCase вызвана, currentOpeningCase:', currentOpeningCase);
             
             const caseDetailPage = document.getElementById('caseDetailPage');
             if (!caseDetailPage) {
                 console.error('❌ caseDetailPage не найден');
+                alert('Страница деталей кейса не найдена');
                 return;
             }
             
             // Получаем ID кейса из сохраненного состояния
             const caseId = currentOpeningCase || 1;
+            console.log('🔵 Ищем кейс с ID:', caseId);
+            console.log('🔵 window.casesData:', window.casesData);
+            
             const caseData = window.casesData[caseId];
             
             if (!caseData) {
-                alert('Кейс не найден');
-                console.error('❌ Кейс не найден, ID:', caseId);
+                alert('Кейс не найден. ID: ' + caseId);
+                console.error('❌ Кейс не найден, ID:', caseId, 'Доступные кейсы:', Object.keys(window.casesData || {}));
                 return;
             }
             
@@ -4372,8 +4409,9 @@
             
             // Проверяем баланс
             const balance = parseFloat(_balance || 0);
+            console.log('🔵 Баланс:', balance, 'Цена кейса:', caseData.price);
             if (balance < caseData.price) {
-                alert('Недостаточно средств');
+                alert('Недостаточно средств. Нужно: ' + caseData.price + ', есть: ' + balance);
                 return;
             }
             
@@ -4386,7 +4424,13 @@
             const whatsInside = document.querySelector('.whats-inside-title');
             const caseDetailHeader = document.querySelector('.case-detail-header');
             
-            if (openBtn) openBtn.style.display = 'none';
+            if (openBtn) {
+                openBtn.style.display = 'none';
+                console.log('✅ Кнопка скрыта');
+            } else {
+                console.warn('⚠️ Кнопка openCaseBtn не найдена');
+            }
+            
             if (prizesGrid) prizesGrid.style.display = 'none';
             if (whatsInside) whatsInside.style.display = 'none';
             if (caseDetailHeader) caseDetailHeader.style.display = 'none';
@@ -4395,12 +4439,19 @@
             const rouletteContainer = document.getElementById('rouletteContainer');
             if (rouletteContainer) {
                 rouletteContainer.style.display = 'flex';
+                rouletteContainer.style.zIndex = '2000';
                 console.log('✅ Показываю рулетку');
                 setTimeout(() => {
-                    startRoulette(caseData);
+                    if (typeof startRoulette === 'function') {
+                        startRoulette(caseData);
+                    } else {
+                        console.error('❌ startRoulette не найдена');
+                        alert('Ошибка: функция рулетки не найдена');
+                    }
                 }, 100);
             } else {
                 console.error('❌ rouletteContainer не найден');
+                alert('Ошибка: контейнер рулетки не найден');
             }
         }
         
