@@ -4568,16 +4568,26 @@
 
         // Переопределяем window.openCase полной версией
         window.openCase = function() {
+            console.log('🔵 window.openCase вызвана');
             if (typeof window.openCaseFull === 'function') {
-                window.openCaseFull();
+                console.log('✅ Вызываем window.openCaseFull');
+                return window.openCaseFull();
             } else {
-                console.warn('⚠️ window.openCaseFull еще не определена');
-                alert('Ошибка: Функция открытия кейса еще не загружена. Попробуйте еще раз.');
+                console.warn('⚠️ window.openCaseFull еще не определена, ждем...');
+                setTimeout(() => {
+                    if (typeof window.openCaseFull === 'function') {
+                        window.openCaseFull();
+                    } else {
+                        console.error('❌ window.openCaseFull так и не определена');
+                        alert('Ошибка: Функция открытия кейса не загружена. Перезагрузите страницу.');
+                    }
+                }, 200);
             }
         };
         
         // Полная версия функции openCase
         window.openCaseFull = function() {
+            console.log('🔵🔵🔵 window.openCaseFull НАЧАЛАСЬ!');
             console.log('🔵 openCaseFull вызвана');
             console.log('currentCase:', currentCase);
             console.log('isOpening:', isOpening);
@@ -4663,9 +4673,32 @@
                         console.log('✅ Восстановили currentPrizes из currentCase:', currentPrizes);
                     }
                     
+                    // Проверяем, что элементы существуют
+                    if (!rouletteContainer) {
+                        console.error('❌ rouletteContainer не найден!');
+                        alert('Ошибка: Элемент рулетки не найден');
+                        isOpening = false;
+                        return;
+                    }
+                    
                     // Сначала создаем рулетку, потом показываем
                     console.log('✅ Создаем рулетку...');
-                    createRoulette();
+                    try {
+                        if (typeof createRoulette === 'function') {
+                            createRoulette();
+                            console.log('✅ createRoulette вызвана успешно');
+                        } else {
+                            console.error('❌ createRoulette не является функцией!');
+                            alert('Ошибка: Функция createRoulette не найдена');
+                            isOpening = false;
+                            return;
+                        }
+                    } catch (err) {
+                        console.error('❌ Ошибка при вызове createRoulette:', err);
+                        alert('Ошибка при создании рулетки: ' + err.message);
+                        isOpening = false;
+                        return;
+                    }
                     
                     // Убеждаемся, что контейнер видим
                     rouletteContainer.style.display = 'block';
@@ -4925,12 +4958,22 @@
                 };
                 
                 console.log('✅ Вызываем openCaseFunc');
+                console.log('✅ openCaseFunc type:', typeof openCaseFunc);
                 try {
-                    openCaseFunc();
+                    if (typeof openCaseFunc === 'function') {
+                        console.log('🔵 Вызываем openCaseFunc...');
+                        openCaseFunc();
+                        console.log('✅ openCaseFunc вызвана');
+                    } else {
+                        console.error('❌ openCaseFunc не является функцией!');
+                        alert('Ошибка: openCaseFunc не является функцией');
+                        isOpening = false;
+                    }
                 } catch (err) {
                     console.error('❌ ОШИБКА в openCaseFunc:', err);
+                    console.error('Stack:', err.stack);
                     isOpening = false;
-                    alert('Ошибка при открытии кейса: ' + err.message);
+                    alert('Ошибка при открытии кейса: ' + err.message + '\n\nПроверьте консоль для подробностей.');
                 }
         };
         
