@@ -83,6 +83,31 @@
             }
         });
         
+        // ИНИЦИАЛИЗАЦИЯ НАВИГАЦИИ ПРИ ЗАГРУЗКЕ
+        function initNavigation() {
+            console.log('🔵 Инициализация навигации');
+            var items = document.querySelectorAll('.nav-item');
+            for (var i = 0; i < items.length; i++) {
+                items[i].classList.remove('active');
+                items[i].style.color = 'rgba(255, 255, 255, 0.7)';
+            }
+            // Активируем первую вкладку (Кейсы)
+            var firstItem = document.querySelector('.nav-item[data-page="cases"]');
+            if (firstItem) {
+                firstItem.classList.add('active');
+                firstItem.style.color = '#667eea';
+                console.log('✅ Активирована вкладка Кейсы');
+            }
+        }
+        
+        // Вызываем инициализацию сразу и после загрузки DOM
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initNavigation);
+        } else {
+            setTimeout(initNavigation, 0);
+        }
+        window.addEventListener('load', initNavigation);
+        
         // ФУНКЦИЯ НАВИГАЦИИ - ОПРЕДЕЛЯЕМ В HEAD ЧТОБЫ БЫЛА ДОСТУПНА СРАЗУ
         // Если функция уже определена, не переопределяем
         if (!window.handleNavClick) {
@@ -1615,11 +1640,15 @@
         }
 
         .nav-item.active {
-            color: #667eea;
+            color: #667eea !important;
         }
         
         .nav-item.active .nav-icon {
             transform: scale(1.1);
+        }
+        
+        .nav-item:not(.active) {
+            color: rgba(255, 255, 255, 0.7) !important;
         }
 
         .nav-icon {
