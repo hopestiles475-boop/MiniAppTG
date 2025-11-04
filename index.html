@@ -4805,25 +4805,31 @@
         // Полная версия функции openCase - УПРОЩЕННАЯ И РАБОТАЮЩАЯ
         window.openCaseFull = function() {
             console.log('🔵 openCaseFull вызвана');
+            console.log('currentCase:', currentCase);
+            console.log('currentPrizes:', currentPrizes);
+            console.log('isOpening:', isOpening);
             
             if (!currentCase) {
-                alert('Ошибка: Кейс не выбран');
+                console.error('❌ currentCase не определена!');
+                alert('Ошибка: Кейс не выбран. Вернитесь назад и выберите кейс снова.');
                 return;
             }
             
             if (isOpening) {
-                console.warn('Уже открывается');
+                console.warn('⚠️ Уже открывается');
                 return;
             }
             
             // Восстанавливаем currentPrizes если нужно
             if (!currentPrizes || currentPrizes.length === 0) {
+                console.warn('⚠️ currentPrizes пуст, восстанавливаем из currentCase');
                 currentPrizes = currentCase.prizes || [];
-            }
-            
-            // ПРОСТАЯ ПРЯМАЯ ФУНКЦИЯ БЕЗ ВЛОЖЕННОСТИ
-            if (isOpening) {
-                return;
+                console.log('✅ Восстановили currentPrizes:', currentPrizes);
+                if (!currentPrizes || currentPrizes.length === 0) {
+                    console.error('❌ currentCase.prizes тоже пуст!');
+                    alert('Ошибка: В кейсе нет призов. Обратитесь к администратору.');
+                    return;
+                }
             }
             
             const price = currentCase.price || 0;
@@ -4864,10 +4870,30 @@
                 detailIcon.style.display = 'none';
             }
             
+            // Проверяем, что currentPrizes не пуст перед созданием рулетки
+            if (!currentPrizes || currentPrizes.length === 0) {
+                console.error('❌ currentPrizes пуст перед созданием рулетки!');
+                currentPrizes = currentCase.prizes || [];
+                if (!currentPrizes || currentPrizes.length === 0) {
+                    alert('Ошибка: Нет доступных призов в кейсе');
+                    isOpening = false;
+                    return;
+                }
+            }
+            
             // Создаем рулетку
             if (typeof createRoulette === 'function') {
-                createRoulette();
+                try {
+                    createRoulette();
+                    console.log('✅ createRoulette выполнена успешно');
+                } catch (err) {
+                    console.error('❌ Ошибка в createRoulette:', err);
+                    alert('Ошибка при создании рулетки: ' + err.message);
+                    isOpening = false;
+                    return;
+                }
             } else {
+                console.error('❌ createRoulette не является функцией!');
                 alert('Ошибка: Функция createRoulette не найдена');
                 isOpening = false;
                 return;
@@ -4875,6 +4901,24 @@
             
             rouletteContainer.style.display = 'block';
             rouletteContainer.classList.add('active');
+            
+            // Проверяем, что рулетка создана
+            setTimeout(() => {
+                const rouletteTrack = document.getElementById('rouletteTrack');
+                if (!rouletteTrack) {
+                    console.error('❌ rouletteTrack не найден после создания!');
+                    isOpening = false;
+                    return;
+                }
+                const giftItems = rouletteTrack.querySelectorAll('.gift-item');
+                if (!giftItems || giftItems.length === 0) {
+                    console.error('❌ giftItems пуст после создания рулетки!');
+                    alert('Ошибка: Рулетка не создана. Перезагрузите страницу.');
+                    isOpening = false;
+                    return;
+                }
+                console.log('✅ Рулетка создана, элементов:', giftItems.length);
+            }, 100);
 
             if (tg) {
                 tg.HapticFeedback.impactOccurred('heavy');
@@ -4882,10 +4926,33 @@
             
             // Даем время на отрисовку элементов перед анимацией
             setTimeout(() => {
+                // Проверяем, что currentPrizes не пуст
+                if (!currentPrizes || currentPrizes.length === 0) {
+                    console.error('❌ currentPrizes пуст!');
+                    alert('Ошибка: Нет доступных призов. Перезагрузите страницу.');
+                    isOpening = false;
+                    return;
+                }
+                
                 // Сначала выбираем случайный приз из доступных
                 const randomPrize = currentPrizes[Math.floor(Math.random() * currentPrizes.length)];
                 const rouletteTrack = document.getElementById('rouletteTrack');
+                
+                if (!rouletteTrack) {
+                    console.error('❌ rouletteTrack не найден!');
+                    alert('Ошибка: Элемент рулетки не найден');
+                    isOpening = false;
+                    return;
+                }
+                
                 const giftItems = rouletteTrack.querySelectorAll('.gift-item');
+                
+                if (!giftItems || giftItems.length === 0) {
+                    console.error('❌ giftItems пуст!');
+                    alert('Ошибка: Элементы рулетки не созданы. Перезагрузите страницу.');
+                    isOpening = false;
+                    return;
+                }
                 
                 // Убеждаемся, что все элементы видны СРАЗУ
                 giftItems.forEach(item => {
@@ -5136,7 +5203,27 @@
         }
 
         function createRoulette() {
+            console.log('🔵 createRoulette вызвана');
+            console.log('currentPrizes:', currentPrizes);
+            console.log('currentPrizes.length:', currentPrizes ? currentPrizes.length : 0);
+            
             const rouletteTrack = document.getElementById('rouletteTrack');
+            if (!rouletteTrack) {
+                console.error('❌ rouletteTrack не найден в createRoulette!');
+                throw new Error('Элемент рулетки не найден');
+            }
+            
+            // Проверяем, что currentPrizes не пуст
+            if (!currentPrizes || currentPrizes.length === 0) {
+                console.error('❌ currentPrizes пуст в createRoulette!');
+                if (currentCase && currentCase.prizes) {
+                    currentPrizes = currentCase.prizes;
+                    console.log('✅ Восстановили currentPrizes из currentCase');
+                } else {
+                    throw new Error('Нет доступных призов для создания рулетки');
+                }
+            }
+            
             rouletteTrack.innerHTML = '';
             
             // Создаем множество повторений для бесконечного эффекта прокрутки
@@ -5146,6 +5233,8 @@
             for (let i = 0; i < repeatCount; i++) {
                 extendedPrizes.push(...currentPrizes);
             }
+            
+            console.log('✅ Создано extendedPrizes, элементов:', extendedPrizes.length);
             
             extendedPrizes.forEach((prize, index) => {
                 const giftItem = document.createElement('div');
@@ -5229,7 +5318,12 @@
                 visibility: visible !important;
                 opacity: 1 !important;
             `;
+            
+            console.log('✅ createRoulette завершена, создано элементов:', extendedPrizes.length);
         }
+        
+        // Делаем функцию глобальной для отладки
+        window.createRoulette = createRoulette;
 
         function showCaseDetail(caseNum) {
             window.showCaseDetail = showCaseDetail; // Делаем глобальной
