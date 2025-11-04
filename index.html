@@ -133,10 +133,10 @@
                         // Не скрываем mainPage полностью, если переключаемся на другую вкладку
                         // Просто скрываем визуально, но сохраняем структуру
                         if (pages[i].id === 'mainPage' && page !== 'cases') {
-                            pages[i].style.display = 'none';
-                            pages[i].style.visibility = 'hidden';
-                            pages[i].style.opacity = '0';
-                            pages[i].style.pointerEvents = 'none';
+                        pages[i].style.display = 'none';
+                        pages[i].style.visibility = 'hidden';
+                        pages[i].style.opacity = '0';
+                        pages[i].style.pointerEvents = 'none';
                         } else if (pages[i].id !== 'mainPage') {
                             pages[i].style.display = 'none';
                             pages[i].style.visibility = 'hidden';
@@ -226,13 +226,6 @@
                         casesContainer.style.width = '100%';
                         casesContainer.style.minHeight = '200px';
                         casesContainer.style.position = 'relative';
-                        
-                        // ВРЕМЕННО: добавляем тестовый элемент прямо здесь для диагностики
-                        const testDiv = document.createElement('div');
-                        testDiv.style.cssText = 'padding: 20px; background: rgba(255, 0, 0, 0.5); margin: 10px; border-radius: 12px; color: white; font-size: 18px; font-weight: bold;';
-                        testDiv.textContent = 'ТЕСТ: Контейнер найден, загрузка кейсов...';
-                        casesContainer.appendChild(testDiv);
-                        console.log('✅ Тестовый элемент добавлен в контейнер');
                     } else {
                         console.error('❌ Контейнер кейсов НЕ НАЙДЕН!');
                         console.error('❌ casesPage:', casesPage);
@@ -397,7 +390,7 @@
                                     // Дополнительное обновление через небольшую задержку
                                     setTimeout(() => updateBalanceDisplay(), 100);
                                 }
-                                if (typeof initCrashGame === 'function') initCrashGame();
+                        if (typeof initCrashGame === 'function') initCrashGame();
                             }).catch(() => {
                                 if (typeof updateBalanceDisplay === 'function') {
                                     updateBalanceDisplay();
@@ -450,7 +443,7 @@
                                     updateBalanceDisplay();
                                     setTimeout(() => updateBalanceDisplay(), 100);
                                 }
-                                if (typeof initMinesGame === 'function') initMinesGame();
+                        if (typeof initMinesGame === 'function') initMinesGame();
                             }).catch(() => {
                                 if (typeof updateBalanceDisplay === 'function') {
                                     updateBalanceDisplay();
@@ -503,7 +496,7 @@
                                     updateBalanceDisplay();
                                     setTimeout(() => updateBalanceDisplay(), 100);
                                 }
-                                if (typeof initDiceGame === 'function') initDiceGame();
+                        if (typeof initDiceGame === 'function') initDiceGame();
                             }).catch(() => {
                                 if (typeof updateBalanceDisplay === 'function') {
                                     updateBalanceDisplay();
@@ -2102,6 +2095,10 @@
             gap: 12px;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
             width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
         }
 
         .case-card:hover {
@@ -2112,9 +2109,12 @@
         }
 
         .case-icon {
-            width: 80px;
-            height: 80px;
-            min-width: 80px;
+            width: 80px !important;
+            height: 80px !important;
+            min-width: 80px !important;
+            max-width: 80px !important;
+            min-height: 80px !important;
+            max-height: 80px !important;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             padding: 10px;
@@ -2122,12 +2122,16 @@
             align-items: center;
             justify-content: center;
             border: 2px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            flex-shrink: 0;
         }
 
         .case-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
+            object-fit: contain !important;
             display: block;
         }
 
@@ -4909,7 +4913,7 @@
                 casesPage.style.zIndex = '100';
                 casesPage.style.pointerEvents = 'auto';
                 console.log('✅ casesPage сделана видимой');
-            } else {
+                } else {
                 console.error('❌ casesPage НЕ НАЙДЕНА!');
             }
             
@@ -5111,8 +5115,8 @@
                     loadCases();
                 } catch (e) {
                     console.error('❌ Ошибка в loadCases:', e);
-                }
-            } else {
+                    }
+                } else {
                 console.error('❌ loadCases не найдена в forceLoadCasesOnReady');
             }
         }
@@ -5151,9 +5155,9 @@
             
             if (!caseDetailPage) {
                 alert('Страница деталей не найдена');
-                        return;
-                    }
-
+                return;
+            }
+            
             // Скрываем страницу кейсов
             if (casesPage) {
                 casesPage.style.display = 'none';
