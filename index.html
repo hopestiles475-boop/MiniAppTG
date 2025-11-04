@@ -296,10 +296,15 @@
                         console.error('❌ casesPage.innerHTML:', casesPage ? casesPage.innerHTML.substring(0, 500) : 'N/A');
                     }
                     
+                    // Показываем баланс в header для кейсов
                     if (header) {
                         header.style.display = 'flex';
                         header.style.visibility = 'visible';
                         header.style.opacity = '1';
+                        const balanceSection = header.querySelector('.balance-section');
+                        if (balanceSection) {
+                            balanceSection.style.display = 'flex';
+                        }
                     }
                     
                     // Скрываем кнопку подписки если она есть
@@ -389,7 +394,14 @@
                         }, 3000);
                     }, 50);
                 } else if (page === 'profile' && profilePage) {
-                    if (header) header.style.display = 'flex';
+                    // Показываем баланс в header для профиля
+                    if (header) {
+                        header.style.display = 'flex';
+                        const balanceSection = header.querySelector('.balance-section');
+                        if (balanceSection) {
+                            balanceSection.style.display = 'flex';
+                        }
+                    }
                     profilePage.style.display = 'block';
                     profilePage.style.visibility = 'visible';
                     profilePage.style.opacity = '1';
@@ -449,7 +461,14 @@
                         caseDetailPage.style.pointerEvents = 'none';
                         caseDetailPage.style.zIndex = '-1';
                     }
-                    if (header) header.style.display = 'flex';
+                    // Скрываем баланс в header при открытии игры
+                    if (header) {
+                        header.style.display = 'flex';
+                        const balanceSection = header.querySelector('.balance-section');
+                        if (balanceSection) {
+                            balanceSection.style.display = 'none';
+                        }
+                    }
                     crashPage.style.display = 'block';
                     crashPage.style.visibility = 'visible';
                     crashPage.style.opacity = '1';
@@ -520,7 +539,14 @@
                         caseDetailPage.style.pointerEvents = 'none';
                         caseDetailPage.style.zIndex = '-1';
                     }
-                    if (header) header.style.display = 'flex';
+                    // Скрываем баланс в header при открытии игры
+                    if (header) {
+                        header.style.display = 'flex';
+                        const balanceSection = header.querySelector('.balance-section');
+                        if (balanceSection) {
+                            balanceSection.style.display = 'none';
+                        }
+                    }
                     minesPage.style.display = 'block';
                     minesPage.style.visibility = 'visible';
                     minesPage.style.opacity = '1';
@@ -590,7 +616,14 @@
                         caseDetailPage.style.pointerEvents = 'none';
                         caseDetailPage.style.zIndex = '-1';
                     }
-                    if (header) header.style.display = 'flex';
+                    // Скрываем баланс в header при открытии игры
+                    if (header) {
+                        header.style.display = 'flex';
+                        const balanceSection = header.querySelector('.balance-section');
+                        if (balanceSection) {
+                            balanceSection.style.display = 'none';
+                        }
+                    }
                     dicePage.style.display = 'block';
                     dicePage.style.visibility = 'visible';
                     dicePage.style.opacity = '1';
