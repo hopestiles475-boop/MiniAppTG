@@ -226,7 +226,7 @@
                                 }
                             });
                         } else {
-                            if (typeof updateInventory === 'function') updateInventory();
+                        if (typeof updateInventory === 'function') updateInventory();
                         }
                         if (typeof initProfileHandlers === 'function') initProfileHandlers();
                         if (typeof initTopUpHandlers === 'function') initTopUpHandlers();
@@ -248,8 +248,18 @@
                     crashPage.style.pointerEvents = 'auto';
                     // Инициализируем краш игру
                     setTimeout(function() {
-                        if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
-                        if (typeof initCrashGame === 'function') initCrashGame();
+                        if (typeof loadUserData === 'function') {
+                            loadUserData().then(() => {
+                                if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+                                if (typeof initCrashGame === 'function') initCrashGame();
+                            }).catch(() => {
+                                if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+                                if (typeof initCrashGame === 'function') initCrashGame();
+                            });
+                        } else {
+                            if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+                            if (typeof initCrashGame === 'function') initCrashGame();
+                        }
                     }, 50);
                 } else if (page === 'mines' && minesPage) {
                     if (header) header.style.display = 'flex';
@@ -267,8 +277,18 @@
                     minesPage.style.pointerEvents = 'auto';
                     // Инициализируем мины игру
                     setTimeout(function() {
-                        if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
-                        if (typeof initMinesGame === 'function') initMinesGame();
+                        if (typeof loadUserData === 'function') {
+                            loadUserData().then(() => {
+                                if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+                                if (typeof initMinesGame === 'function') initMinesGame();
+                            }).catch(() => {
+                                if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+                                if (typeof initMinesGame === 'function') initMinesGame();
+                            });
+                        } else {
+                            if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+                            if (typeof initMinesGame === 'function') initMinesGame();
+                        }
                     }, 50);
                 } else if (page === 'dice' && dicePage) {
                     if (header) header.style.display = 'flex';
@@ -286,8 +306,18 @@
                     dicePage.style.pointerEvents = 'auto';
                     // Инициализируем dice игру
                     setTimeout(function() {
-                        if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
-                        if (typeof initDiceGame === 'function') initDiceGame();
+                        if (typeof loadUserData === 'function') {
+                            loadUserData().then(() => {
+                                if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+                                if (typeof initDiceGame === 'function') initDiceGame();
+                            }).catch(() => {
+                                if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+                                if (typeof initDiceGame === 'function') initDiceGame();
+                            });
+                        } else {
+                            if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
+                            if (typeof initDiceGame === 'function') initDiceGame();
+                        }
                     }, 50);
                 }
             };
@@ -3939,7 +3969,7 @@
                     if (Array.isArray(parsed)) {
                         userInventory = parsed;
                         console.log('✅ Инвентарь загружен из localStorage:', userInventory.length, 'предметов');
-                    } else {
+                } else {
                         console.warn('⚠️ Инвентарь в localStorage не массив, создаю пустой');
                         userInventory = [];
                     }
@@ -4681,7 +4711,7 @@
                 console.error('❌ Контейнер:', casesContainer);
                 console.error('❌ HTML контейнера:', casesContainer.innerHTML);
                 alert('Ошибка: кейсы не добавлены в контейнер. Проверьте консоль.');
-            } else {
+                } else {
                 console.log('✅ Кейсов в контейнере:', casesContainer.children.length);
                 
                 // Убеждаемся что контейнер видим - ПРИНУДИТЕЛЬНО
@@ -4722,7 +4752,7 @@
                     }
                 }, 200);
             });
-                        } else {
+                } else {
             setTimeout(function() {
                 if (typeof loadCases === 'function') {
                     console.log('🔵 Принудительная загрузка кейсов (DOM уже загружен)');
@@ -4745,9 +4775,9 @@
             
             if (!caseDetailPage) {
                 alert('Страница деталей не найдена');
-                return;
-            }
-            
+                        return;
+                    }
+
             // Скрываем страницу кейсов
             if (casesPage) {
                 casesPage.style.display = 'none';
@@ -4763,7 +4793,7 @@
             caseDetailPage.style.pointerEvents = 'auto';
             
             // Устанавливаем иконку кейса
-            const detailIcon = document.getElementById('detailIcon');
+                    const detailIcon = document.getElementById('detailIcon');
             if (detailIcon) {
                 detailIcon.innerHTML = '';
                 const img = document.createElement('img');
@@ -4988,8 +5018,8 @@
                 item.dataset.prizeIcon = prize.icon;
                 item.dataset.prizeValue = prize.value;
                 
-                const img = document.createElement('img');
-                img.src = prize.icon;
+                    const img = document.createElement('img');
+                    img.src = prize.icon;
                 img.alt = '';
                 img.style.width = '80px';
                 img.style.height = '80px';
@@ -5018,7 +5048,7 @@
             if (finalTargetPrize.icon === selectedPrize.icon && 
                 Math.abs(finalTargetPrize.value - selectedPrize.value) < 0.001) {
                 console.log('✅ ПОДАРОК СОВПАДАЕТ!');
-            } else {
+                } else {
                 console.warn('⚠️ Подарок на позиции не совпадает, обновляю selectedPrize на тот что на позиции');
                 selectedPrize.icon = finalTargetPrize.icon;
                 selectedPrize.value = finalTargetPrize.value;
@@ -6375,6 +6405,11 @@
             minesGameState.gameActive = false;
             minesGameState.currentMultiplier = 1.0;
             
+            // Обновляем баланс во всех местах
+            if (typeof updateBalanceDisplay === 'function') {
+                updateBalanceDisplay();
+            }
+            
             for (let i = 0; i < minesGameState.gridSize; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'mines-cell';
@@ -6716,6 +6751,11 @@
             const autoToggle = document.getElementById('diceAutoToggle');
             const autoStatus = document.getElementById('diceAutoStatus');
             const startBtn = document.getElementById('diceStartBtn');
+            
+            // Обновляем баланс во всех местах
+            if (typeof updateBalanceDisplay === 'function') {
+                updateBalanceDisplay();
+            }
             
             // Обновление значения слайдера
             if (thresholdSlider && thresholdValue) {
@@ -7153,7 +7193,10 @@
             canvas.height = containerHeight * dpr;
             ctx.scale(dpr, dpr);
             
-            // Обновляем баланс
+            // Обновляем баланс во всех местах
+            if (typeof updateBalanceDisplay === 'function') {
+                updateBalanceDisplay();
+            }
             updateCrashBalance();
             
             // Обновляем историю
@@ -7520,6 +7563,10 @@
             const balanceEl = document.getElementById('crashBalance');
             if (balanceEl) {
                 balanceEl.textContent = _balance.toFixed(2);
+            }
+            // Также обновляем все остальные отображения баланса
+            if (typeof updateBalanceDisplay === 'function') {
+                updateBalanceDisplay();
             }
         }
         
