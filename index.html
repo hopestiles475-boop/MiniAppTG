@@ -3468,9 +3468,6 @@
             <h2 style="color: white; font-size: 32px; margin: 0;">Кейсы</h2>
         </div>
         <div class="cases-container" id="casesContainer" style="display: flex !important; flex-direction: column !important; gap: 20px !important; padding: 20px !important; min-height: 200px !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 1000 !important;">
-            <div style="padding: 30px; background: rgba(255, 0, 0, 0.8) !important; margin: 20px !important; border-radius: 16px !important; color: white !important; font-size: 24px !important; font-weight: bold !important; text-align: center !important; box-shadow: 0 8px 32px rgba(255, 0, 0, 0.5) !important; position: relative !important; z-index: 1001 !important;">
-                🔴 ТЕСТ: Контейнер существует, ожидаю загрузки кейсов...
-            </div>
         </div>
         <script>
             // Принудительная загрузка кейсов сразу после создания контейнера
@@ -5035,10 +5032,14 @@
             console.log('✅ Детей в контейнере:', casesContainer.children.length);
             
             // Удаляем тестовый элемент если кейсы загружены
-            const testElement = casesContainer.querySelector('div[style*="ТЕСТ"]') || casesContainer.querySelector('div[style*="Тест"]');
-            if (testElement && cardsCreated > 0) {
-                testElement.remove();
-                console.log('✅ Тестовый элемент удален, кейсы загружены');
+            const testElement = casesContainer.querySelector('div[style*="ТЕСТ"]') || casesContainer.querySelector('div[style*="Тест"]') || casesContainer.querySelector('div[style*="тест"]');
+            if (testElement) {
+                if (cardsCreated > 0) {
+                    testElement.remove();
+                    console.log('✅ Тестовый элемент удален, кейсы загружены:', cardsCreated);
+                } else {
+                    console.warn('⚠️ Тестовый элемент найден, но кейсы не созданы. Количество созданных:', cardsCreated);
+                }
             }
             
             // Проверяем видимость контейнера
