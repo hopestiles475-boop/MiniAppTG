@@ -209,7 +209,14 @@
                     casesPage.classList.add('active');
                     
                     // Убеждаемся что контейнер кейсов видим
-                    const casesContainer = document.getElementById('casesContainer') || document.querySelector('.cases-container');
+                    let casesContainer = document.getElementById('casesContainer');
+                    if (!casesContainer) {
+                        casesContainer = document.querySelector('.cases-container');
+                    }
+                    if (!casesContainer) {
+                        casesContainer = casesPage.querySelector('#casesContainer') || casesPage.querySelector('.cases-container');
+                    }
+                    
                     if (casesContainer) {
                         console.log('✅ Контейнер кейсов найден:', casesContainer);
                         casesContainer.style.display = 'flex';
@@ -218,8 +225,18 @@
                         casesContainer.style.pointerEvents = 'auto';
                         casesContainer.style.width = '100%';
                         casesContainer.style.minHeight = '200px';
+                        casesContainer.style.position = 'relative';
+                        
+                        // ВРЕМЕННО: добавляем тестовый элемент прямо здесь для диагностики
+                        const testDiv = document.createElement('div');
+                        testDiv.style.cssText = 'padding: 20px; background: rgba(255, 0, 0, 0.5); margin: 10px; border-radius: 12px; color: white; font-size: 18px; font-weight: bold;';
+                        testDiv.textContent = 'ТЕСТ: Контейнер найден, загрузка кейсов...';
+                        casesContainer.appendChild(testDiv);
+                        console.log('✅ Тестовый элемент добавлен в контейнер');
                     } else {
                         console.error('❌ Контейнер кейсов НЕ НАЙДЕН!');
+                        console.error('❌ casesPage:', casesPage);
+                        console.error('❌ casesPage.innerHTML:', casesPage ? casesPage.innerHTML.substring(0, 500) : 'N/A');
                     }
                     
                     if (header) {
@@ -237,15 +254,29 @@
                     // Загружаем кейсы сразу - несколько раз для надежности
                     function forceLoadCases() {
                         console.log('🔵 forceLoadCases вызвана');
-                        if (typeof loadCases === 'function') {
-                            console.log('🔵 Принудительно загружаю кейсы');
+                        console.log('🔵 typeof loadCases:', typeof loadCases);
+                        console.log('🔵 typeof window.loadCases:', typeof window.loadCases);
+                        
+                        if (typeof window.loadCases === 'function') {
+                            console.log('🔵 Принудительно загружаю кейсы через window.loadCases');
+                            try {
+                                window.loadCases();
+                            } catch (e) {
+                                console.error('❌ Ошибка в window.loadCases:', e);
+                                alert('Ошибка загрузки кейсов: ' + e.message);
+                            }
+                        } else if (typeof loadCases === 'function') {
+                            console.log('🔵 Принудительно загружаю кейсы через loadCases');
                             try {
                                 loadCases();
                             } catch (e) {
                                 console.error('❌ Ошибка в loadCases:', e);
+                                alert('Ошибка загрузки кейсов: ' + e.message);
                             }
                         } else {
-                            console.error('❌ loadCases не найдена, тип:', typeof loadCases);
+                            console.error('❌ loadCases не найдена!');
+                            console.error('❌ Доступные функции:', Object.keys(window).filter(k => k.toLowerCase().includes('case')));
+                            alert('Ошибка: функция loadCases не найдена!');
                         }
                     }
                     
@@ -272,7 +303,7 @@
                             console.log('🔵 Проверка через 1 сек, контейнер:', !!container);
                             if (container) {
                                 console.log('🔵 Детей в контейнере:', container.children.length);
-                                if (container.children.length === 0) {
+                                if (container.children.length === 0 || container.children.length === 1) {
                                     console.warn('⚠️ Кейсы не загружены через 1 сек, повторная попытка...');
                                     forceLoadCases();
                                 }
@@ -282,7 +313,7 @@
                         // Проверка через 2 секунды
                         setTimeout(function() {
                             const container = document.getElementById('casesContainer');
-                            if (container && container.children.length === 0) {
+                            if (container && (container.children.length === 0 || container.children.length === 1)) {
                                 console.warn('⚠️ Кейсы все еще не загружены через 2 сек, повторная попытка...');
                                 forceLoadCases();
                             }
@@ -291,7 +322,7 @@
                         // Проверка через 3 секунды
                         setTimeout(function() {
                             const container = document.getElementById('casesContainer');
-                            if (container && container.children.length === 0) {
+                            if (container && (container.children.length === 0 || container.children.length === 1)) {
                                 console.error('❌ КРИТИЧЕСКАЯ ПРОБЛЕМА: Кейсы не загружены через 3 сек!');
                                 console.error('❌ Пробую прямой вызов loadCases...');
                                 if (typeof window.loadCases === 'function') {
