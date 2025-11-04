@@ -974,6 +974,26 @@
 
         .modal.active {
             display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            z-index: 3000 !important;
+            pointer-events: auto !important;
+        }
+        
+        #inventoryItemModal {
+            z-index: 3000 !important;
+            pointer-events: auto !important;
+        }
+        
+        #inventoryItemModal .modal-content {
+            pointer-events: auto !important;
+            z-index: 3001 !important;
+        }
+        
+        #inventoryItemModal .inventory-modal-btn {
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            z-index: 3002 !important;
         }
 
         /* Скрываем кнопку "Открыть" со страницы деталей когда модальное окно активно */
@@ -1674,12 +1694,19 @@
             justify-content: center;
             position: relative;
             overflow: hidden;
-            cursor: pointer;
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            z-index: 10 !important;
             transition: all 0.3s;
         }
 
         .inventory-slot:active {
             transform: scale(0.95);
+        }
+        
+        .inventory-slot:hover {
+            background: rgba(102, 126, 234, 0.2);
+            border-color: rgba(102, 126, 234, 0.6);
         }
 
         .inventory-slot.has-item {
@@ -4273,7 +4300,11 @@
                     { icon: 'Case1/QWvlnRQNdZo2nqVt5hI6ff7l3ZpxK-IGc3X10-CUGLv10ycEwc-no-bg-preview%20(carve.photos).png', value: 2.90 },
                     { icon: 'Case1/rO9Afzk_7QoBW7-D-94uoD2JsyTsaZnp1prTIWnzp_AsMeQrp--no-bg-preview%20(carve.photos).png', value: 1.76 },
                     { icon: 'Case1/SZPAhV0giLdoCjqwE0tP2Fa3_NfB65B54BuJKToWItApL6Qtt3-no-bg-preview%20(carve.photos).png', value: 40.44 },
-                    { icon: 'Case1/VqbJmqTX4m3Um9XF5l6aFIETbR-TRBmBrEOiHLnxicnI8Bfqoh-no-bg-preview%20(carve.photos).png', value: 23.50 }
+                    { icon: 'Case1/VqbJmqTX4m3Um9XF5l6aFIETbR-TRBmBrEOiHLnxicnI8Bfqoh-no-bg-preview%20(carve.photos).png', value: 23.50 },
+                    { icon: 'ton_symbol.png', value: 1.00 },
+                    { icon: 'ton_symbol.png', value: 0.05 },
+                    { icon: 'ton_symbol.png', value: 0.20 },
+                    { icon: 'ton_symbol.png', value: 0.10 }
                 ]
             };
             
@@ -5259,9 +5290,48 @@
                 valueBadge.innerHTML = formatPrice(item.value);
                 slot.appendChild(valueBadge);
                 
-                slot.addEventListener('click', () => {
-                    showInventoryItemModal(item);
-                });
+                // Множественные обработчики для надежности
+                slot.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔵 Клик по предмету инвентаря:', item);
+                    if (typeof showInventoryItemModal === 'function') {
+                        showInventoryItemModal(item);
+                    } else if (typeof window.showInventoryItemModal === 'function') {
+                        window.showInventoryItemModal(item);
+                    } else {
+                        console.error('❌ showInventoryItemModal не найдена');
+                        alert('Ошибка: функция показа предмета не найдена');
+                    }
+                };
+                
+                slot.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔵 Клик по предмету инвентаря (addEventListener):', item);
+                    if (typeof showInventoryItemModal === 'function') {
+                        showInventoryItemModal(item);
+                    } else if (typeof window.showInventoryItemModal === 'function') {
+                        window.showInventoryItemModal(item);
+                    }
+                }, true);
+                
+                slot.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔵 Touch по предмету инвентаря:', item);
+                    if (typeof showInventoryItemModal === 'function') {
+                        showInventoryItemModal(item);
+                    } else if (typeof window.showInventoryItemModal === 'function') {
+                        window.showInventoryItemModal(item);
+                    }
+                }, { passive: false });
+                
+                // Убеждаемся что элемент кликабелен
+                slot.style.cursor = 'pointer';
+                slot.style.pointerEvents = 'auto';
+                slot.style.zIndex = '10';
+                slot.style.position = 'relative';
                 
                 inventoryGrid.appendChild(slot);
             });
@@ -5732,27 +5802,44 @@
         
         // Показ модального окна предмета из инвентаря
         function showInventoryItemModal(item) {
+            console.log('🔵 showInventoryItemModal вызвана, предмет:', item);
+            if (!item) {
+                console.error('❌ Предмет не передан');
+                return;
+            }
+            
             selectedInventoryItem = item;
             const modal = document.getElementById('inventoryItemModal');
             const modalIcon = document.getElementById('inventoryModalIcon');
             const modalName = document.getElementById('inventoryModalName');
             const modalPrice = document.getElementById('inventoryModalPrice');
             
-            if (!modal || !modalIcon || !modalName || !modalPrice) return;
+            if (!modal) {
+                console.error('❌ Модальное окно инвентаря не найдено');
+                return;
+            }
+            
+            if (!modalIcon || !modalName || !modalPrice) {
+                console.error('❌ Элементы модального окна не найдены');
+                return;
+            }
             
             // Устанавливаем название
-            modalName.textContent = item.name;
+            modalName.textContent = item.name || 'Предмет';
             
             // Устанавливаем цену
-            modalPrice.innerHTML = formatPrice(item.value);
+            modalPrice.innerHTML = formatPrice(item.value || 0);
             
             // Устанавливаем иконку
             modalIcon.innerHTML = '';
             const iconStr = String(item.icon || '');
-            if (iconStr.toLowerCase().includes('.png') || iconStr.toLowerCase().includes('.jpg') || iconStr.toLowerCase().includes('.jpeg')) {
+            if (iconStr.toLowerCase().includes('.png') || iconStr.toLowerCase().includes('.jpg') || iconStr.toLowerCase().includes('.jpeg') || iconStr.toLowerCase().includes('.gif') || iconStr.toLowerCase().includes('.webp')) {
                 const img = document.createElement('img');
                 img.src = item.icon;
-                img.alt = item.name;
+                img.alt = item.name || 'Предмет';
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'contain';
                 img.onerror = function() {
                     modalIcon.innerHTML = '<span style="font-size: 80px;">🎁</span>';
                 };
@@ -5763,11 +5850,47 @@
             
             // Показываем модальное окно
             modal.classList.add('active');
+            modal.style.display = 'flex';
+            modal.style.zIndex = '3000';
+            
+            // Перепривязываем обработчик кнопки продажи
+            const sellBtn = document.getElementById('sellItemBtn');
+            if (sellBtn) {
+                const newSellBtn = sellBtn.cloneNode(true);
+                sellBtn.parentNode.replaceChild(newSellBtn, sellBtn);
+                
+                newSellBtn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔵 Клик по кнопке продажи');
+                    if (typeof sellSelectedItem === 'function') {
+                        sellSelectedItem();
+                    } else if (typeof window.sellSelectedItem === 'function') {
+                        window.sellSelectedItem();
+                    } else {
+                        console.error('❌ sellSelectedItem не найдена');
+                        alert('Функция продажи не найдена');
+                    }
+                };
+                
+                newSellBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof sellSelectedItem === 'function') {
+                        sellSelectedItem();
+                    } else if (typeof window.sellSelectedItem === 'function') {
+                        window.sellSelectedItem();
+                    }
+                }, true);
+            }
             
             if (tg) {
                 tg.HapticFeedback.impactOccurred('light');
             }
         }
+        
+        // Делаем функцию глобальной
+        window.showInventoryItemModal = showInventoryItemModal;
         
         // Закрытие модального окна предмета из инвентаря
         function closeInventoryModal() {
@@ -6435,43 +6558,113 @@
 
         // Продажа выбранного предмета
         function sellSelectedItem() {
-            if (!selectedInventoryItem) return;
+            console.log('🔵 sellSelectedItem вызвана, selectedInventoryItem:', selectedInventoryItem);
+            
+            if (!selectedInventoryItem) {
+                console.error('❌ Предмет не выбран');
+                alert('Предмет не выбран');
+                return;
+            }
             
             const item = selectedInventoryItem;
+            console.log('✅ Продаю предмет:', item);
             
-            if (tg) {
-                tg.showConfirm(`Продать "${item.name}" за 💎 ${item.value.toFixed(2)}?`, (confirmed) => {
+            const confirmText = `Продать "${item.name || 'Предмет'}" за ${item.value.toFixed(2)}?`;
+            
+            if (tg && tg.showConfirm) {
+                tg.showConfirm(confirmText, (confirmed) => {
                     if (confirmed) {
+                        console.log('✅ Пользователь подтвердил продажу');
                         if (changeBalance(item.value, 'sellItem')) {
                             // Удаляем предмет из инвентаря
+                            const oldLength = userInventory.length;
                             userInventory = userInventory.filter(invItem => invItem.id !== item.id);
+                            console.log('✅ Предмет удален из инвентаря. Было:', oldLength, 'Стало:', userInventory.length);
+                            
                             saveInventory(); // Сохраняем баланс локально
                             saveUserData(); // Сохраняем на сервер
                             updateInventory();
                             closeInventoryModal();
                             
+                            selectedInventoryItem = null;
+                            
                             tg.HapticFeedback.notificationOccurred('success');
+                        } else {
+                            console.error('❌ Не удалось изменить баланс');
+                            alert('Ошибка: не удалось продать предмет');
                         }
+                    } else {
+                        console.log('❌ Пользователь отменил продажу');
                     }
                 });
             } else {
-                if (confirm(`Продать "${item.name}" за ${item.value.toFixed(2)}?`)) {
+                if (confirm(confirmText)) {
+                    console.log('✅ Пользователь подтвердил продажу');
                     if (changeBalance(item.value, 'sellItem')) {
                         // Удаляем предмет из инвентаря
+                        const oldLength = userInventory.length;
                         userInventory = userInventory.filter(invItem => invItem.id !== item.id);
+                        console.log('✅ Предмет удален из инвентаря. Было:', oldLength, 'Стало:', userInventory.length);
+                        
                         saveInventory(); // Сохраняем баланс локально
                         saveUserData(); // Сохраняем на сервер
                         updateInventory();
                         closeInventoryModal();
+                        
+                        selectedInventoryItem = null;
+                    } else {
+                        console.error('❌ Не удалось изменить баланс');
+                        alert('Ошибка: не удалось продать предмет');
                     }
+                } else {
+                    console.log('❌ Пользователь отменил продажу');
                 }
             }
         }
         
+        // Делаем функцию глобальной
+        window.sellSelectedItem = sellSelectedItem;
+        
         // Обработчик кнопки "Продать" в модальном окне
-        const sellItemBtn = document.getElementById('sellItemBtn');
-        if (sellItemBtn) {
-            sellItemBtn.addEventListener('click', sellSelectedItem);
+        function attachSellButtonHandler() {
+            const sellItemBtn = document.getElementById('sellItemBtn');
+            if (sellItemBtn) {
+                console.log('✅ Привязываю обработчик к кнопке продажи');
+                const newBtn = sellItemBtn.cloneNode(true);
+                sellItemBtn.parentNode.replaceChild(newBtn, sellItemBtn);
+                
+                newBtn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔵 Клик по кнопке продажи (onclick)');
+                    if (typeof sellSelectedItem === 'function') {
+                        sellSelectedItem();
+                    } else if (typeof window.sellSelectedItem === 'function') {
+                        window.sellSelectedItem();
+                    }
+                };
+                
+                newBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔵 Клик по кнопке продажи (addEventListener)');
+                    if (typeof sellSelectedItem === 'function') {
+                        sellSelectedItem();
+                    } else if (typeof window.sellSelectedItem === 'function') {
+                        window.sellSelectedItem();
+                    }
+                }, true);
+            } else {
+                console.warn('⚠️ Кнопка sellItemBtn не найдена, попробую позже');
+                setTimeout(attachSellButtonHandler, 100);
+            }
+        }
+        
+        // Привязываем обработчик при загрузке
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', attachSellButtonHandler);
+        } else {
+            attachSellButtonHandler();
         }
 
         // ========== ИГРА КРАШ ==========
