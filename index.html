@@ -185,7 +185,7 @@
                 
                 // Показываем нужную страницу и инициализируем
                 if (page === 'cases' && casesPage) {
-                    if (header) header.style.display = 'flex';
+                    // Убеждаемся что кейсы НЕ скрыты
                     casesPage.style.display = 'block';
                     casesPage.style.visibility = 'visible';
                     casesPage.style.opacity = '1';
@@ -198,6 +198,17 @@
                     casesPage.style.height = '100%';
                     casesPage.style.zIndex = '100';
                     casesPage.style.pointerEvents = 'auto';
+                    
+                    // Убеждаемся что контейнер кейсов видим
+                    const casesContainer = document.getElementById('casesContainer') || document.querySelector('.cases-container');
+                    if (casesContainer) {
+                        casesContainer.style.display = 'flex';
+                        casesContainer.style.visibility = 'visible';
+                        casesContainer.style.opacity = '1';
+                        casesContainer.style.pointerEvents = 'auto';
+                    }
+                    
+                    if (header) header.style.display = 'flex';
                     
                     // Скрываем кнопку подписки если она есть
                     const subscribeBtn = document.querySelector('.subscribe-btn');
@@ -217,7 +228,9 @@
                     
                     forceLoadCases();
                     setTimeout(forceLoadCases, 100);
+                    setTimeout(forceLoadCases, 300);
                     setTimeout(forceLoadCases, 500);
+                    setTimeout(forceLoadCases, 1000);
                     
                     setTimeout(function() {
                         if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
@@ -4827,26 +4840,35 @@
                 console.error('❌ Кейсы не добавлены в контейнер!');
                 console.error('❌ Контейнер:', casesContainer);
                 console.error('❌ HTML контейнера:', casesContainer.innerHTML);
-                alert('Ошибка: кейсы не добавлены в контейнер. Проверьте консоль.');
-                } else {
+            } else {
                 console.log('✅ Кейсов в контейнере:', casesContainer.children.length);
                 
                 // Убеждаемся что контейнер видим - ПРИНУДИТЕЛЬНО
-                casesContainer.style.setProperty('display', 'flex', 'important');
-                casesContainer.style.setProperty('visibility', 'visible', 'important');
-                casesContainer.style.setProperty('opacity', '1', 'important');
-                casesContainer.style.setProperty('position', 'relative', 'important');
-                casesContainer.style.setProperty('width', '100%', 'important');
-                casesContainer.style.setProperty('min-height', '200px', 'important');
+                casesContainer.style.display = 'flex';
+                casesContainer.style.visibility = 'visible';
+                casesContainer.style.opacity = '1';
+                casesContainer.style.position = 'relative';
+                casesContainer.style.width = '100%';
+                casesContainer.style.minHeight = '200px';
+                casesContainer.style.pointerEvents = 'auto';
+                
+                // Убеждаемся что родительская страница видима
+                const casesPage = document.getElementById('casesPage');
+                if (casesPage) {
+                    casesPage.style.display = 'block';
+                    casesPage.style.visibility = 'visible';
+                    casesPage.style.opacity = '1';
+                    casesPage.style.pointerEvents = 'auto';
+                }
                 
                 // Проверяем каждый элемент и делаем его видимым - ПРИНУДИТЕЛЬНО
                 Array.from(casesContainer.children).forEach((child, index) => {
                     console.log(`✅ Кейс ${index + 1}:`, child.className);
-                    child.style.setProperty('display', 'flex', 'important');
-                    child.style.setProperty('visibility', 'visible', 'important');
-                    child.style.setProperty('opacity', '1', 'important');
-                    child.style.setProperty('position', 'relative', 'important');
-                    child.style.setProperty('width', '100%', 'important');
+                    child.style.display = 'flex';
+                    child.style.visibility = 'visible';
+                    child.style.opacity = '1';
+                    child.style.position = 'relative';
+                    child.style.width = '100%';
                     child.style.setProperty('max-width', '600px', 'important');
                     child.style.setProperty('margin', '0 auto 20px auto', 'important');
                     child.style.setProperty('pointer-events', 'auto', 'important');
