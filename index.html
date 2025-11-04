@@ -701,12 +701,14 @@
             font-size: 20px;
             font-weight: 700;
             cursor: pointer;
-            margin: 30px auto;
+            margin: 20px auto;
             display: block;
             box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
             transition: all 0.3s;
             position: relative;
             z-index: 1;
+            width: calc(100% - 40px);
+            max-width: 400px;
         }
 
         .open-case-btn:hover {
@@ -3091,11 +3093,11 @@
             <div class="case-detail-price" id="detailPrice">0.1 <span class="currency-icon"></span></div>
         </div>
         
+        <button class="open-case-btn" id="openCaseBtn" onclick="openCase()">Открыть кейс</button>
+        
         <div class="whats-inside-title">Что может выпасть?</div>
         <div class="prizes-grid" id="prizesGrid">
         </div>
-        
-        <button class="open-case-btn" id="openCaseBtn" onclick="openCase()">Открыть кейс</button>
         
         <div id="rouletteContainer" class="roulette-container" style="display: none;">
             <div class="roulette-wrapper">
@@ -4307,17 +4309,25 @@
         
         // Функция открытия кейса с рулеткой
         function openCase() {
-            const caseDetailPage = document.getElementById('caseDetailPage');
-            if (!caseDetailPage) return;
+            console.log('🔵 openCase вызвана');
             
-            // Получаем ID кейса из URL или из сохраненного состояния
+            const caseDetailPage = document.getElementById('caseDetailPage');
+            if (!caseDetailPage) {
+                console.error('❌ caseDetailPage не найден');
+                return;
+            }
+            
+            // Получаем ID кейса из сохраненного состояния
             const caseId = currentOpeningCase || 1;
             const caseData = window.casesData[caseId];
             
             if (!caseData) {
                 alert('Кейс не найден');
+                console.error('❌ Кейс не найден, ID:', caseId);
                 return;
             }
+            
+            console.log('✅ Кейс найден:', caseData);
             
             // Проверяем баланс
             const balance = parseFloat(_balance || 0);
@@ -4333,33 +4343,47 @@
             const openBtn = document.getElementById('openCaseBtn');
             const prizesGrid = document.getElementById('prizesGrid');
             const whatsInside = document.querySelector('.whats-inside-title');
+            const caseDetailHeader = document.querySelector('.case-detail-header');
             
             if (openBtn) openBtn.style.display = 'none';
             if (prizesGrid) prizesGrid.style.display = 'none';
             if (whatsInside) whatsInside.style.display = 'none';
+            if (caseDetailHeader) caseDetailHeader.style.display = 'none';
             
             // Показываем рулетку
             const rouletteContainer = document.getElementById('rouletteContainer');
             if (rouletteContainer) {
-                rouletteContainer.style.display = 'block';
-                startRoulette(caseData);
+                rouletteContainer.style.display = 'flex';
+                console.log('✅ Показываю рулетку');
+                setTimeout(() => {
+                    startRoulette(caseData);
+                }, 100);
+            } else {
+                console.error('❌ rouletteContainer не найден');
             }
         }
         
         // Функция запуска рулетки
         function startRoulette(caseData) {
+            console.log('🔵 startRoulette вызвана');
+            
             const roulettePrize = document.getElementById('roulettePrize');
-            if (!roulettePrize) return;
+            if (!roulettePrize) {
+                console.error('❌ roulettePrize не найден');
+                return;
+            }
             
             // Список подарков для прокрутки (повторяем несколько раз для эффекта)
             const prizes = caseData.prizes;
-            const scrollItems = [...prizes, ...prizes, ...prizes, ...prizes];
+            const scrollItems = [...prizes, ...prizes, ...prizes, ...prizes, ...prizes];
             
             // Выбираем рандомный подарок
             const randomPrize = prizes[Math.floor(Math.random() * prizes.length)];
+            console.log('✅ Выбран подарок:', randomPrize);
             
             // Очищаем контейнер
             roulettePrize.innerHTML = '';
+            roulettePrize.style.transform = 'translateY(0)';
             
             // Создаем элементы для прокрутки
             scrollItems.forEach((prize, index) => {
@@ -4373,22 +4397,31 @@
                 img.style.width = '80px';
                 img.style.height = '80px';
                 img.style.objectFit = 'contain';
-                img.onerror = () => item.textContent = '🎁';
+                img.onerror = () => {
+                    item.textContent = '🎁';
+                    item.style.fontSize = '60px';
+                };
                 
                 item.appendChild(img);
                 roulettePrize.appendChild(item);
             });
             
-            // Находим позицию выбранного подарка (последний круг + случайная позиция)
-            const targetIndex = scrollItems.length - prizes.length + Math.floor(Math.random() * prizes.length);
+            // Находим позицию выбранного подарка в последнем круге
+            const randomIndexInLastCircle = Math.floor(Math.random() * prizes.length);
+            const targetIndex = (scrollItems.length - prizes.length) + randomIndexInLastCircle;
+            const targetPrize = scrollItems[targetIndex];
+            
+            // Используем выбранный подарок
+            const finalPrize = targetPrize || randomPrize;
             
             // Анимация прокрутки
             const duration = 3000;
             const startTime = Date.now();
             const startPosition = 0;
             const itemHeight = 100;
-            const totalHeight = scrollItems.length * itemHeight;
             const targetPosition = targetIndex * itemHeight;
+            
+            console.log('✅ Начинаю анимацию, targetPosition:', targetPosition);
             
             // Easing функция для плавного замедления
             function easeOutCubic(t) {
@@ -4407,17 +4440,18 @@
                     requestAnimationFrame(animate);
                 } else {
                     // Анимация завершена, показываем выигрыш
+                    console.log('✅ Анимация завершена, показываю подарок');
                     setTimeout(() => {
-                        showPrize(randomPrize);
+                        showPrize(finalPrize);
                     }, 500);
                 }
             }
             
-            // Запускаем анимацию
-            requestAnimationFrame(animate);
-            
             // Списываем баланс
             changeBalance(-caseData.price);
+            
+            // Запускаем анимацию
+            requestAnimationFrame(animate);
         }
         
         // Функция показа выигрыша
