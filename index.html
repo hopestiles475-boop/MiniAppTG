@@ -4575,7 +4575,15 @@
             console.log('✅ currentPrizes:', currentPrizes);
             console.log('✅ currentPrizes.length:', currentPrizes ? currentPrizes.length : 0);
             
+            // Проверяем, что currentPrizes установлены
+            if (!currentPrizes || currentPrizes.length === 0) {
+                console.warn('⚠️ currentPrizes пуст, восстанавливаем из currentCase');
+                currentPrizes = currentCase.prizes || [];
+                console.log('✅ Восстановили currentPrizes:', currentPrizes);
+            }
+            
             const openCaseFunc = function() {
+                    console.log('🔵🔵🔵 openCaseFunc НАЧАЛАСЬ!');
                     if (isOpening) {
                         console.warn('⚠️ Уже открывается, выходим');
                         return;
@@ -4889,7 +4897,13 @@
                 };
                 
                 console.log('✅ Вызываем openCaseFunc');
-                openCaseFunc();
+                try {
+                    openCaseFunc();
+                } catch (err) {
+                    console.error('❌ ОШИБКА в openCaseFunc:', err);
+                    isOpening = false;
+                    alert('Ошибка при открытии кейса: ' + err.message);
+                }
         };
         
         // Убеждаемся, что функция доступна глобально
@@ -5279,33 +5293,50 @@
                 // Единая функция обработки клика
                 const handleOpenClick = function(e) {
                     console.log('🔵🔵🔵 КЛИК ПО КНОПКЕ ОТКРЫТЬ!');
+                    console.log('🔵 Событие:', e);
+                    
                     if (e) {
                         e.preventDefault();
                         e.stopPropagation();
                         e.stopImmediatePropagation();
                     }
+                    
                     console.log('🔵 Клик по кнопке "Открыть"');
                     console.log('currentCase:', currentCase);
+                    console.log('currentCase type:', typeof currentCase);
                     console.log('isOpening:', isOpening);
                     console.log('typeof window.openCase:', typeof window.openCase);
                     console.log('typeof window.openCaseFull:', typeof window.openCaseFull);
                     
+                    // Проверяем currentCase
+                    if (!currentCase) {
+                        console.error('❌ currentCase пуст!');
+                        alert('Ошибка: Кейс не выбран. Вернитесь назад и выберите кейс снова.');
+                        return false;
+                    }
+                    
                     // Пробуем вызвать функцию напрямую
                     try {
+                        console.log('🔵 Пробуем вызвать функцию...');
                         if (typeof window.openCase === 'function') {
                             console.log('✅ Вызываем window.openCase()');
-                            window.openCase();
+                            const result = window.openCase();
+                            console.log('✅ window.openCase() вернула:', result);
                         } else if (typeof window.openCaseFull === 'function') {
                             console.log('✅ Вызываем window.openCaseFull()');
-                            window.openCaseFull();
+                            const result = window.openCaseFull();
+                            console.log('✅ window.openCaseFull() вернула:', result);
                         } else {
                             console.error('❌ Функция openCase не найдена!');
+                            console.error('window.openCase:', window.openCase);
+                            console.error('window.openCaseFull:', window.openCaseFull);
                             alert('Ошибка: Функция openCase не найдена. Перезагрузите страницу.');
                             return false;
                         }
                     } catch (err) {
-                        console.error('❌ Ошибка при вызове openCase:', err);
-                        alert('Ошибка: ' + err.message);
+                        console.error('❌ ОШИБКА при вызове openCase:', err);
+                        console.error('Stack:', err.stack);
+                        alert('Ошибка: ' + err.message + '\n\nПроверьте консоль для подробностей.');
                         return false;
                     }
                     
@@ -5320,6 +5351,14 @@
                 
                 // Также добавляем через mousedown для гарантии
                 newBtn.addEventListener('mousedown', function(e) {
+                    console.log('🔵 mousedown на кнопке');
+                    e.preventDefault();
+                    handleOpenClick(e);
+                });
+                
+                // Также добавляем touchstart для мобильных устройств
+                newBtn.addEventListener('touchstart', function(e) {
+                    console.log('🔵 touchstart на кнопке');
                     e.preventDefault();
                     handleOpenClick(e);
                 });
@@ -5327,6 +5366,13 @@
                 // Проверяем, что кнопка доступна
                 console.log('✅ Кнопка настроена, disabled:', newBtn.disabled);
                 console.log('✅ Кнопка pointer-events:', newBtn.style.pointerEvents);
+                console.log('✅ Кнопка style:', newBtn.style.cssText);
+                console.log('✅ Кнопка z-index:', window.getComputedStyle(newBtn).zIndex);
+                
+                // Тестируем, что кнопка видна
+                const rect = newBtn.getBoundingClientRect();
+                console.log('✅ Кнопка позиция:', rect);
+                console.log('✅ Кнопка видима:', rect.width > 0 && rect.height > 0);
                 
                 console.log('✅ Обработчики кнопки "Открыть" установлены');
             } else {
