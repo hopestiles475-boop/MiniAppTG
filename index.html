@@ -154,8 +154,21 @@
                     casesPage.style.height = '100%';
                     casesPage.style.zIndex = '100';
                     casesPage.style.pointerEvents = 'auto';
+                    
+                    // Скрываем кнопку подписки если она есть
+                    const subscribeBtn = document.querySelector('.subscribe-btn');
+                    if (subscribeBtn) {
+                        subscribeBtn.style.display = 'none';
+                    }
+                    
+                    // Загружаем кейсы сразу
+                    if (typeof loadCases === 'function') {
+                        loadCases();
+                    } else {
+                        console.error('❌ loadCases не найдена');
+                    }
+                    
                     setTimeout(function() {
-                        if (typeof loadCases === 'function') loadCases();
                         if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
                     }, 50);
                 } else if (page === 'profile' && profilePage) {
@@ -1492,6 +1505,24 @@
             overflow-y: auto;
             z-index: 100;
         }
+        
+        .cases-page .subscribe-btn {
+            display: none !important;
+        }
+        
+        .cases-container {
+            display: flex !important;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            justify-content: flex-start;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px 0;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
 
         .cases-header {
             text-align: center;
@@ -1504,13 +1535,6 @@
             font-weight: 700;
             color: #ffffff;
             margin-bottom: 20px;
-        }
-
-        .cases-container {
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
         }
 
         .case-card {
@@ -3935,7 +3959,12 @@
         // Функция загрузки кейсов из папок
         function loadCases() {
             const casesContainer = document.getElementById('casesContainer');
-            if (!casesContainer) return;
+            if (!casesContainer) {
+                console.error('❌ casesContainer не найден');
+                return;
+            }
+            
+            console.log('✅ Загружаю кейсы...');
             
             // Данные кейса 1 - добавляем цены для подарков
             const case1Data = {
@@ -3962,11 +3991,17 @@
             };
             
             // Сохраняем в глобальное хранилище
+            window.casesData = window.casesData || {};
             window.casesData[case1Data.id] = case1Data;
             
             const cases = [case1Data];
             
             casesContainer.innerHTML = '';
+            
+            // Убеждаемся, что контейнер видим
+            casesContainer.style.display = 'flex';
+            casesContainer.style.visibility = 'visible';
+            casesContainer.style.opacity = '1';
             
             cases.forEach(caseData => {
                 const caseCard = document.createElement('div');
@@ -3991,6 +4026,8 @@
                 
                 casesContainer.appendChild(caseCard);
             });
+            
+            console.log('✅ Кейсы загружены:', cases.length);
         }
         
         window.loadCases = loadCases;
