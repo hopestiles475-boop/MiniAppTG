@@ -3447,11 +3447,14 @@
         </div>
     </div>
 
-    <div id="casesPage" class="cases-page" style="display: none;">
-        <div class="cases-header">
-            <h2>Кейсы</h2>
+    <div id="casesPage" class="cases-page" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; z-index: 100; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); overflow-y: auto;">
+        <div class="cases-header" style="padding: 20px; text-align: center;">
+            <h2 style="color: white; font-size: 32px; margin: 0;">Кейсы</h2>
         </div>
-        <div class="cases-container" id="casesContainer">
+        <div class="cases-container" id="casesContainer" style="display: flex; flex-direction: column; gap: 20px; padding: 20px; min-height: 200px;">
+            <div style="padding: 20px; background: rgba(255, 0, 0, 0.5); margin: 10px; border-radius: 12px; color: white; font-size: 18px; font-weight: bold; text-align: center;">
+                🔴 ТЕСТ: Контейнер существует, ожидаю загрузки кейсов...
+            </div>
         </div>
         <script>
             // Принудительная загрузка кейсов сразу после создания контейнера
@@ -4934,16 +4937,18 @@
             console.log('✅ Всего кейсов для загрузки:', cases.length);
             console.log('✅ Данные кейсов:', cases.map(c => `#${c.id}`).join(', '));
             
-            // Очищаем контейнер
-            casesContainer.innerHTML = '';
-            console.log('✅ Контейнер очищен');
+            // Сохраняем тестовый элемент если он есть
+            const existingTestElement = casesContainer.querySelector('div[style*="ТЕСТ"]') || casesContainer.querySelector('div[style*="Тест"]');
             
-            // ВРЕМЕННО: добавляем тестовый элемент для проверки
-            const testDiv = document.createElement('div');
-            testDiv.style.cssText = 'padding: 20px; background: rgba(102, 126, 234, 0.3); margin: 10px; border-radius: 12px; color: white;';
-            testDiv.textContent = 'Тест: контейнер работает, загрузка кейсов...';
-            casesContainer.appendChild(testDiv);
-            console.log('✅ Тестовый элемент добавлен');
+            // Удаляем только старые карточки кейсов (если есть)
+            const existingCards = casesContainer.querySelectorAll('.case-card');
+            existingCards.forEach(card => card.remove());
+            console.log('✅ Старые карточки удалены:', existingCards.length);
+            
+            // Если есть тестовый элемент - не трогаем его
+            if (existingTestElement) {
+                console.log('✅ Тестовый элемент сохранен, будет удален после загрузки кейсов');
+            }
             
             // Убеждаемся, что контейнер видим - ПРИНУДИТЕЛЬНО
             casesContainer.style.display = 'flex';
@@ -5014,14 +5019,16 @@
             console.log('✅ Детей в контейнере:', casesContainer.children.length);
             
             // Удаляем тестовый элемент если кейсы загружены
-            const testElement = casesContainer.querySelector('div[style*="Тест"]');
+            const testElement = casesContainer.querySelector('div[style*="ТЕСТ"]') || casesContainer.querySelector('div[style*="Тест"]');
             if (testElement && cardsCreated > 0) {
                 testElement.remove();
                 console.log('✅ Тестовый элемент удален, кейсы загружены');
             }
             
             // Проверяем видимость контейнера
-            if (casesContainer.children.length === 0 || (casesContainer.children.length === 1 && testElement)) {
+            const totalChildren = casesContainer.children.length;
+            const hasTestElement = !!testElement;
+            if (cardsCreated === 0 || totalChildren === 0 || (totalChildren === 1 && hasTestElement)) {
                 console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: Кейсы не были добавлены в контейнер!');
                 console.error('❌ Контейнер существует:', !!casesContainer);
                 console.error('❌ Количество детей:', casesContainer ? casesContainer.children.length : 'контейнер не найден');
