@@ -249,25 +249,56 @@
                         }
                     }
                     
-                    // Вызываем сразу и с задержками
+                    // Вызываем сразу и с задержками - МНОЖЕСТВЕННО
                     forceLoadCases();
                     setTimeout(forceLoadCases, 50);
                     setTimeout(forceLoadCases, 100);
+                    setTimeout(forceLoadCases, 150);
                     setTimeout(forceLoadCases, 200);
                     setTimeout(forceLoadCases, 300);
                     setTimeout(forceLoadCases, 500);
+                    setTimeout(forceLoadCases, 800);
                     setTimeout(forceLoadCases, 1000);
+                    setTimeout(forceLoadCases, 1500);
+                    setTimeout(forceLoadCases, 2000);
                     
+                    // Дополнительная проверка и загрузка
                     setTimeout(function() {
                         if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
-                        // Дополнительная проверка через 2 секунды
+                        
+                        // Проверка через 1 секунду
+                        setTimeout(function() {
+                            const container = document.getElementById('casesContainer');
+                            console.log('🔵 Проверка через 1 сек, контейнер:', !!container);
+                            if (container) {
+                                console.log('🔵 Детей в контейнере:', container.children.length);
+                                if (container.children.length === 0) {
+                                    console.warn('⚠️ Кейсы не загружены через 1 сек, повторная попытка...');
+                                    forceLoadCases();
+                                }
+                            }
+                        }, 1000);
+                        
+                        // Проверка через 2 секунды
                         setTimeout(function() {
                             const container = document.getElementById('casesContainer');
                             if (container && container.children.length === 0) {
-                                console.warn('⚠️ Кейсы все еще не загружены, повторная попытка...');
+                                console.warn('⚠️ Кейсы все еще не загружены через 2 сек, повторная попытка...');
                                 forceLoadCases();
                             }
                         }, 2000);
+                        
+                        // Проверка через 3 секунды
+                        setTimeout(function() {
+                            const container = document.getElementById('casesContainer');
+                            if (container && container.children.length === 0) {
+                                console.error('❌ КРИТИЧЕСКАЯ ПРОБЛЕМА: Кейсы не загружены через 3 сек!');
+                                console.error('❌ Пробую прямой вызов loadCases...');
+                                if (typeof window.loadCases === 'function') {
+                                    window.loadCases();
+                                }
+                            }
+                        }, 3000);
                     }, 50);
                 } else if (page === 'profile' && profilePage) {
                     if (header) header.style.display = 'flex';
@@ -3385,7 +3416,7 @@
         </div>
     </div>
 
-    <div id="casesPage" class="cases-page" style="display: block;">
+    <div id="casesPage" class="cases-page" style="display: none;">
         <div class="cases-header">
             <h2>Кейсы</h2>
         </div>
@@ -3394,14 +3425,46 @@
         <script>
             // Принудительная загрузка кейсов сразу после создания контейнера
             (function() {
-                setTimeout(function() {
+                function tryLoadCases() {
+                    console.log('🔵 Попытка загрузки кейсов из HTML скрипта');
+                    const container = document.getElementById('casesContainer');
+                    const page = document.getElementById('casesPage');
+                    console.log('🔵 Контейнер найден:', !!container);
+                    console.log('🔵 Страница найдена:', !!page);
+                    
                     if (typeof window.loadCases === 'function') {
-                        console.log('🔵 Прямой вызов loadCases из HTML');
-                        window.loadCases();
+                        console.log('🔵 window.loadCases найдена, вызываю...');
+                        try {
+                            window.loadCases();
+                        } catch (e) {
+                            console.error('❌ Ошибка при вызове loadCases:', e);
+                        }
                     } else {
-                        console.error('❌ window.loadCases не найдена в HTML');
+                        console.error('❌ window.loadCases не найдена, тип:', typeof window.loadCases);
+                        console.error('❌ Доступные функции:', Object.keys(window).filter(k => k.includes('Case')));
                     }
-                }, 100);
+                }
+                
+                // Пытаемся загрузить сразу
+                tryLoadCases();
+                
+                // Пытаемся с задержками
+                setTimeout(tryLoadCases, 100);
+                setTimeout(tryLoadCases, 300);
+                setTimeout(tryLoadCases, 500);
+                setTimeout(tryLoadCases, 1000);
+                
+                // Также при полной загрузке страницы
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', tryLoadCases);
+                } else {
+                    setTimeout(tryLoadCases, 100);
+                }
+                
+                // И при полной загрузке
+                window.addEventListener('load', function() {
+                    setTimeout(tryLoadCases, 200);
+                });
             })();
         </script>
     </div>
@@ -4823,10 +4886,18 @@
             const cases = [case1Data, case2Data, case3Data, case4Data, case5Data, case6Data, case7Data];
             
             console.log('✅ Всего кейсов для загрузки:', cases.length);
+            console.log('✅ Данные кейсов:', cases.map(c => `#${c.id}`).join(', '));
             
             // Очищаем контейнер
             casesContainer.innerHTML = '';
             console.log('✅ Контейнер очищен');
+            
+            // ВРЕМЕННО: добавляем тестовый элемент для проверки
+            const testDiv = document.createElement('div');
+            testDiv.style.cssText = 'padding: 20px; background: rgba(102, 126, 234, 0.3); margin: 10px; border-radius: 12px; color: white;';
+            testDiv.textContent = 'Тест: контейнер работает, загрузка кейсов...';
+            casesContainer.appendChild(testDiv);
+            console.log('✅ Тестовый элемент добавлен');
             
             // Убеждаемся, что контейнер видим - ПРИНУДИТЕЛЬНО
             casesContainer.style.display = 'flex';
@@ -4896,8 +4967,15 @@
             console.log('✅ Кейсы загружены:', cardsCreated, 'из', cases.length, 'контейнер:', casesContainer);
             console.log('✅ Детей в контейнере:', casesContainer.children.length);
             
+            // Удаляем тестовый элемент если кейсы загружены
+            const testElement = casesContainer.querySelector('div[style*="Тест"]');
+            if (testElement && cardsCreated > 0) {
+                testElement.remove();
+                console.log('✅ Тестовый элемент удален, кейсы загружены');
+            }
+            
             // Проверяем видимость контейнера
-            if (casesContainer.children.length === 0) {
+            if (casesContainer.children.length === 0 || (casesContainer.children.length === 1 && testElement)) {
                 console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: Кейсы не были добавлены в контейнер!');
                 console.error('❌ Контейнер существует:', !!casesContainer);
                 console.error('❌ Количество детей:', casesContainer ? casesContainer.children.length : 'контейнер не найден');
@@ -4952,23 +5030,42 @@
         console.log('✅ window.loadCases установлена, тип:', typeof window.loadCases);
         
         // Принудительная загрузка кейсов при загрузке страницы
+        function forceLoadCasesOnReady() {
+            console.log('🔵 forceLoadCasesOnReady вызвана, readyState:', document.readyState);
+            const container = document.getElementById('casesContainer');
+            console.log('🔵 Контейнер в forceLoadCasesOnReady:', !!container);
+            
+            if (typeof loadCases === 'function') {
+                console.log('🔵 Вызываю loadCases из forceLoadCasesOnReady');
+                try {
+                    loadCases();
+                } catch (e) {
+                    console.error('❌ Ошибка в loadCases:', e);
+                }
+            } else {
+                console.error('❌ loadCases не найдена в forceLoadCasesOnReady');
+            }
+        }
+        
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(function() {
-                    if (typeof loadCases === 'function') {
-                        console.log('🔵 Принудительная загрузка кейсов при DOMContentLoaded');
-                        loadCases();
-                    }
-                }, 200);
+                console.log('🔵 DOMContentLoaded произошел');
+                setTimeout(forceLoadCasesOnReady, 100);
+                setTimeout(forceLoadCasesOnReady, 300);
+                setTimeout(forceLoadCasesOnReady, 500);
             });
-                } else {
-            setTimeout(function() {
-                if (typeof loadCases === 'function') {
-                    console.log('🔵 Принудительная загрузка кейсов (DOM уже загружен)');
-                    loadCases();
-                }
-            }, 200);
+        } else {
+            console.log('🔵 DOM уже загружен, вызываю сразу');
+            setTimeout(forceLoadCasesOnReady, 100);
+            setTimeout(forceLoadCasesOnReady, 300);
+            setTimeout(forceLoadCasesOnReady, 500);
         }
+        
+        // Также при полной загрузке страницы
+        window.addEventListener('load', function() {
+            console.log('🔵 window.load произошел');
+            setTimeout(forceLoadCasesOnReady, 200);
+        });
         
         // Функция показа деталей кейса
         function showCaseDetail(caseId) {
