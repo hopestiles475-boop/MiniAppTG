@@ -89,12 +89,25 @@
             window.handleNavClick = function(page, clickedItem) {
                 if (!page) return;
                 
-                // Обновляем активную вкладку
+                console.log('🔵 Переключение на вкладку:', page);
+                
+                // Обновляем активную вкладку - ПРИНУДИТЕЛЬНО
                 var items = document.querySelectorAll('.nav-item');
                 for (var i = 0; i < items.length; i++) {
                     items[i].classList.remove('active');
+                    items[i].style.color = 'rgba(255, 255, 255, 0.7)';
                 }
-                if (clickedItem) clickedItem.classList.add('active');
+                if (clickedItem) {
+                    clickedItem.classList.add('active');
+                    clickedItem.style.color = '#667eea';
+                } else {
+                    // Если clickedItem не передан, находим по data-page
+                    var targetItem = document.querySelector('.nav-item[data-page="' + page + '"]');
+                    if (targetItem) {
+                        targetItem.classList.add('active');
+                        targetItem.style.color = '#667eea';
+                    }
+                }
                 
                 // Получаем страницы
                 var mainPage = document.getElementById('mainPage');
@@ -192,6 +205,32 @@
                 // Показываем нужную страницу и инициализируем
                 if (page === 'cases' && casesPage) {
                     console.log('🔵 Переключение на вкладку Кейсы');
+                    
+                    // АГРЕССИВНО скрываем все остальные страницы
+                    if (crashPage) {
+                        crashPage.style.display = 'none';
+                        crashPage.style.visibility = 'hidden';
+                        crashPage.style.opacity = '0';
+                        crashPage.style.pointerEvents = 'none';
+                        crashPage.style.zIndex = '-1';
+                        crashPage.classList.remove('active');
+                    }
+                    if (minesPage) {
+                        minesPage.style.display = 'none';
+                        minesPage.style.visibility = 'hidden';
+                        minesPage.style.opacity = '0';
+                        minesPage.style.pointerEvents = 'none';
+                        minesPage.style.zIndex = '-1';
+                        minesPage.classList.remove('active');
+                    }
+                    if (dicePage) {
+                        dicePage.style.display = 'none';
+                        dicePage.style.visibility = 'hidden';
+                        dicePage.style.opacity = '0';
+                        dicePage.style.pointerEvents = 'none';
+                        dicePage.style.zIndex = '-1';
+                        dicePage.classList.remove('active');
+                    }
                     
                     // Убеждаемся что кейсы НЕ скрыты - ПРИНУДИТЕЛЬНО
                     casesPage.style.display = 'block';
@@ -353,13 +392,30 @@
                         if (typeof initWithdrawHandlers === 'function') initWithdrawHandlers();
                     }, 50);
                 } else if (page === 'crash' && crashPage) {
-                    // Убеждаемся что кейсы скрыты
+                    // АГРЕССИВНО скрываем все остальные страницы
                     if (casesPage) {
                         casesPage.style.display = 'none';
                         casesPage.style.visibility = 'hidden';
                         casesPage.style.opacity = '0';
                         casesPage.style.pointerEvents = 'none';
                         casesPage.style.zIndex = '-1';
+                        casesPage.classList.remove('active');
+                    }
+                    if (minesPage) {
+                        minesPage.style.display = 'none';
+                        minesPage.style.visibility = 'hidden';
+                        minesPage.style.opacity = '0';
+                        minesPage.style.pointerEvents = 'none';
+                        minesPage.style.zIndex = '-1';
+                        minesPage.classList.remove('active');
+                    }
+                    if (dicePage) {
+                        dicePage.style.display = 'none';
+                        dicePage.style.visibility = 'hidden';
+                        dicePage.style.opacity = '0';
+                        dicePage.style.pointerEvents = 'none';
+                        dicePage.style.zIndex = '-1';
+                        dicePage.classList.remove('active');
                     }
                     if (caseDetailPage) {
                         caseDetailPage.style.display = 'none';
@@ -407,13 +463,30 @@
                         }
                     }, 50);
                 } else if (page === 'mines' && minesPage) {
-                    // Убеждаемся что кейсы скрыты
+                    // АГРЕССИВНО скрываем все остальные страницы
                     if (casesPage) {
                         casesPage.style.display = 'none';
                         casesPage.style.visibility = 'hidden';
                         casesPage.style.opacity = '0';
                         casesPage.style.pointerEvents = 'none';
                         casesPage.style.zIndex = '-1';
+                        casesPage.classList.remove('active');
+                    }
+                    if (crashPage) {
+                        crashPage.style.display = 'none';
+                        crashPage.style.visibility = 'hidden';
+                        crashPage.style.opacity = '0';
+                        crashPage.style.pointerEvents = 'none';
+                        crashPage.style.zIndex = '-1';
+                        crashPage.classList.remove('active');
+                    }
+                    if (dicePage) {
+                        dicePage.style.display = 'none';
+                        dicePage.style.visibility = 'hidden';
+                        dicePage.style.opacity = '0';
+                        dicePage.style.pointerEvents = 'none';
+                        dicePage.style.zIndex = '-1';
+                        dicePage.classList.remove('active');
                     }
                     if (caseDetailPage) {
                         caseDetailPage.style.display = 'none';
@@ -460,13 +533,30 @@
                         }
                     }, 50);
                 } else if (page === 'dice' && dicePage) {
-                    // Убеждаемся что кейсы скрыты
+                    // АГРЕССИВНО скрываем все остальные страницы
                     if (casesPage) {
                         casesPage.style.display = 'none';
                         casesPage.style.visibility = 'hidden';
                         casesPage.style.opacity = '0';
                         casesPage.style.pointerEvents = 'none';
                         casesPage.style.zIndex = '-1';
+                        casesPage.classList.remove('active');
+                    }
+                    if (crashPage) {
+                        crashPage.style.display = 'none';
+                        crashPage.style.visibility = 'hidden';
+                        crashPage.style.opacity = '0';
+                        crashPage.style.pointerEvents = 'none';
+                        crashPage.style.zIndex = '-1';
+                        crashPage.classList.remove('active');
+                    }
+                    if (minesPage) {
+                        minesPage.style.display = 'none';
+                        minesPage.style.visibility = 'hidden';
+                        minesPage.style.opacity = '0';
+                        minesPage.style.pointerEvents = 'none';
+                        minesPage.style.zIndex = '-1';
+                        minesPage.classList.remove('active');
                     }
                     if (caseDetailPage) {
                         caseDetailPage.style.display = 'none';
