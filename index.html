@@ -4327,6 +4327,29 @@
                 fetchGlobalPrizes();
             }, 3000);
             
+            // Обновляем баланс каждые 5 секунд (для обновления после пополнения)
+            setInterval(() => {
+                if (typeof loadUserData === 'function') {
+                    loadUserData();
+                }
+            }, 5000);
+            
+            // Обновляем баланс при возврате в приложение (когда пользователь возвращается из бота)
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    if (typeof loadUserData === 'function') {
+                        loadUserData();
+                    }
+                }
+            });
+            
+            // Обновляем баланс при получении фокуса окна
+            window.addEventListener('focus', () => {
+                if (typeof loadUserData === 'function') {
+                    loadUserData();
+                }
+            });
+            
             // Слушаем изменения в localStorage (для синхронизации между вкладками)
             window.addEventListener('storage', (e) => {
                 if (e.key === 'globalPrizes') {
@@ -5024,6 +5047,7 @@
             prizesGrid.innerHTML = '';
             currentPrizes = currentCase.prizes;
             
+            // Создаем элементы призов
             currentPrizes.forEach(prize => {
                 const prizeItem = document.createElement('div');
                 prizeItem.className = 'prize-item';
@@ -5033,54 +5057,88 @@
                 iconDiv.className = 'prize-icon';
                 
                 const iconStr = String(prize.icon || '');
-                if (iconStr.toLowerCase().includes('.png') || iconStr.toLowerCase().includes('.jpg') || iconStr.toLowerCase().includes('.jpeg')) {
+                if (iconStr.toLowerCase().includes('.png') || iconStr.toLowerCase().includes('.jpg') || iconStr.toLowerCase().includes('.jpeg') || iconStr.toLowerCase().includes('.gif') || iconStr.toLowerCase().includes('.webp')) {
                     const img = document.createElement('img');
+                    img.alt = prize.name || 'Prize';
+                    img.style.width = '60px';
+                    img.style.height = '60px';
+                    img.style.objectFit = 'contain';
+                    img.style.display = 'block';
+                    img.loading = 'eager';
                     
                     // Пробуем разные варианты пути
-                    const tryLoadImage = (src) => {
+                    let attempts = 0;
+                    const maxAttempts = 4;
+                    const tryLoadImage = (src, attempt = 0) => {
+                        attempts = attempt;
+                        if (attempt > maxAttempts) {
+                            console.error('Failed to load prize image after all attempts:', src);
+                            img.style.display = 'none';
+                            const textNode = document.createTextNode(prize.name || '?');
+                            iconDiv.appendChild(textNode);
+                            return;
+                        }
+                        
                         img.src = src;
-                        img.alt = prize.name || 'Prize';
-                        img.style.width = '60px';
-                        img.style.height = '60px';
-                        img.style.objectFit = 'contain';
-                        img.style.display = 'block';
                         
                         img.onload = function() {
                             console.log('Prize image loaded:', this.src);
+                            this.style.display = 'block';
                         };
                         
                         img.onerror = function() {
-                            console.error('Failed to load prize image:', this.src);
-                            // Пробуем декодировать путь
-                            try {
-                                const decodedPath = decodeURIComponent(src);
-                                if (decodedPath !== src) {
-                                    this.src = decodedPath;
-                                    return;
-                                }
-                            } catch(e) {}
+                            console.warn(`Failed to load prize image (attempt ${attempt + 1}/${maxAttempts + 1}):`, this.src);
                             
-                            // Пробуем закодировать путь
-                            try {
-                                const encodedPath = encodeURI(src);
-                                if (encodedPath !== src) {
-                                    this.src = encodedPath;
-                                    return;
-                                }
-                            } catch(e) {}
+                            // Пробуем разные варианты пути
+                            let nextSrc = null;
                             
-                            // Если ничего не помогло, показываем название
-                            this.style.display = 'none';
-                            const textNode = document.createTextNode(prize.name || '?');
-                            if (this.parentElement) {
-                                this.parentElement.appendChild(textNode);
+                            if (attempt === 0) {
+                                // Попытка 1: декодировать URL
+                                try {
+                                    const decodedPath = decodeURIComponent(src);
+                                    if (decodedPath !== src) {
+                                        nextSrc = decodedPath;
+                                    }
+                                } catch(e) {}
+                            } else if (attempt === 1) {
+                                // Попытка 2: закодировать URL
+                                try {
+                                    const encodedPath = encodeURI(src);
+                                    if (encodedPath !== src) {
+                                        nextSrc = encodedPath;
+                                    }
+                                } catch(e) {}
+                            } else if (attempt === 2) {
+                                // Попытка 3: убрать пробелы и специальные символы
+                                try {
+                                    const cleanPath = src.replace(/\s+/g, '%20');
+                                    if (cleanPath !== src) {
+                                        nextSrc = cleanPath;
+                                    }
+                                } catch(e) {}
+                            } else if (attempt === 3) {
+                                // Попытка 4: добавить относительный путь если его нет
+                                if (!src.startsWith('/') && !src.startsWith('http')) {
+                                    nextSrc = '/' + src;
+                                }
+                            }
+                            
+                            if (nextSrc) {
+                                setTimeout(() => tryLoadImage(nextSrc, attempt + 1), 100);
+                            } else {
+                                // Если ничего не помогло, показываем название
+                                this.style.display = 'none';
+                                const textNode = document.createTextNode(prize.name || '?');
+                                if (this.parentElement) {
+                                    this.parentElement.appendChild(textNode);
+                                }
                             }
                         };
                         
                         iconDiv.appendChild(img);
                     };
                     
-                    tryLoadImage(prize.icon);
+                    tryLoadImage(prize.icon, 0);
                 } else {
                     iconDiv.textContent = prize.icon || '?';
                 }
@@ -5102,44 +5160,64 @@
             const openBtn = document.getElementById('openBtn');
             if (openBtn) {
                 console.log('✅ Найдена кнопка openBtn, устанавливаю обработчики');
-                openBtn.disabled = false;
-                openBtn.classList.add('show');
-                openBtn.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; bottom: 100px !important; left: 20px !important; right: 20px !important; z-index: 99999 !important; pointer-events: auto !important; cursor: pointer !important;';
-                openBtn.innerHTML = 'Открыть <span>🚀</span>';
+                console.log('✅ currentCase:', currentCase);
+                console.log('✅ isOpening:', isOpening);
                 
                 // Удаляем старые обработчики через клонирование
                 const newBtn = openBtn.cloneNode(true);
+                // Удаляем атрибут onclick из HTML, чтобы избежать конфликтов
+                newBtn.removeAttribute('onclick');
                 openBtn.parentNode.replaceChild(newBtn, openBtn);
                 
-                // Устанавливаем новые обработчики
-                newBtn.onclick = function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
+                // Обновляем стили и состояние кнопки
+                newBtn.disabled = false;
+                newBtn.classList.add('show');
+                newBtn.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; bottom: 100px !important; left: 20px !important; right: 20px !important; z-index: 99999 !important; pointer-events: auto !important; cursor: pointer !important;';
+                newBtn.innerHTML = 'Открыть <span>🚀</span>';
+                
+                // Единая функция обработки клика
+                const handleOpenClick = function(e) {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                    }
                     console.log('🔵 Клик по кнопке "Открыть"');
                     console.log('currentCase:', currentCase);
                     console.log('isOpening:', isOpening);
-                    if (currentCase && !isOpening) {
-                        window.openCase();
-                    } else {
-                        console.error('❌ Нельзя открыть: currentCase =', currentCase, ', isOpening =', isOpening);
+                    
+                    if (!currentCase) {
+                        console.error('❌ currentCase не определена!');
                         if (tg) {
-                            tg.showAlert('Ошибка: Кейс не выбран или уже открывается');
+                            tg.showAlert('Ошибка: Кейс не выбран');
                         } else {
-                            alert('Ошибка: Кейс не выбран или уже открывается');
+                            alert('Ошибка: Кейс не выбран');
                         }
+                        return false;
                     }
+                    
+                    if (isOpening) {
+                        console.warn('⚠️ Кейс уже открывается');
+                        return false;
+                    }
+                    
+                    // Вызываем функцию открытия
+                    if (typeof window.openCase === 'function') {
+                        window.openCase();
+                    } else if (typeof openCase === 'function') {
+                        openCase();
+                    } else {
+                        console.error('❌ Функция openCase не найдена!');
+                        alert('Ошибка: Функция openCase не найдена');
+                    }
+                    return false;
                 };
                 
-                newBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    console.log('🔵 addEventListener клик по кнопке "Открыть"');
-                    if (currentCase && !isOpening) {
-                        window.openCase();
-                    }
-                }, true);
+                // Устанавливаем обработчик через onclick
+                newBtn.onclick = handleOpenClick;
+                
+                // Также добавляем через addEventListener для надежности
+                newBtn.addEventListener('click', handleOpenClick, { capture: true, once: false });
                 
                 console.log('✅ Обработчики кнопки "Открыть" установлены');
             } else {
