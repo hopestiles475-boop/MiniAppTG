@@ -4802,32 +4802,23 @@
             }
         };
         
-        // Полная версия функции openCase - УПРОЩЕННАЯ И РАБОТАЮЩАЯ
+        // Полная версия функции openCase - МАКСИМАЛЬНО ПРОСТАЯ
         window.openCaseFull = function() {
-            console.log('🔵 openCaseFull вызвана');
-            console.log('currentCase:', currentCase);
-            console.log('currentPrizes:', currentPrizes);
-            console.log('isOpening:', isOpening);
-            
+            // Базовые проверки
             if (!currentCase) {
-                console.error('❌ currentCase не определена!');
-                alert('Ошибка: Кейс не выбран. Вернитесь назад и выберите кейс снова.');
+                alert('Ошибка: Кейс не выбран');
                 return;
             }
             
             if (isOpening) {
-                console.warn('⚠️ Уже открывается');
                 return;
             }
             
             // Восстанавливаем currentPrizes если нужно
             if (!currentPrizes || currentPrizes.length === 0) {
-                console.warn('⚠️ currentPrizes пуст, восстанавливаем из currentCase');
                 currentPrizes = currentCase.prizes || [];
-                console.log('✅ Восстановили currentPrizes:', currentPrizes);
                 if (!currentPrizes || currentPrizes.length === 0) {
-                    console.error('❌ currentCase.prizes тоже пуст!');
-                    alert('Ошибка: В кейсе нет призов. Обратитесь к администратору.');
+                    alert('Ошибка: В кейсе нет призов');
                     return;
                 }
             }
@@ -4861,6 +4852,7 @@
                 return;
             }
             
+            // Скрываем кнопку и иконку
             if (openBtn) {
                 openBtn.style.display = 'none';
                 openBtn.disabled = true;
@@ -4870,9 +4862,8 @@
                 detailIcon.style.display = 'none';
             }
             
-            // Проверяем, что currentPrizes не пуст перед созданием рулетки
+            // Проверяем, что currentPrizes не пуст
             if (!currentPrizes || currentPrizes.length === 0) {
-                console.error('❌ currentPrizes пуст перед созданием рулетки!');
                 currentPrizes = currentCase.prizes || [];
                 if (!currentPrizes || currentPrizes.length === 0) {
                     alert('Ошибка: Нет доступных призов в кейсе');
@@ -4882,33 +4873,32 @@
             }
             
             // Создаем рулетку
-            if (typeof createRoulette === 'function') {
-                try {
+            try {
+                if (typeof createRoulette === 'function') {
                     createRoulette();
-                    console.log('✅ createRoulette выполнена успешно');
-                } catch (err) {
-                    console.error('❌ Ошибка в createRoulette:', err);
-                    alert('Ошибка при создании рулетки: ' + err.message);
+                } else {
+                    alert('Ошибка: Функция createRoulette не найдена');
                     isOpening = false;
                     return;
                 }
-            } else {
-                console.error('❌ createRoulette не является функцией!');
-                alert('Ошибка: Функция createRoulette не найдена');
+            } catch (err) {
+                alert('Ошибка при создании рулетки: ' + err.message);
                 isOpening = false;
                 return;
             }
             
-            // Принудительно показываем контейнер рулетки
+            // ПРИНУДИТЕЛЬНО показываем контейнер рулетки
             rouletteContainer.style.cssText = `
                 display: block !important;
                 visibility: visible !important;
                 opacity: 1 !important;
                 width: 100% !important;
                 height: 200px !important;
+                min-height: 200px !important;
                 position: relative !important;
                 overflow: hidden !important;
-                z-index: 10 !important;
+                z-index: 100 !important;
+                background: rgba(255, 255, 255, 0.05) !important;
             `;
             rouletteContainer.classList.add('active');
 
@@ -4916,9 +4906,9 @@
                 tg.HapticFeedback.impactOccurred('heavy');
             }
             
-            // Даем время на отрисовку элементов перед анимацией - ОДИН ТАЙМАУТ
+            // Даем время на отрисовку элементов перед анимацией
             setTimeout(() => {
-                // Проверяем, что рулетка создана
+                // Проверяем рулетку
                 const rouletteTrack = document.getElementById('rouletteTrack');
                 if (!rouletteTrack) {
                     alert('Ошибка: Рулетка не создана');
@@ -4928,19 +4918,12 @@
                 
                 const giftItems = rouletteTrack.querySelectorAll('.gift-item');
                 if (!giftItems || giftItems.length === 0) {
-                    alert('Ошибка: Элементы рулетки не созданы. Попробуйте еще раз.');
+                    alert('Ошибка: Элементы рулетки не созданы');
                     isOpening = false;
                     return;
                 }
                 
-                // Проверяем, что currentPrizes не пуст
-                if (!currentPrizes || currentPrizes.length === 0) {
-                    alert('Ошибка: Нет доступных призов');
-                    isOpening = false;
-                    return;
-                }
-                
-                // Сначала выбираем случайный приз из доступных
+                // Выбираем случайный приз
                 const randomPrize = currentPrizes[Math.floor(Math.random() * currentPrizes.length)];
                 
                 // Убеждаемся, что все элементы видны СРАЗУ
@@ -5587,60 +5570,53 @@
                 newBtn.removeAttribute('onclick');
                 openBtn.parentNode.replaceChild(newBtn, openBtn);
                 
-                // Обновляем стили и состояние кнопки
+                // Обновляем стили и состояние кнопки - МАКСИМАЛЬНО ВИДИМАЯ
                 newBtn.disabled = false;
                 newBtn.classList.add('show');
-                newBtn.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; bottom: 100px !important; left: 20px !important; right: 20px !important; z-index: 99999 !important; pointer-events: auto !important; cursor: pointer !important;';
-                newBtn.innerHTML = 'Открыть <span>🚀</span>';
+                newBtn.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; bottom: 100px !important; left: 20px !important; right: 20px !important; z-index: 999999 !important; pointer-events: auto !important; cursor: pointer !important; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; color: white !important; border: none !important; padding: 20px !important; border-radius: 24px !important; font-size: 20px !important; font-weight: 700 !important;';
+                newBtn.innerHTML = 'ОТКРЫТЬ <span>🚀</span>';
+                newBtn.id = 'openBtn'; // Убеждаемся что ID есть
                 
-                // Единая функция обработки клика - ПРОСТАЯ И ПРЯМАЯ
-                const handleOpenClick = function(e) {
-                    if (e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                    }
+                // МАКСИМАЛЬНО ПРОСТОЙ ОБРАБОТЧИК - ПРЯМОЙ ВЫЗОВ
+                newBtn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
                     
-                    console.log('🔵 КЛИК ПО КНОПКЕ ОТКРЫТЬ!');
-                    console.log('currentCase:', currentCase);
-                    console.log('isOpening:', isOpening);
-                    
-                    if (!currentCase) {
-                        alert('Ошибка: Кейс не выбран');
-                        return false;
-                    }
-                    
-                    if (isOpening) {
-                        console.warn('Уже открывается');
-                        return false;
-                    }
-                    
-                    // ВЫЗЫВАЕМ НАПРЯМУЮ window.openCaseFull
-                    try {
-                        if (typeof window.openCaseFull === 'function') {
-                            window.openCaseFull();
-                        } else if (typeof window.openCase === 'function') {
-                            window.openCase();
-                        } else {
-                            alert('Ошибка: Функция не найдена. Перезагрузите страницу.');
-                        }
-                    } catch (err) {
-                        console.error('Ошибка:', err);
-                        alert('Ошибка: ' + err.message);
+                    // Прямой вызов функции
+                    if (typeof window.openCaseFull === 'function') {
+                        window.openCaseFull();
+                    } else {
+                        alert('Функция не найдена');
                     }
                     
                     return false;
                 };
                 
-                // Устанавливаем обработчик ПРОСТО И ПРЯМО
-                newBtn.onclick = function(e) {
+                // Также через addEventListener для надежности
+                newBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    handleOpenClick(e);
-                };
+                    if (typeof window.openCaseFull === 'function') {
+                        window.openCaseFull();
+                    }
+                }, true);
                 
-                // Также через addEventListener
-                newBtn.addEventListener('click', handleOpenClick, true);
+                // И через mousedown для гарантии
+                newBtn.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    if (typeof window.openCaseFull === 'function') {
+                        window.openCaseFull();
+                    }
+                });
+                
+                // И через touchstart для мобильных
+                newBtn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    if (typeof window.openCaseFull === 'function') {
+                        window.openCaseFull();
+                    }
+                });
                 
                 // Делаем глобальную функцию для тестирования
                 window.testOpenCase = function() {
