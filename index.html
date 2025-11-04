@@ -3811,13 +3811,46 @@
                             saveUserData().catch(err => console.error('Ошибка сохранения баланса:', err));
                         }
                         
-                        // Загружаем инвентарь
-                        if (data.inventory && Array.isArray(data.inventory)) {
-                            userInventory = data.inventory;
-                            updateInventory();
-                        } else {
-                            loadInventory();
+                        // Загружаем инвентарь - объединяем локальный и серверный
+                        const localInventory = localStorage.getItem('userInventory');
+                        let localInventoryArray = [];
+                        if (localInventory) {
+                            try {
+                                localInventoryArray = JSON.parse(localInventory);
+                                if (!Array.isArray(localInventoryArray)) {
+                                    localInventoryArray = [];
+                                }
+                            } catch (e) {
+                                console.error('Ошибка парсинга локального инвентаря:', e);
+                                localInventoryArray = [];
+                            }
                         }
+                        
+                        const serverInventory = (data.inventory && Array.isArray(data.inventory)) ? data.inventory : [];
+                        
+                        // Используем инвентарь с большим количеством предметов
+                        // Это защищает от потери подарков при рассинхронизации
+                        if (localInventoryArray.length > serverInventory.length) {
+                            console.log(`⚠️ Локальный инвентарь (${localInventoryArray.length} предметов) больше серверного (${serverInventory.length}), используем локальный`);
+                            userInventory = localInventoryArray;
+                            // Сохраняем больший инвентарь обратно на сервер
+                            saveUserData().catch(err => console.error('Ошибка сохранения инвентаря:', err));
+                        } else if (serverInventory.length > 0) {
+                            console.log(`✅ Используем серверный инвентарь (${serverInventory.length} предметов)`);
+                            userInventory = serverInventory;
+                            // Сохраняем в localStorage для надежности
+                            try {
+                                localStorage.setItem('userInventory', JSON.stringify(userInventory));
+                            } catch (e) {
+                                console.error('Ошибка сохранения инвентаря локально:', e);
+                            }
+                        } else {
+                            // Если оба пустые, используем локальный (может там что-то есть)
+                            userInventory = localInventoryArray;
+                            console.log('⚠️ Оба инвентаря пустые или не найдены, используем локальный');
+                        }
+                        
+                        updateInventory();
                     }
                 } else {
                     console.log('Failed to load user data, using local storage');
@@ -3825,6 +3858,7 @@
                     if (localBalanceValue !== null) {
                         setBalanceFromServer(localBalanceValue);
                     }
+                    // Загружаем инвентарь из localStorage
                     loadInventory();
                 }
             } catch (error) {
@@ -3900,8 +3934,16 @@
                 const storedBalance = localStorage.getItem('userBalance');
                 
                 if (stored) {
-                    userInventory = JSON.parse(stored);
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed)) {
+                        userInventory = parsed;
+                        console.log('✅ Инвентарь загружен из localStorage:', userInventory.length, 'предметов');
+                    } else {
+                        console.warn('⚠️ Инвентарь в localStorage не массив, создаю пустой');
+                        userInventory = [];
+                    }
                 } else {
+                    console.log('ℹ️ Инвентарь в localStorage не найден, создаю пустой');
                     userInventory = [];
                 }
                 
@@ -3911,8 +3953,9 @@
                 
                 updateInventory();
             } catch (e) {
-                console.error('Failed to load inventory:', e);
+                console.error('❌ Ошибка загрузки инвентаря:', e);
                 userInventory = [];
+                updateInventory();
             }
         }
         
@@ -5052,47 +5095,72 @@
                 // Баланс будет начислен только при продаже предмета в инвентаре
                 
                 // Добавляем подарок в инвентарь
-                if (typeof userInventory !== 'undefined' && Array.isArray(userInventory)) {
-                    const inventoryItem = {
-                        icon: prize.icon,
-                        name: prize.name || `Предмет ${prize.value.toFixed(2)}`,
-                        value: prize.value,
-                        timestamp: Date.now(),
-                        id: Date.now() + Math.random()
-                    };
-                    
-                    userInventory.push(inventoryItem);
-                    console.log('✅ Подарок добавлен в инвентарь:', inventoryItem);
-                    console.log('✅ Всего предметов в инвентаре:', userInventory.length);
-                    
-                    // Сохраняем инвентарь
-                    if (typeof saveInventory === 'function') {
-                        saveInventory();
-                        console.log('✅ Инвентарь сохранен локально');
+                // КРИТИЧЕСКИ ВАЖНО: убеждаемся что userInventory это массив
+                if (typeof userInventory === 'undefined') {
+                    userInventory = [];
+                    console.warn('⚠️ userInventory не определен, создаю новый массив');
+                }
+                
+                if (!Array.isArray(userInventory)) {
+                    console.warn('⚠️ userInventory не массив, преобразую в массив. Тип:', typeof userInventory, 'Значение:', userInventory);
+                    // Загружаем из localStorage если возможно
+                    try {
+                        const stored = localStorage.getItem('userInventory');
+                        if (stored) {
+                            userInventory = JSON.parse(stored);
+                            if (!Array.isArray(userInventory)) {
+                                userInventory = [];
+                            }
+                        } else {
+                            userInventory = [];
+                        }
+                    } catch (e) {
+                        console.error('Ошибка загрузки инвентаря из localStorage:', e);
+                        userInventory = [];
                     }
-                    
-                    // Сохраняем на сервер
-                    if (typeof saveUserData === 'function') {
-                        saveUserData().then(() => {
-                            console.log('✅ Данные сохранены на сервер');
-                        }).catch(err => {
-                            console.error('❌ Ошибка сохранения на сервер:', err);
-                        });
-                    }
-                    
-                    // Обновляем отображение инвентаря
-                    if (typeof updateInventory === 'function') {
-                        setTimeout(() => {
-                            updateInventory();
-                            console.log('✅ Инвентарь обновлен на экране');
-                        }, 100);
-                    }
-                } else {
-                    console.error('❌ userInventory не найден или не является массивом');
-                    console.error('   Тип userInventory:', typeof userInventory);
-                    if (typeof userInventory !== 'undefined') {
-                        console.error('   userInventory:', userInventory);
-                    }
+                }
+                
+                const inventoryItem = {
+                    icon: prize.icon,
+                    name: prize.name || `Предмет ${prize.value.toFixed(2)}`,
+                    value: prize.value,
+                    timestamp: Date.now(),
+                    id: Date.now() + Math.random()
+                };
+                
+                userInventory.push(inventoryItem);
+                console.log('✅ Подарок добавлен в инвентарь:', inventoryItem);
+                console.log('✅ Всего предметов в инвентаре:', userInventory.length);
+                
+                // Сохраняем инвентарь СРАЗУ в localStorage
+                try {
+                    localStorage.setItem('userInventory', JSON.stringify(userInventory));
+                    console.log('✅ Инвентарь сохранен в localStorage, количество:', userInventory.length);
+                } catch (e) {
+                    console.error('❌ Ошибка сохранения инвентаря в localStorage:', e);
+                }
+                
+                // Сохраняем на сервер (асинхронно, не блокируем)
+                if (typeof saveUserData === 'function') {
+                    saveUserData().then(() => {
+                        console.log('✅ Данные сохранены на сервер, инвентарь:', userInventory.length, 'предметов');
+                    }).catch(err => {
+                        console.error('❌ Ошибка сохранения на сервер:', err);
+                        // При ошибке сохраняем хотя бы локально
+                        try {
+                            localStorage.setItem('userInventory', JSON.stringify(userInventory));
+                        } catch (e) {
+                            console.error('❌ Критическая ошибка сохранения локально:', e);
+                        }
+                    });
+                }
+                
+                // Обновляем отображение инвентаря
+                if (typeof updateInventory === 'function') {
+                    setTimeout(() => {
+                        updateInventory();
+                        console.log('✅ Инвентарь обновлен на экране, предметов:', userInventory.length);
+                    }, 100);
                 }
             }
         }
