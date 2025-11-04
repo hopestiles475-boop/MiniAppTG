@@ -1798,14 +1798,14 @@
         .cases-container {
             display: flex !important;
             flex-direction: column;
-            gap: 20px;
+            gap: 12px;
             align-items: center;
             justify-content: flex-start;
             width: 100%;
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
-            padding-top: 40px;
+            padding: 12px;
+            padding-top: 20px;
             visibility: visible !important;
             opacity: 1 !important;
             min-height: 200px;
@@ -1814,49 +1814,50 @@
         .cases-container:empty::before {
             content: 'Загрузка кейсов...';
             color: rgba(255, 255, 255, 0.5);
-            font-size: 16px;
+            font-size: 14px;
         }
 
         .cases-header {
             text-align: center;
-            padding: 20px;
-            padding-top: 40px;
+            padding: 12px;
+            padding-top: 20px;
         }
 
         .cases-header h2 {
-            font-size: 32px;
+            font-size: 24px;
             font-weight: 700;
             color: #ffffff;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
         }
 
         .case-card {
             background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
-            border-radius: 24px;
-            padding: 20px;
+            border-radius: 16px;
+            padding: 12px;
             border: 2px solid rgba(255, 255, 255, 0.15);
             cursor: pointer;
             transition: all 0.4s;
             display: flex;
             align-items: center;
-            gap: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            gap: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            width: 100%;
         }
 
         .case-card:hover {
-            transform: translateY(-4px);
+            transform: translateY(-2px);
             border-color: rgba(102, 126, 234, 0.5);
-            box-shadow: 0 12px 48px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 24px rgba(102, 126, 234, 0.4);
             background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
         }
 
         .case-icon {
-            width: 120px;
-            height: 120px;
-            min-width: 120px;
+            width: 80px;
+            height: 80px;
+            min-width: 80px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 15px;
+            border-radius: 12px;
+            padding: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1874,33 +1875,33 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 4px;
         }
 
         .case-name {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: 700;
             color: #ffffff;
         }
 
         .case-description {
-            font-size: 16px;
+            font-size: 13px;
             color: rgba(255, 255, 255, 0.7);
         }
 
         .case-price {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 700;
             color: #667eea;
             display: flex;
             align-items: center;
-            gap: 6px;
-            margin-top: 8px;
+            gap: 4px;
+            margin-top: 4px;
         }
 
         .case-price .currency-icon {
-            width: 18px;
-            height: 18px;
+            width: 14px;
+            height: 14px;
         }
 
         .crash-page {
