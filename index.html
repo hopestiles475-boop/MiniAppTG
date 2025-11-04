@@ -672,9 +672,7 @@
         }
 
         .prize-name {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.8);
-            font-weight: 500;
+            display: none !important;
         }
 
         .back-btn {
@@ -3966,27 +3964,26 @@
             
             console.log('✅ Загружаю кейсы...');
             
-            // Данные кейса 1 - добавляем цены для подарков
+            // Данные кейса 1 - добавляем цены для подарков (первый предмет убран)
             const case1Data = {
                 id: 1,
                 icon: 'Case1/Case/OA2YI79hneequQi62NNm5RTa0jw-sxBTwlrfcD4cx18nkOBqIQ-edited-free%20(carve.photos).png',
                 price: 0.1,
                 prizes: [
-                    { icon: 'Case1/_D0XSaGmN7sJKEqjy0b9AaZOeqNBYK-HQ2iXL3fx0KLNqjlEfW-edited-free%20(carve.photos).png', name: 'Предмет 1', value: 82.17 },
-                    { icon: 'Case1/7aggEGM43iT4zaeQ90WDXbKgaxRuIctX8OzjKHUoNGYKDTiEdT-no-bg-preview%20(carve.photos).png', name: 'Предмет 2', value: 75.66 },
-                    { icon: 'Case1/AW7Qv-lm22xsWd8ZnVjP7pVDjzBgqo-x9-7UoZO2ekVCWsWsAl-edited-free%20(carve.photos).png', name: 'Предмет 3', value: 69.30 },
-                    { icon: 'Case1/cIBPnG2m_9uqU5vfNaXES6TIPHfksPhjIYc8nPIjbVuiGb317Z-no-bg-preview%20(carve.photos).png', name: 'Предмет 4', value: 25.27 },
-                    { icon: 'Case1/g7a9ySOF7wq3mu2Shuxr67enQDHEcB0zcgllGa59ked5fEcXN-yfwBe-9z2LBU_7zbVRyb2z2-DCQaLdGYWqfUqS-Photoroom.png', name: 'Предмет 5', value: 23.50 },
-                    { icon: 'Case1/Jftdn-uPpbWzly4TEgsyY3LBDQUkI1Q0hcmopC-HAru9nM5uJW-no-bg-preview%20(carve.photos).png', name: 'Предмет 6', value: 17.00 },
-                    { icon: 'Case1/kIMnTGaiutK0Ou4X_-RRh2ckiNpdKQBCMNtnb9wRdYmxf_kJ3s-no-bg-preview%20(carve.photos).png', name: 'Предмет 7', value: 11.40 },
-                    { icon: 'Case1/KQdlr7WVUg4qZZ3J0muYmXNRCePTR-p8n74r-_r7zQMhtyuhHTUb9JrOU6rTAjB9tnNBBplZGBXyh-YxLPQnqYZO-Photoroom.png', name: 'Предмет 8', value: 8.64 },
-                    { icon: 'Case1/L3L25Ezu2782EQaWm5os_oi1ELu1qudKKDGbeP4FMGOxxjKCBi-no-bg-preview%20(carve.photos).png', name: 'Предмет 9', value: 7.90 },
-                    { icon: 'Case1/llJ3ZTgJvieSHhmehyG9LuNG5M2dY7tr5bPpctgOh6H_Mz4bal-edited-free%20(carve.photos).png', name: 'Предмет 10', value: 6.50 },
-                    { icon: 'Case1/NE-peoxoim_KxZ6SDxHjoRAwQSnt7tj6rcRUOgvyfYHoXKlU9f-no-bg-preview%20(carve.photos).png', name: 'Предмет 11', value: 5.20 },
-                    { icon: 'Case1/QWvlnRQNdZo2nqVt5hI6ff7l3ZpxK-IGc3X10-CUGLv10ycEwc-no-bg-preview%20(carve.photos).png', name: 'Предмет 12', value: 4.80 },
-                    { icon: 'Case1/rO9Afzk_7QoBW7-D-94uoD2JsyTsaZnp1prTIWnzp_AsMeQrp--no-bg-preview%20(carve.photos).png', name: 'Предмет 13', value: 3.60 },
-                    { icon: 'Case1/SZPAhV0giLdoCjqwE0tP2Fa3_NfB65B54BuJKToWItApL6Qtt3-no-bg-preview%20(carve.photos).png', name: 'Предмет 14', value: 2.40 },
-                    { icon: 'Case1/VqbJmqTX4m3Um9XF5l6aFIETbR-TRBmBrEOiHLnxicnI8Bfqoh-no-bg-preview%20(carve.photos).png', name: 'Предмет 15', value: 1.20 }
+                    { icon: 'Case1/7aggEGM43iT4zaeQ90WDXbKgaxRuIctX8OzjKHUoNGYKDTiEdT-no-bg-preview%20(carve.photos).png', value: 75.66 },
+                    { icon: 'Case1/AW7Qv-lm22xsWd8ZnVjP7pVDjzBgqo-x9-7UoZO2ekVCWsWsAl-edited-free%20(carve.photos).png', value: 69.30 },
+                    { icon: 'Case1/cIBPnG2m_9uqU5vfNaXES6TIPHfksPhjIYc8nPIjbVuiGb317Z-no-bg-preview%20(carve.photos).png', value: 25.27 },
+                    { icon: 'Case1/g7a9ySOF7wq3mu2Shuxr67enQDHEcB0zcgllGa59ked5fEcXN-yfwBe-9z2LBU_7zbVRyb2z2-DCQaLdGYWqfUqS-Photoroom.png', value: 23.50 },
+                    { icon: 'Case1/Jftdn-uPpbWzly4TEgsyY3LBDQUkI1Q0hcmopC-HAru9nM5uJW-no-bg-preview%20(carve.photos).png', value: 17.00 },
+                    { icon: 'Case1/kIMnTGaiutK0Ou4X_-RRh2ckiNpdKQBCMNtnb9wRdYmxf_kJ3s-no-bg-preview%20(carve.photos).png', value: 11.40 },
+                    { icon: 'Case1/KQdlr7WVUg4qZZ3J0muYmXNRCePTR-p8n74r-_r7zQMhtyuhHTUb9JrOU6rTAjB9tnNBBplZGBXyh-YxLPQnqYZO-Photoroom.png', value: 8.64 },
+                    { icon: 'Case1/L3L25Ezu2782EQaWm5os_oi1ELu1qudKKDGbeP4FMGOxxjKCBi-no-bg-preview%20(carve.photos).png', value: 7.90 },
+                    { icon: 'Case1/llJ3ZTgJvieSHhmehyG9LuNG5M2dY7tr5bPpctgOh6H_Mz4bal-edited-free%20(carve.photos).png', value: 6.50 },
+                    { icon: 'Case1/NE-peoxoim_KxZ6SDxHjoRAwQSnt7tj6rcRUOgvyfYHoXKlU9f-no-bg-preview%20(carve.photos).png', value: 5.20 },
+                    { icon: 'Case1/QWvlnRQNdZo2nqVt5hI6ff7l3ZpxK-IGc3X10-CUGLv10ycEwc-no-bg-preview%20(carve.photos).png', value: 4.80 },
+                    { icon: 'Case1/rO9Afzk_7QoBW7-D-94uoD2JsyTsaZnp1prTIWnzp_AsMeQrp--no-bg-preview%20(carve.photos).png', value: 3.60 },
+                    { icon: 'Case1/SZPAhV0giLdoCjqwE0tP2Fa3_NfB65B54BuJKToWItApL6Qtt3-no-bg-preview%20(carve.photos).png', value: 2.40 },
+                    { icon: 'Case1/VqbJmqTX4m3Um9XF5l6aFIETbR-TRBmBrEOiHLnxicnI8Bfqoh-no-bg-preview%20(carve.photos).png', value: 1.20 }
                 ]
             };
             
@@ -4097,7 +4094,7 @@
                     iconDiv.className = 'prize-icon';
                     const img = document.createElement('img');
                     img.src = prize.icon;
-                    img.alt = prize.name;
+                    img.alt = '';
                     img.style.width = '60px';
                     img.style.height = '60px';
                     img.style.objectFit = 'contain';
@@ -4110,11 +4107,6 @@
                     valueDiv.className = 'prize-value';
                     valueDiv.innerHTML = `${prize.value} <span class="currency-icon"></span>`;
                     prizeItem.appendChild(valueDiv);
-                    
-                    const nameDiv = document.createElement('div');
-                    nameDiv.className = 'prize-name';
-                    nameDiv.textContent = prize.name;
-                    prizeItem.appendChild(nameDiv);
                     
                     prizesGrid.appendChild(prizeItem);
                 });
