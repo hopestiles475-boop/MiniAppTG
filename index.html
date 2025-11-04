@@ -2205,19 +2205,21 @@
         .case-card {
             background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
             border-radius: 16px;
-            padding: 12px;
+            padding: 12px !important;
             border: 2px solid rgba(255, 255, 255, 0.15);
             cursor: pointer;
             transition: all 0.4s;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
-            position: relative;
-            overflow: hidden;
+            width: 100% !important;
+            max-width: 600px !important;
+            margin: 0 auto 12px auto !important;
+            position: relative !important;
+            overflow: hidden !important;
+            box-sizing: border-box !important;
+            min-height: 80px !important;
         }
 
         .case-card:hover {
@@ -2236,13 +2238,15 @@
             max-height: 80px !important;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 12px;
-            padding: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            padding: 8px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
             border: 2px solid rgba(255, 255, 255, 0.1);
-            overflow: hidden;
-            flex-shrink: 0;
+            overflow: hidden !important;
+            flex-shrink: 0 !important;
+            position: relative !important;
+            box-sizing: border-box !important;
         }
 
         .case-icon img {
@@ -2251,14 +2255,23 @@
             max-width: 100% !important;
             max-height: 100% !important;
             object-fit: contain !important;
-            display: block;
+            display: block !important;
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            box-sizing: border-box !important;
         }
 
         .case-info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 4px !important;
+            min-width: 0 !important;
+            overflow: hidden !important;
+            position: relative !important;
+            z-index: 1 !important;
         }
 
         .case-name {
@@ -5107,13 +5120,13 @@
                     const caseCard = document.createElement('div');
                     caseCard.className = 'case-card';
                     caseCard.dataset.case = caseData.id;
-                    caseCard.style.cursor = 'pointer';
+                    caseCard.style.cssText = 'cursor: pointer !important; display: flex !important; align-items: center !important; gap: 12px !important; width: 100% !important; max-width: 600px !important; margin: 0 auto 12px auto !important; position: relative !important; overflow: hidden !important; box-sizing: border-box !important; min-height: 80px !important;';
                     
                     caseCard.innerHTML = `
-                        <div class="case-icon">
-                            <img src="${caseData.icon}" alt="Кейс #${caseData.id}" onerror="this.style.display='none'; this.parentElement.innerHTML='🎁';">
+                        <div class="case-icon" style="width: 80px !important; height: 80px !important; max-width: 80px !important; max-height: 80px !important; flex-shrink: 0 !important; overflow: hidden !important;">
+                            <img src="${caseData.icon}" alt="Кейс #${caseData.id}" style="width: 100% !important; height: 100% !important; max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; display: block !important;" onerror="this.style.display='none'; this.parentElement.innerHTML='🎁';">
                         </div>
-                        <div class="case-info">
+                        <div class="case-info" style="flex: 1 !important; min-width: 0 !important; overflow: hidden !important;">
                             <div class="case-name">Кейс #${caseData.id}</div>
                             <div class="case-description">${caseData.prizes.length} предметов</div>
                             <div class="case-price">${caseData.price} <span class="currency-icon"></span></div>
