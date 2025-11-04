@@ -231,14 +231,23 @@
                 if (page === 'cases' && casesPage) {
                     console.log('🔵 Переключение на вкладку Кейсы');
                     
-                    // АГРЕССИВНО скрываем все остальные страницы
+                    // АГРЕССИВНО скрываем все остальные страницы и их элементы
                     if (crashPage) {
                         crashPage.style.display = 'none';
                         crashPage.style.visibility = 'hidden';
                         crashPage.style.opacity = '0';
                         crashPage.style.pointerEvents = 'none';
                         crashPage.style.zIndex = '-1';
+                        crashPage.style.position = 'fixed';
+                        crashPage.style.left = '-9999px';
                         crashPage.classList.remove('active');
+                        // Скрываем все элементы краша
+                        const crashElements = crashPage.querySelectorAll('.crash-controls, .crash-bet-control, .crash-bet-btn, .crash-header, .crash-balance, label');
+                        crashElements.forEach(el => {
+                            el.style.display = 'none';
+                            el.style.visibility = 'hidden';
+                            el.style.opacity = '0';
+                        });
                     }
                     if (minesPage) {
                         minesPage.style.display = 'none';
@@ -246,7 +255,16 @@
                         minesPage.style.opacity = '0';
                         minesPage.style.pointerEvents = 'none';
                         minesPage.style.zIndex = '-1';
+                        minesPage.style.position = 'fixed';
+                        minesPage.style.left = '-9999px';
                         minesPage.classList.remove('active');
+                        // Скрываем все элементы мин
+                        const minesElements = minesPage.querySelectorAll('.mines-controls, .mines-bet-control, .mines-start-btn, .mines-cash-out-btn, .mines-header, .mines-balance, label');
+                        minesElements.forEach(el => {
+                            el.style.display = 'none';
+                            el.style.visibility = 'hidden';
+                            el.style.opacity = '0';
+                        });
                     }
                     if (dicePage) {
                         dicePage.style.display = 'none';
@@ -254,7 +272,16 @@
                         dicePage.style.opacity = '0';
                         dicePage.style.pointerEvents = 'none';
                         dicePage.style.zIndex = '-1';
+                        dicePage.style.position = 'fixed';
+                        dicePage.style.left = '-9999px';
                         dicePage.classList.remove('active');
+                        // Скрываем все элементы dice
+                        const diceElements = dicePage.querySelectorAll('.dice-controls, .dice-bet-control, .dice-start-btn, .dice-header, .dice-balance, label');
+                        diceElements.forEach(el => {
+                            el.style.display = 'none';
+                            el.style.visibility = 'hidden';
+                            el.style.opacity = '0';
+                        });
                     }
                     
                     // Убеждаемся что кейсы НЕ скрыты - ПРИНУДИТЕЛЬНО
@@ -725,6 +752,22 @@
             position: relative;
             z-index: 10;
             background: transparent;
+            flex-wrap: nowrap;
+            overflow: hidden;
+        }
+        
+        /* Исправляем перекрытие баланса и заголовка */
+        .balance-section {
+            flex-shrink: 0;
+            white-space: nowrap;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .cases-header h2 {
+            position: relative;
+            z-index: 1;
+            margin-top: 10px;
         }
         
         /* Скрываем профиль в играх, чтобы не перекрывал баланс */
@@ -732,6 +775,49 @@
         .mines-page .header .profile-section,
         .dice-page .header .profile-section {
             display: none !important;
+        }
+        
+        /* АГРЕССИВНО скрываем все элементы игр в кейсах */
+        #casesPage .crash-controls,
+        #casesPage .crash-bet-control,
+        #casesPage .crash-bet-btn,
+        #casesPage .crash-graph-container,
+        #casesPage .crash-history-container,
+        #casesPage .mines-controls,
+        #casesPage .mines-bet-control,
+        #casesPage .mines-start-btn,
+        #casesPage .mines-cash-out-btn,
+        #casesPage .mines-grid-container,
+        #casesPage .mines-multiplier-display,
+        #casesPage .mines-stats,
+        #casesPage .dice-controls,
+        #casesPage .dice-bet-control,
+        #casesPage .dice-start-btn,
+        #casesPage .dice-result-container,
+        #casesPage .dice-stats,
+        #casesPage label[for*="Bet"],
+        #casesPage label[for*="bet"],
+        #casesPage label:contains("Ставка"),
+        #casesPage label:contains("Множитель"),
+        #casesPage .crash-header,
+        #casesPage .mines-header,
+        #casesPage .dice-header {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            position: absolute !important;
+            left: -9999px !important;
+        }
+        
+        /* Убеждаемся что страницы игр скрыты */
+        #casesPage.active ~ #crashPage,
+        #casesPage.active ~ #minesPage,
+        #casesPage.active ~ #dicePage {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            z-index: -1 !important;
         }
         
         /* Убеждаемся что балансы в играх видны */
@@ -2270,7 +2356,10 @@
         .cases-header {
             text-align: center;
             padding: 12px;
-            padding-top: 20px;
+            padding-top: 70px !important;
+            position: relative;
+            z-index: 1;
+            margin-top: 0 !important;
         }
 
         .cases-header h2 {
@@ -2278,6 +2367,10 @@
             font-weight: 700;
             color: #ffffff;
             margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+            margin-top: 0 !important;
+            padding-top: 0 !important;
         }
 
         .case-card {
@@ -3460,12 +3553,12 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="profile-section">
+    <div class="header" style="display: flex !important; align-items: center !important; justify-content: space-between !important; padding: 15px 20px !important; position: relative !important; z-index: 10 !important; flex-wrap: nowrap !important; overflow: hidden !important;">
+        <div class="profile-section" style="flex-shrink: 0 !important; min-width: 0 !important; overflow: hidden !important; max-width: 50% !important;">
             <div class="avatar">👤</div>
-            <div class="username" id="username">User</div>
+            <div class="username" id="username" style="white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;">User</div>
         </div>
-        <div class="balance-section">
+        <div class="balance-section" style="flex-shrink: 0 !important; white-space: nowrap !important; position: relative !important; z-index: 2 !important;">
             <span class="diamond-icon"></span>
             <span class="balance-text" id="balance">0.00</span>
             <button style="background: transparent; border: none; color: #ffffff; font-size: 18px; cursor: pointer; padding: 0 5px;">+</button>
